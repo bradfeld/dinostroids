@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dinosaur Asteroids</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Basic styling for the game */
+    body {
+      background-color: black;
+      /* Prevent scrollbars if canvas slightly overflows */
+      overflow: hidden;
+      /* Remove default body margin */
+      margin: 0;
+      /* Ensure canvas aligns top-left */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh; /* Ensure body takes full viewport height */
+    }
+
+    canvas {
+      /* Remove extra space below inline elements */
+      display: block;
+      /* Optional: add a subtle border if you want to see the canvas edges */
+      /* border: 1px solid grey; */
+    }
+  </style>
+</head>
+<body>
+  <!-- The canvas element where the game will be drawn -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Link the JavaScript file containing the game logic -->
+  <!-- Make sure 'script.js' is in the same directory as this HTML file -->
+  <script src="script.js"></script>
+</body>
+</html>
