@@ -1,4 +1,4 @@
-# Dinoroids
+# Dinostroids
 
 A classic arcade-style shooter game built with HTML Canvas and pure JavaScript, done entirely with vibe coding in Cursor.
 

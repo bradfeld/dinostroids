@@ -209,6 +209,11 @@ document.addEventListener('keydown', (event) => {
         startGame();
         event.preventDefault();
     }
+    // Quit game to start screen on 'Escape' press if game is running and help isn't visible
+    if (event.key === 'Escape' && isGameStarted && !isHelpScreenVisible) {
+        quitToStartScreen();
+        event.preventDefault();
+    }
 });
 document.addEventListener('keyup', (event) => { keys[event.key] = false; });
 
@@ -500,10 +505,11 @@ function drawHelpScreen() {
     ctx.fillText('Arrow Up: Thrust', centerX, startY + lineHeight * 3.5);
     ctx.fillText('Spacebar: Shoot', centerX, startY + lineHeight * 4.5);
     ctx.fillText('?: Toggle Help / Pause', centerX, startY + lineHeight * 5.5);
+    ctx.fillText('Esc: Quit to Title', centerX, startY + lineHeight * 6.5); // Added Esc info
 
     // Draw close instruction
     ctx.font = '24px Arial'; // Slightly larger font for close instruction
-    ctx.fillText('Press ? to close', centerX, startY + lineHeight * 7.5);
+    ctx.fillText('Press ? to close', centerX, startY + lineHeight * 8.5); // Adjusted Y position
 }
 
 // --- Draw Start Screen ---
@@ -607,3 +613,8 @@ initGame();
 
 // Start the animation loop - it will initially draw the start screen
 requestAnimationFrame(updateGame);
+
+// --- Quit Game Function ---
+function quitToStartScreen() {
+    initGame(); // Reset game state and flags to show start screen
+}
