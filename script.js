@@ -1,3 +1,7 @@
+import { inject } from '@vercel/analytics';
+
+inject();
+
 // Canvas setup
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -20,6 +24,7 @@ const ASTEROID_BASE_SIZE = 40; // Average size
 const ASTEROID_SIZE_VARIATION = 20; // Max deviation from base size
 const ASTEROID_MIN_SPEED = 0.5;
 const ASTEROID_SPEED_VARIATION = 1.5;
+const LEADERBOARD_MAX_ENTRIES = 20; // Match API
 
 // Asteroid Types
 const ASTEROID_TYPE = {
@@ -96,6 +101,10 @@ let gameRunning = true;
 let lastAsteroidSpawn = 0;
 let isHelpScreenVisible = false; // Added for help screen state
 let isGameStarted = false; // Added for start screen state
+let isLeaderboardVisible = false; // Added for leaderboard state
+let leaderboardData = null; // To store fetched leaderboard data
+let leaderboardError = null; // To store fetch errors
+let isFetchingLeaderboard = false; // Flag for loading state
 
 // --- Classes ---
 
@@ -204,14 +213,19 @@ document.addEventListener('keydown', (event) => {
         isHelpScreenVisible = !isHelpScreenVisible;
         event.preventDefault(); // Prevent browser find (?)
     }
-    // Start game on 'Enter' press if not already started and help isn't visible
-    if (event.key === 'Enter' && !isGameStarted && !isHelpScreenVisible) {
+    // Start game on 'Enter' press if not already started and help/leaderboard isn't visible
+    if (event.key === 'Enter' && !isGameStarted && !isHelpScreenVisible && !isLeaderboardVisible) {
         startGame();
         event.preventDefault();
     }
     // Quit game to start screen on 'Escape' press if game is running and help isn't visible
     if (event.key === 'Escape' && isGameStarted && !isHelpScreenVisible) {
         quitToStartScreen();
+        event.preventDefault();
+    }
+    // Toggle leaderboard screen on 'L' press if not in game and help isn't visible
+    if (event.key.toLowerCase() === 'l' && !isGameStarted && !isHelpScreenVisible) {
+        toggleLeaderboard();
         event.preventDefault();
     }
 });
@@ -269,19 +283,132 @@ function checkCollision(obj1, obj2) {
     return distance < obj1.size + obj2.size;
 }
 
-function gameOver() {
+// --- Game Over Logic with Leaderboard Check ---
+async function gameOver() {
     gameRunning = false;
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; // Semi-transparent overlay
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const finalScore = score; // Capture score before potential reset
 
+    // Fetch the latest leaderboard to check qualification
+    await fetchLeaderboard();
+
+    let qualifies = false;
+    if (leaderboardData && !leaderboardError) {
+        if (leaderboardData.length < LEADERBOARD_MAX_ENTRIES) {
+            qualifies = finalScore > 0; // Qualifies if list isn't full (and score > 0)
+        } else {
+            qualifies = finalScore > leaderboardData[leaderboardData.length - 1].score;
+        }
+    }
+    // If fetch failed, we can't submit, maybe log error or just skip
+    else if (leaderboardError) {
+        console.error("Cannot check leaderboard qualification due to fetch error.");
+    }
+
+    let initials = null;
+    let submitted = false;
+    let submitError = null;
+
+    if (qualifies) {
+        // Use prompt to get initials (loop for validation)
+        while (true) {
+            initials = prompt(`You made the leaderboard! Score: ${finalScore}\nEnter your initials (1-3 characters):`);
+            if (initials === null) { // User pressed Cancel
+                initials = null;
+                break;
+            }
+            initials = initials.trim().toUpperCase();
+            if (initials.length > 0 && initials.length <= 3) {
+                break; // Valid input
+            }
+            alert("Please enter 1 to 3 characters for your initials.");
+        }
+
+        if (initials) {
+            try {
+                submitted = await submitScore(initials, finalScore);
+                if (submitted) {
+                    // Refresh leaderboard after submission
+                    await fetchLeaderboard();
+                }
+            } catch (error) {
+                submitError = error.message;
+            }
+        }
+    }
+
+    // --- Draw Final Game Over Screen ---
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; // Slightly darker overlay
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'white';
-    ctx.font = '48px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 40);
+    ctx.textBaseline = 'middle';
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    ctx.font = '48px Arial';
+    ctx.fillText('GAME OVER', centerX, centerY - 150);
+
     ctx.font = '30px Arial';
-    ctx.fillText('Score: ' + score, canvas.width / 2, canvas.height / 2 + 10);
+    ctx.fillText(`Final Score: ${finalScore}`, centerX, centerY - 100);
+
+    // Display leaderboard status/result
     ctx.font = '20px Arial';
-    ctx.fillText('Refresh to Play Again', canvas.width / 2, canvas.height / 2 + 50);
+    if (qualifies) {
+        if (initials) {
+            if (submitted) {
+                ctx.fillText('Score submitted to leaderboard!', centerX, centerY - 60);
+            } else if (submitError) {
+                ctx.fillText(`Submission Error: ${submitError}`, centerX, centerY - 60);
+                ctx.fillText('Your score was not saved.', centerX, centerY - 30);
+            } else { // Should not happen if submission attempt was made, but fallback
+                 ctx.fillText('Score qualified, but was not submitted.', centerX, centerY - 60);
+            }
+        } else {
+            ctx.fillText('You qualified, but did not enter initials.', centerX, centerY - 60);
+        }
+    } else {
+        if (!leaderboardError) {
+             ctx.fillText('Better luck next time!', centerX, centerY - 60);
+        } else {
+             ctx.fillText('Could not check leaderboard ranking.', centerX, centerY - 60);
+        }
+    }
+
+    // Option to view leaderboard or refresh
+    // If submitted successfully, show the leaderboard snippet?
+    // For now, just keep the refresh prompt
+    ctx.font = '20px Arial';
+    ctx.fillText('Refresh to Play Again', centerX, centerY + 150);
+    ctx.fillText('(Press L on start screen for leaderboard)', centerX, centerY + 180);
+
+    // Consider drawing a snippet of the leaderboard here if qualifies/submitted
+    // drawLeaderboardSnippet(centerX, centerY);
+}
+
+// --- Submit Score Function ---
+async function submitScore(initials, score) {
+    console.log(`Submitting score: ${initials} - ${score}`);
+    try {
+        const response = await fetch('/api/leaderboard', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ initials, score }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' })); // Try to parse error
+            throw new Error(`Failed to submit score: ${response.status} ${errorData.message || ''}`);
+        }
+
+        const result = await response.json();
+        console.log("Submission result:", result.message);
+        return true; // Indicate success
+    } catch (error) {
+        console.error("Error submitting score:", error);
+        throw error; // Re-throw to be caught in gameOver
+    }
 }
 
 // --- Update and Draw ---
@@ -295,7 +422,12 @@ function updateGame(currentTime) {
 
   // Priority 2: Start Screen
   if (!isGameStarted) {
-      drawStartScreen();
+      // Show Leaderboard *instead* of Start Screen if toggled
+      if (isLeaderboardVisible) {
+          drawLeaderboardScreen();
+      } else {
+          drawStartScreen();
+      }
       requestAnimationFrame(updateGame); // Keep animation loop running
       return;
   }
@@ -512,6 +644,109 @@ function drawHelpScreen() {
     ctx.fillText('Press ? to close', centerX, startY + lineHeight * 8.5); // Adjusted Y position
 }
 
+// --- Draw Leaderboard Screen ---
+function drawLeaderboardScreen() {
+    // Draw semi-transparent background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Set text style
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const centerX = canvas.width / 2;
+    const startY = 100; // Start drawing from the top
+    const lineHeight = 30;
+
+    ctx.font = '36px Arial';
+    ctx.fillText('Top Scores', centerX, startY);
+
+    ctx.font = '18px Arial';
+    if (isFetchingLeaderboard) {
+        ctx.fillText('Loading...', centerX, startY + lineHeight * 2);
+    } else if (leaderboardError) {
+        ctx.fillText(`Error: ${leaderboardError}`, centerX, startY + lineHeight * 2);
+    } else if (leaderboardData && leaderboardData.length > 0) {
+        // Draw header
+        ctx.textAlign = 'left';
+        const rankX = centerX - 200;
+        const initialsX = centerX - 100;
+        const scoreX = centerX + 0;
+        const dateX = centerX + 100;
+        ctx.fillText('Rank', rankX, startY + lineHeight * 2);
+        ctx.fillText('Initials', initialsX, startY + lineHeight * 2);
+        ctx.textAlign = 'right';
+        ctx.fillText('Score', scoreX + 80, startY + lineHeight * 2);
+        ctx.textAlign = 'left'; // Reset for date
+        ctx.fillText('Date', dateX, startY + lineHeight * 2);
+
+        // Draw entries
+        ctx.font = '16px Arial';
+        leaderboardData.forEach((entry, index) => {
+            const yPos = startY + lineHeight * (3.5 + index);
+            ctx.textAlign = 'left';
+            ctx.fillText(`${index + 1}.`, rankX, yPos);
+            ctx.fillText(entry.initials, initialsX, yPos);
+            ctx.textAlign = 'right';
+            ctx.fillText(entry.score.toLocaleString(), scoreX + 80, yPos);
+
+            // Format date nicely
+            ctx.textAlign = 'left'; // Reset for date
+            try {
+                const date = new Date(entry.createdAt);
+                const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                ctx.fillText(formattedDate, dateX, yPos);
+            } catch (e) {
+                ctx.fillText('Invalid Date', dateX, yPos);
+            }
+        });
+    } else {
+        ctx.fillText('No scores yet!', centerX, startY + lineHeight * 2);
+    }
+
+    // Close instruction
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Press L to return to Start Screen', centerX, canvas.height - 50);
+}
+
+// --- Fetch Leaderboard Data ---
+async function fetchLeaderboard() {
+    isFetchingLeaderboard = true;
+    leaderboardError = null;
+    leaderboardData = null; // Clear old data
+    // Force redraw to show loading state
+    if (isLeaderboardVisible) drawLeaderboardScreen();
+
+    try {
+        const response = await fetch('/api/leaderboard');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        leaderboardData = await response.json();
+    } catch (error) {
+        console.error("Failed to fetch leaderboard:", error);
+        leaderboardError = error.message;
+        leaderboardData = []; // Set to empty array on error to prevent issues
+    } finally {
+        isFetchingLeaderboard = false;
+        // Force redraw to show data or error
+        if (isLeaderboardVisible) drawLeaderboardScreen();
+    }
+}
+
+// --- Toggle Leaderboard Visibility ---
+function toggleLeaderboard() {
+    isLeaderboardVisible = !isLeaderboardVisible;
+    if (isLeaderboardVisible) {
+        fetchLeaderboard(); // Fetch data when opening
+    } else {
+        // Optionally clear data when closing
+        leaderboardData = null;
+        leaderboardError = null;
+    }
+}
+
 // --- Draw Start Screen ---
 function drawStartScreen() {
     // Clear canvas
@@ -538,6 +773,7 @@ function drawStartScreen() {
     // Help hint
     ctx.font = '20px Arial';
     ctx.fillText('? for Help', centerX, centerY + 50);
+    ctx.fillText('L for Leaderboard', centerX, centerY + 80); // Added Leaderboard hint
 
     // Copyright
     ctx.font = '14px Arial';
@@ -613,8 +849,3 @@ initGame();
 
 // Start the animation loop - it will initially draw the start screen
 requestAnimationFrame(updateGame);
-
-// --- Quit Game Function ---
-function quitToStartScreen() {
-    initGame(); // Reset game state and flags to show start screen
-}
