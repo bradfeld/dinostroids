@@ -16,23 +16,22 @@ const FRICTION = 0.98;
 
 // Player
 const PLAYER_SIZE = 15;
-const PLAYER_ROTATION_SPEED = 0.07;
-// Increased base speed for Easy mode
-const PLAYER_ACCELERATION = 0.18; 
+const PLAYER_ROTATION_SPEED = 0.07 * 3; // ~0.21
+const PLAYER_ACCELERATION = 0.18 * 3; // 0.54
 const PLAYER_FRICTION = 0.98;
 const INVINCIBILITY_TIME = 3000; // milliseconds
 
 // Bullets
 const BULLET_RADIUS = 2;
-const BULLET_SPEED = 8; // Increased from original
+const BULLET_SPEED = 8; // Reverted to original speed
 const BULLET_LIFESPAN = 50; // frames
 // Reduced cooldown for faster shooting
 const SHOOT_COOLDOWN = 120; // milliseconds
 
 // Asteroids
 // Increased base speeds for asteroids
-const ASTEROID_MIN_SPEED = 0.6;
-const ASTEROID_SPEED_VARIATION = 1.6;
+const ASTEROID_MIN_SPEED = 0.6 * 3; // 1.8
+const ASTEROID_SPEED_VARIATION = 1.6 * 3; // 4.8
 
 // Define asteroid sizes and speeds
 const asteroidSizes = {
@@ -43,19 +42,19 @@ const asteroidSizes = {
 
 const asteroidSpeeds = {
     easy: {
-        large: { min: 0.5, max: 1.0 },
-        medium: { min: 0.8, max: 1.5 },
-        small: { min: 1.2, max: 2.0 }
+        large: { min: 1.5, max: 3.0 },  // 0.5*3, 1.0*3
+        medium: { min: 2.4, max: 4.5 },  // 0.8*3, 1.5*3
+        small: { min: 3.6, max: 6.0 }   // 1.2*3, 2.0*3
     },
     medium: {
-        large: { min: 0.8, max: 1.5 },
-        medium: { min: 1.2, max: 2.0 },
-        small: { min: 1.8, max: 2.5 }
+        large: { min: 2.4, max: 4.5 },  // 0.8*3, 1.5*3
+        medium: { min: 3.6, max: 6.0 },  // 1.2*3, 2.0*3
+        small: { min: 5.4, max: 7.5 }   // 1.8*3, 2.5*3
     },
     difficult: {
-        large: { min: 1.2, max: 2.0 },
-        medium: { min: 1.8, max: 2.5 },
-        small: { min: 2.5, max: 3.5 }
+        large: { min: 3.6, max: 6.0 },  // 1.2*3, 2.0*3
+        medium: { min: 5.4, max: 7.5 },  // 1.8*3, 2.5*3
+        small: { min: 7.5, max: 10.5 }  // 2.5*3, 3.5*3
     }
 };
 
@@ -883,8 +882,9 @@ function startLevel() {
     asteroids = [];
     bullets = [];
 
-    // Calculate number of asteroids based on level
-    const numAsteroids = Math.min(2 + Math.floor(level / 2), 8);
+    // Calculate number of asteroids based on level: 5 + (level * 2)
+    const numAsteroids = 5 + (level * 2);
+    console.log(`Level ${level}: Spawning ${numAsteroids} asteroids.`); // Keep log for now
 
     // Spawn initial asteroids
     for (let i = 0; i < numAsteroids; i++) {
