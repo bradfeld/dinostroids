@@ -127,42 +127,40 @@ const ASTEROID_PROPERTIES = {
 const ASTEROID_INITIAL_SIZE_VARIATION = 15;
 
 // --- Dinosaur Shapes ---
-// Define vertices relative to center (0,0) and scaled roughly to 1 unit radius
 const DINO_SHAPES = [
-    // Shape 1: Sauropod-like
+    // Shape 1: Sauropod-like (small)
     [
-        {x: 0.8, y: -0.6}, {x: 1, y: -0.4}, {x: 0.9, y: 0}, {x: 0.5, y: 0.3}, // Head/Neck
-        {x: 0.2, y: 0.8}, {x: -0.5, y: 0.7}, {x: -1, y: 0.5}, // Body/Tail
-        {x: -0.8, y: 0}, {x: -0.9, y: -0.3}, // Under Tail / Back Leg
-        {x: -0.4, y: -0.6}, // Back Leg Bottom
-        {x: 0, y: -0.7}, // Belly
-        {x: 0.3, y: -0.6}, // Front Leg
-        {x: 0.6, y: -0.8} // Back to Neck Start
+        {x: 0.8, y: -0.6}, {x: 1, y: -0.4}, {x: 0.9, y: 0}, {x: 0.5, y: 0.3},
+        {x: 0.2, y: 0.8}, {x: -0.5, y: 0.7}, {x: -1, y: 0.5},
+        {x: -0.8, y: 0}, {x: -0.9, y: -0.3},
+        {x: -0.4, y: -0.6},
+        {x: 0, y: -0.7},
+        {x: 0.3, y: -0.6},
+        {x: 0.6, y: -0.8}
     ],
-    // Shape 2: T-Rex-like (simplified)
+    // Shape 2: T-Rex-like (large)
     [
-        {x: 0.5, y: -0.9}, {x: 0.9, y: -0.7}, {x: 0.6, y: -0.2}, {x: 0.9, y: 0.1}, // Head
-        {x: 0.5, y: 0.3}, // Neck
-        {x: 0.4, y: 0.8}, {x: -0.3, y: 0.9}, {x: -0.8, y: 0.6}, // Body/Tail
-        {x: -1.0, y: 0.0}, {x: -0.8, y: -0.3}, // Tail bottom / Leg top
-        {x: -0.9, y: -0.6}, {x: -0.7, y: -0.7}, // Leg bottom
-        {x: -0.3, y: -0.6}, // Underbelly
-        {x: 0.2, y: -0.3}, {x: 0.3, y: -0.5}, // Arm
-        {x: 0.1, y: -0.8} // Chest back to neck
+        {x: 0.5, y: -0.9}, {x: 0.9, y: -0.7}, {x: 0.6, y: -0.2}, {x: 0.9, y: 0.1},
+        {x: 0.5, y: 0.3},
+        {x: 0.4, y: 0.8}, {x: -0.3, y: 0.9}, {x: -0.8, y: 0.6},
+        {x: -1.0, y: 0.0}, {x: -0.8, y: -0.3},
+        {x: -0.9, y: -0.6}, {x: -0.7, y: -0.7},
+        {x: -0.3, y: -0.8},
+        {x: 0.2, y: -0.3}, {x: 0.3, y: -0.5},
+        {x: 0.1, y: -0.8}
     ],
-     // Shape 3: Pterodactyl-like (simplified)
+    // Shape 3: Pterodactyl-like (medium)
     [
-        {x: 0.4, y: -0.8}, {x: 0.8, y: -0.6}, {x: 1.0, y: -0.7}, {x: 0.6, y: 0}, // Head/Beak
-        {x: 0.8, y: 0.4}, // Neck/Body top
-        {x: 0.3, y: 0.1}, // Wing Joint
-        {x: 0.9, y: 0.9}, {x: 0.5, y: 1.0}, {x: 0.0, y: 0.5}, // Outer Wing Top
-        {x: -0.6, y: 0.8}, {x: -1.0, y: 0.6}, {x: -0.7, y: 0.1}, // Back wing edge
-        {x: -0.5, y: 0.3}, // Body back
-        {x: -0.6, y: -0.5}, {x: -0.4, y: -0.6}, // Legs
-        {x: 0, y: -0.3} // Body Bottom
+        {x: 0.4, y: -0.8}, {x: 0.8, y: -0.6}, {x: 1.0, y: -0.7}, {x: 0.6, y: 0},
+        {x: 0.8, y: 0.4},
+        {x: 0.3, y: 0.1},
+        {x: 0.9, y: 0.9}, {x: 0.5, y: 1.0}, {x: 0.0, y: 0.5},
+        {x: -0.6, y: 0.8}, {x: -1.0, y: 0.6}, {x: -0.7, y: 0.1},
+        {x: -0.5, y: 0.3},
+        {x: -0.6, y: -0.5}, {x: -0.4, y: -0.6},
+        {x: 0, y: -0.3}
     ]
 ];
-
 
 // --- Game state ---
 let player = {
@@ -195,75 +193,64 @@ let isFetchingLeaderboard = false; // Flag for loading state
 // --- Classes ---
 
 class Asteroid {
-    constructor(type, x, y, speedX, speedY, sizeVariation = 0) {
-        this.type = type;
+    constructor(size, x, y) {
+        this.size = size;
         this.x = x;
         this.y = y;
-        const props = ASTEROID_PROPERTIES[type];
-        // Apply variation only if provided (e.g., for initial big ones)
-        this.size = props.baseSize + (Math.random() * sizeVariation * 2) - sizeVariation;
-        this.scoreValue = props.score;
-        this.speedX = speedX;
-        this.speedY = speedY;
-        this.rotation = Math.random() * TWO_PI; // Random initial rotation
-        this.rotationSpeed = (Math.random() - 0.5) * 0.02; // Random rotation speed
+        this.radius = asteroidSizes[size];
+        this.speed = Math.random() * (asteroidSpeeds[currentDifficulty][size].max - asteroidSpeeds[currentDifficulty][size].min) + asteroidSpeeds[currentDifficulty][size].min;
+        this.angle = Math.random() * TWO_PI;
+        this.rotation = Math.random() * TWO_PI;
+        this.rotationSpeed = (Math.random() - 0.5) * 0.05;
 
-        // Assign shape based on type
-        switch (this.type) {
-            case ASTEROID_TYPE.BIG: // T-Rex
-                this.vertices = DINO_SHAPES[1];
+        // Assign shape based on size
+        switch (size) {
+            case 'large':
+                this.vertices = DINO_SHAPES[1]; // T-Rex
                 break;
-            case ASTEROID_TYPE.MEDIUM: // Pterodactyl (used instead of Stegosaurus)
-                this.vertices = DINO_SHAPES[2];
+            case 'medium':
+                this.vertices = DINO_SHAPES[2]; // Pterodactyl
                 break;
-            case ASTEROID_TYPE.LITTLE: // Sauropod/Brontosaurus
-                this.vertices = DINO_SHAPES[0];
+            case 'small':
+                this.vertices = DINO_SHAPES[0]; // Sauropod
                 break;
-            default: // Fallback to random if type is unknown (shouldn't happen)
-                this.vertices = DINO_SHAPES[Math.floor(Math.random() * DINO_SHAPES.length)];
         }
     }
 
     draw() {
+        // Don't draw if outside game field
+        if (this.x + this.radius < gameField.offsetX ||
+            this.x - this.radius > gameField.offsetX + gameField.width ||
+            this.y + this.radius < gameField.offsetY ||
+            this.y - this.radius > gameField.offsetY + gameField.height) {
+            return;
+        }
+
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
 
+        // Draw the dinosaur shape
         ctx.beginPath();
-        // Start at the first vertex, scaled by size
-        ctx.moveTo(this.vertices[0].x * this.size, this.vertices[0].y * this.size);
-        // Draw lines to subsequent vertices
+        ctx.moveTo(this.vertices[0].x * this.radius, this.vertices[0].y * this.radius);
         for (let i = 1; i < this.vertices.length; i++) {
-            ctx.lineTo(this.vertices[i].x * this.size, this.vertices[i].y * this.size);
+            ctx.lineTo(this.vertices[i].x * this.radius, this.vertices[i].y * this.radius);
         }
-        ctx.closePath(); // Connect the last vertex back to the first
+        ctx.closePath();
 
+        // Style the asteroid
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 2;
         ctx.stroke();
 
         ctx.restore();
-
-        // Optional: Draw collision circle for debugging
-        /*
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, TWO_PI);
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        */
     }
 
     update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
+        // Move asteroid
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
         this.rotation += this.rotationSpeed;
-
-        // Wrap around the screen
-        if (this.x < -this.size) this.x = canvas.width + this.size;
-        if (this.x > canvas.width + this.size) this.x = -this.size;
-        if (this.y < -this.size) this.y = canvas.height + this.size;
-        if (this.y > canvas.height + this.size) this.y = -this.size;
     }
 }
 
@@ -351,51 +338,31 @@ function wrapAround(object) {
 }
 
 function spawnAsteroid(size = 'large', x = null, y = null) {
-    const asteroid = {
-        size: size,
-        radius: asteroidSizes[size],
-        speed: Math.random() * (asteroidSpeeds[difficulty][size].max - asteroidSpeeds[difficulty][size].min) + asteroidSpeeds[difficulty][size].min
-    };
-
     // If position not specified, spawn at edge of game field
     if (x === null || y === null) {
         const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
         switch(side) {
             case 0: // top
-                asteroid.x = gameField.offsetX + Math.random() * gameField.width;
-                asteroid.y = gameField.offsetY - asteroid.radius;
+                x = gameField.offsetX + Math.random() * gameField.width;
+                y = gameField.offsetY - asteroidSizes[size];
                 break;
             case 1: // right
-                asteroid.x = gameField.offsetX + gameField.width + asteroid.radius;
-                asteroid.y = gameField.offsetY + Math.random() * gameField.height;
+                x = gameField.offsetX + gameField.width + asteroidSizes[size];
+                y = gameField.offsetY + Math.random() * gameField.height;
                 break;
             case 2: // bottom
-                asteroid.x = gameField.offsetX + Math.random() * gameField.width;
-                asteroid.y = gameField.offsetY + gameField.height + asteroid.radius;
+                x = gameField.offsetX + Math.random() * gameField.width;
+                y = gameField.offsetY + gameField.height + asteroidSizes[size];
                 break;
             case 3: // left
-                asteroid.x = gameField.offsetX - asteroid.radius;
-                asteroid.y = gameField.offsetY + Math.random() * gameField.height;
+                x = gameField.offsetX - asteroidSizes[size];
+                y = gameField.offsetY + Math.random() * gameField.height;
                 break;
         }
-    } else {
-        asteroid.x = x;
-        asteroid.y = y;
     }
 
-    // Calculate angle towards center of game field
-    const centerX = gameField.offsetX + gameField.width / 2;
-    const centerY = gameField.offsetY + gameField.height / 2;
-    asteroid.angle = Math.atan2(centerY - asteroid.y, centerX - asteroid.x);
-    
-    // Add some randomness to the angle
-    asteroid.angle += (Math.random() - 0.5) * Math.PI / 2;
-
-    // Add rotation
-    asteroid.rotationSpeed = (Math.random() - 0.5) * 0.1;
-    asteroid.rotation = Math.random() * Math.PI * 2;
-
-    asteroids.push(asteroid);
+    // Create and add the asteroid
+    asteroids.push(new Asteroid(size, x, y));
 }
 
 // Simple Circular Collision Check (Approximation)
@@ -954,7 +921,7 @@ function startLevel() {
     player.isInvulnerable = true;
     setTimeout(() => {
         player.isInvulnerable = false;
-    }, 3000);
+    }, INVINCIBILITY_TIME);
 }
 
 // Add resize listener
