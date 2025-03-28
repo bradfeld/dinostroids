@@ -8,7 +8,8 @@
   "description": "A classic arcade-style shooter game built with HTML Canvas and pure JavaScript, done entirely with vibe coding in Cursor.",
   "main": "script.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "esbuild script.js --bundle --outfile=dist/bundle.js --format=esm --minify"
   },
   "repository": {
     "type": "git",
@@ -20,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/bradfeld/dinostroids/issues"
   },
-  "homepage": "https://github.com/bradfeld/dinostroids#readme"
+  "homepage": "https://github.com/bradfeld/dinostroids#readme",
+  "devDependencies": {
+    "esbuild": "^0.21.5"
+  }
 }
