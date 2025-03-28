@@ -342,32 +342,32 @@ function wrapAround(object) {
 }
 
 function spawnAsteroid(size = 'large', x = null, y = null) {
-    // If position not specified, spawn at edge of game field
-    if (x === null || y === null) {
-        const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
-        const spawnRadius = asteroidSizes[size]; // Use radius for offset
-        switch(side) {
-            case 0: // top
-                x = gameField.offsetX + Math.random() * gameField.width;
-                y = gameField.offsetY - spawnRadius;
-                break;
-            case 1: // right
-                x = gameField.offsetX + gameField.width + spawnRadius;
-                y = gameField.offsetY + Math.random() * gameField.height;
-                break;
-            case 2: // bottom
-                x = gameField.offsetX + Math.random() * gameField.width;
-                y = gameField.offsetY + gameField.height + spawnRadius;
-                break;
-            case 3: // left
-                x = gameField.offsetX - spawnRadius;
-                y = gameField.offsetY + Math.random() * gameField.height;
-                break;
-        }
-    }
+    const spawnRadius = asteroidSizes[size];
+    const minSpawnDistFromPlayer = player.size + spawnRadius + 100; // Safe distance from player
 
-    // Log before creating
-    console.log(`Spawning ${size} asteroid at (${x.toFixed(1)}, ${y.toFixed(1)})`);
+    // If position is not specified (initial level spawn), find a random safe spot INSIDE the field
+    if (x === null || y === null) {
+        let attempts = 0;
+        do {
+            x = gameField.offsetX + spawnRadius + Math.random() * (gameField.width - 2 * spawnRadius);
+            y = gameField.offsetY + spawnRadius + Math.random() * (gameField.height - 2 * spawnRadius);
+            attempts++;
+            // Ensure not too close to player, retry if needed (limit attempts to prevent infinite loop)
+        } while (attempts < 50 && 
+                 Math.sqrt(Math.pow(x - player.x, 2) + Math.pow(y - player.y, 2)) < minSpawnDistFromPlayer);
+        
+        if (attempts >= 50) {
+            console.warn('Could not find a safe spawn location far from the player after 50 attempts. Spawning anyway.');
+        }
+
+        // Log before creating
+        console.log(`Spawning ${size} asteroid randomly inside field at (${x.toFixed(1)}, ${y.toFixed(1)})`);
+    
+    } else {
+        // If position IS specified (e.g., when an asteroid splits), use those coordinates directly
+        // No need to log here as it's not the initial random spawn
+        console.log(`Spawning split ${size} asteroid at provided location (${x.toFixed(1)}, ${y.toFixed(1)})`);
+    }
 
     // Create and add the asteroid
     const newAsteroid = new Asteroid(size, x, y);
@@ -966,11 +966,44 @@ requestAnimationFrame(updateGame);
 function updateAsteroids() {
     for (let i = asteroids.length - 1; i >= 0; i--) {
         const asteroid = asteroids[i];
-        
-        // Call the asteroid's own update method for movement
+        let destroyed = false; // Flag to check if asteroid was destroyed by collision
+
+        // Check collision with player first
+        if (gameRunning && !player.isInvulnerable) {
+            const dx = player.x - asteroid.x;
+            const dy = player.y - asteroid.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < asteroid.radius + player.size / 2) {
+                handlePlayerCollision();
+                // Note: Player collision doesn't destroy the asteroid in this version, 
+                // but could potentially stun or push it.
+            }
+        }
+
+        // Check collision with bullets
+        for (let j = bullets.length - 1; j >= 0; j--) {
+            const bullet = bullets[j];
+            const dxBullet = bullet.x - asteroid.x;
+            const dyBullet = bullet.y - asteroid.y;
+            const distanceBullet = Math.sqrt(dxBullet * dxBullet + dyBullet * dyBullet);
+            
+            if (distanceBullet < asteroid.radius + bullet.radius) {
+                bullets.splice(j, 1); // Remove bullet
+                handleAsteroidDestruction(asteroid, i); // Handle destruction (might splice asteroid)
+                destroyed = true; // Mark as destroyed
+                break; // Stop checking bullets for this asteroid
+            }
+        }
+
+        // If asteroid was destroyed by a bullet, skip update and boundary check for this iteration
+        if (destroyed) {
+            continue;
+        }
+
+        // If not destroyed, THEN update its position
         asteroid.update();
 
-        // Check if asteroid is completely outside the game field
+        // NOW, check if it moved completely outside the game field
         const isOutside = (
             asteroid.x + asteroid.radius < gameField.offsetX ||
             asteroid.x - asteroid.radius > gameField.offsetX + gameField.width ||
@@ -979,41 +1012,9 @@ function updateAsteroids() {
         );
 
         if (isOutside) {
-            // Log before removing
-            console.log(`Removing asteroid at (${asteroid.x.toFixed(1)}, ${asteroid.y.toFixed(1)}) because it's outside game field.`);
+            console.log(`Removing asteroid at (${asteroid.x.toFixed(1)}, ${asteroid.y.toFixed(1)}) because it moved outside game field.`);
             asteroids.splice(i, 1);
-            continue;
-        }
-
-        // Check collision with player
-        if (gameRunning && !player.isInvulnerable) {
-            const dx = player.x - asteroid.x;
-            const dy = player.y - asteroid.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            // Use asteroid.radius and player.size for collision check
-            if (distance < asteroid.radius + player.size / 2) { 
-                handlePlayerCollision();
-            }
-        }
-
-        // Check collision with bullets
-        for (let j = bullets.length - 1; j >= 0; j--) {
-            const bullet = bullets[j];
-            const dx = bullet.x - asteroid.x;
-            const dy = bullet.y - asteroid.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            // Use asteroid.radius and bullet.radius for collision check
-            if (distance < asteroid.radius + bullet.radius) { 
-                // Remove bullet
-                bullets.splice(j, 1);
-                
-                // Handle asteroid destruction (which might remove the asteroid)
-                handleAsteroidDestruction(asteroid, i);
-                // Important: break after destruction as the asteroid at index 'i' is gone
-                break; 
-            }
+            // continue; // Already at end of loop iteration
         }
     }
 }
