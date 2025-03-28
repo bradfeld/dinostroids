@@ -1,6 +1,6 @@
 # Dinostroids
 
-A classic arcade-style shooter game built with HTML Canvas and pure JavaScript, done entirely with vibe coding in Cursor.
+A classic arcade-style shooter game built with HTML Canvas and pure JavaScript. Pilot your spaceship, dodge and destroy waves of incoming dinosaur-shaped asteroids!
 
 ## Gameplay
 

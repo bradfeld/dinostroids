@@ -26,6 +26,43 @@ const ASTEROID_MIN_SPEED = 0.5;
 const ASTEROID_SPEED_VARIATION = 1.5;
 const LEADERBOARD_MAX_ENTRIES = 20; // Match API
 
+// --- Difficulty Settings --- //
+const difficultySettings = {
+    easy: {
+        playerAcceleration: 0.15,
+        shootCooldown: 120,
+        asteroidMinSpeed: 0.4,
+        asteroidSpeedVariation: 1.0,
+        initialAsteroidCountBase: 2,
+        lives: 5,
+    },
+    medium: {
+        playerAcceleration: PLAYER_ACCELERATION, // Use original constant
+        shootCooldown: SHOOT_COOLDOWN,       // Use original constant
+        asteroidMinSpeed: ASTEROID_MIN_SPEED,      // Use original constant
+        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION, // Use original constant
+        initialAsteroidCountBase: 3,
+        lives: 3,
+    },
+    difficult: {
+        playerAcceleration: 0.08,
+        shootCooldown: 180,
+        asteroidMinSpeed: 0.7,
+        asteroidSpeedVariation: 2.0,
+        initialAsteroidCountBase: 4,
+        lives: 2,
+    }
+};
+
+// Variables to hold current difficulty parameters
+let currentDifficulty = 'medium'; // Default
+let currentAcceleration = difficultySettings.medium.playerAcceleration;
+let currentShootCooldown = difficultySettings.medium.shootCooldown;
+let currentAsteroidMinSpeed = difficultySettings.medium.asteroidMinSpeed;
+let currentAsteroidSpeedVariation = difficultySettings.medium.asteroidSpeedVariation;
+let currentInitialAsteroidCountBase = difficultySettings.medium.initialAsteroidCountBase;
+let currentMaxLives = difficultySettings.medium.lives;
+
 // Asteroid Types
 const ASTEROID_TYPE = {
     BIG: 'BIG',
@@ -214,10 +251,19 @@ document.addEventListener('keydown', (event) => {
         isHelpScreenVisible = !isHelpScreenVisible;
         event.preventDefault(); // Prevent browser find (?)
     }
-    // Start game on 'Enter' press if not already started and help isn't visible
-    if (event.key === 'Enter' && !isGameStarted && !isHelpScreenVisible) {
-        startGame();
-        event.preventDefault();
+    // Select difficulty and start game if not started
+    if (!isGameStarted && !isHelpScreenVisible) {
+        const key = event.key.toLowerCase();
+        let selectedDifficulty = null;
+        if (key === 'e') selectedDifficulty = 'easy';
+        else if (key === 'm') selectedDifficulty = 'medium';
+        else if (key === 'd') selectedDifficulty = 'difficult';
+
+        if (selectedDifficulty) {
+            setDifficulty(selectedDifficulty);
+            startGame();
+            event.preventDefault();
+        }
     }
     // End game on 'Escape' press if game is running and help isn't visible
     if (event.key === 'Escape' && isGameStarted && !isHelpScreenVisible) {
@@ -262,9 +308,9 @@ function spawnAsteroid(type, x, y, baseSpeedX = null, baseSpeedY = null) {
         speedX = baseSpeedX + Math.cos(splitAngle) * splitSpeedBoost;
         speedY = baseSpeedY + Math.sin(splitAngle) * splitSpeedBoost;
     } else {
-        // Initial spawn: Random direction and speed
+        // Initial spawn: Use current difficulty settings for speed
         const angle = Math.random() * TWO_PI;
-        const speed = ASTEROID_MIN_SPEED + Math.random() * ASTEROID_SPEED_VARIATION;
+        const speed = currentAsteroidMinSpeed + Math.random() * currentAsteroidSpeedVariation;
         speedX = Math.cos(angle) * speed;
         speedY = Math.sin(angle) * speed;
     }
@@ -454,7 +500,7 @@ function updateGame(currentTime) {
   }
 
   // Reset shooting ability after cooldown
-  if (!player.canShoot && currentTime - player.lastShotTime > SHOOT_COOLDOWN) {
+  if (!player.canShoot && currentTime - player.lastShotTime > currentShootCooldown) {
       player.canShoot = true;
   }
 
@@ -509,6 +555,8 @@ function updateGame(currentTime) {
             // --- Bonus Life Check ---
             if (Math.floor(scoreBefore / 10000) < Math.floor(score / 10000)) {
                 lives++;
+                // Cap lives at the max for the current difficulty? Optional.
+                // if (lives > currentMaxLives) lives = currentMaxLives;
                 console.log('Awarded bonus life at', Math.floor(score / 10000) * 10000, 'points!'); // Optional: Log bonus life
             }
 
@@ -625,7 +673,7 @@ function drawHelpScreen() {
     ctx.fillText('Arrow Up: Thrust', centerX, startY + lineHeight * 3.5);
     ctx.fillText('Spacebar: Shoot', centerX, startY + lineHeight * 4.5);
     ctx.fillText('?: Toggle Help / Pause', centerX, startY + lineHeight * 5.5);
-    ctx.fillText('Esc: Quit to Title', centerX, startY + lineHeight * 6.5); // Added Esc info
+    ctx.fillText('Esc: End Game', centerX, startY + lineHeight * 6.5); // Updated Esc info
 
     // Draw close instruction
     ctx.font = '24px Arial'; // Slightly larger font for close instruction
@@ -687,20 +735,21 @@ function drawStartScreen() {
     // Title
     ctx.font = '48px Arial';
     ctx.textBaseline = 'top';
-    ctx.fillText('Dinosaur Asteroids', centerX, titleY);
+    ctx.fillText('Dinostroids', centerX, titleY); // Renamed
 
-    // Start prompt
-    ctx.font = '30px Arial';
-    ctx.fillText('Press Enter to Start', centerX, startPromptY);
+    // Start prompt - CHANGED
+    ctx.font = '26px Arial'; // Slightly smaller for difficulty
+    ctx.fillText('Select Difficulty:', centerX, startPromptY);
+    ctx.font = '22px Arial';
+    ctx.fillText('E)asy   M)edium   D)ifficult', centerX, startPromptY + 40);
 
     // Help hint
     ctx.font = '20px Arial';
-    ctx.fillText('? for Help', centerX, helpY);
-    // ctx.fillText('L for Leaderboard', centerX, centerY + 80); // REMOVED
+    ctx.fillText('? for Help', centerX, helpY + 20); // Adjusted Y
 
     // --- Leaderboard Display --- //
     ctx.font = '24px Arial';
-    ctx.fillText('Top Scores', centerX, leaderboardTitleY);
+    ctx.fillText('Top Scores', centerX, leaderboardTitleY + 20); // Adjusted Y
 
     ctx.font = '16px Arial';
     ctx.textBaseline = 'top'; // Align leaderboard text from the top
@@ -754,25 +803,46 @@ function drawStartScreen() {
     ctx.font = '14px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom'; // Align copyright to bottom
-    ctx.fillText('(c) Brad Feld, 2025', centerX, canvas.height - 20);
+    ctx.fillText('(c) Dinostroids, 2025', centerX, canvas.height - 20); // Renamed
+}
+
+// --- Set Difficulty Function ---
+function setDifficulty(difficulty) {
+    currentDifficulty = difficulty;
+    const settings = difficultySettings[difficulty];
+
+    currentAcceleration = settings.playerAcceleration;
+    currentShootCooldown = settings.shootCooldown;
+    currentAsteroidMinSpeed = settings.asteroidMinSpeed;
+    currentAsteroidSpeedVariation = settings.asteroidSpeedVariation;
+    currentInitialAsteroidCountBase = settings.initialAsteroidCountBase;
+    currentMaxLives = settings.lives;
+
+    // Apply initial lives based on difficulty for the new game
+    lives = currentMaxLives;
+    console.log(`Difficulty set to: ${difficulty}`);
 }
 
 // --- Start the Game Logic ---
 function startGame() {
     if (isGameStarted) return; // Prevent multiple starts
+
+    // Difficulty and lives are set by setDifficulty() before calling startGame
     isGameStarted = true;
     gameRunning = true;
-    // Reset score/lives/level if needed (initGame already does this)
-    score = 0;
-    lives = 3; // Ensure starting lives
-    level = 1;
+    score = 0; // Reset score
+    level = 1; // Start at level 1
+
     // Reset player state
     player.x = canvas.width / 2;
     player.y = canvas.height / 2;
     player.speed = 0;
     player.angle = -Math.PI / 2;
+
+    // Clear entities
     bullets = [];
     asteroids = [];
+
     startLevel(); // Spawn initial asteroids for level 1
 }
 
@@ -799,11 +869,12 @@ function initGame() {
 
 // --- Level Handling ---
 function startLevel() {
-    // Spawn new BIG asteroids based on the level
-    const numAsteroids = 3 + level;
+    // Spawn new BIG asteroids based on the level and difficulty
+    const numAsteroids = currentInitialAsteroidCountBase + level;
     asteroids = []; // Clear existing asteroids
     for (let i = 0; i < numAsteroids; i++) {
-        spawnAsteroid(ASTEROID_TYPE.BIG); // Spawn BIG ones at edges
+        // Pass current speed settings to spawnAsteroid if needed, or modify spawnAsteroid itself
+        spawnAsteroid(ASTEROID_TYPE.BIG);
     }
 }
 
