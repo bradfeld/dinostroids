@@ -10,45 +10,54 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// --- Constants ---
+// --- Game Constants ---
 const TWO_PI = Math.PI * 2;
-const PLAYER_SIZE = 20;
-const PLAYER_ROTATION_SPEED = 0.05;
-const PLAYER_ACCELERATION = 0.1;
+
+// Player
+const PLAYER_SIZE = 15; // Slightly smaller for faster gameplay feel
+const PLAYER_ROTATION_SPEED = 0.07; // Faster rotation
+const PLAYER_ACCELERATION = 0.18; // Increased base acceleration
 const PLAYER_FRICTION = 0.98;
-const BULLET_SPEED = 7;
-const BULLET_RADIUS = 3;
-const SHOOT_COOLDOWN = 150; // milliseconds
-const ASTEROID_SPAWN_INTERVAL = 1800; // milliseconds
-const ASTEROID_BASE_SIZE = 40; // Average size
-const ASTEROID_SIZE_VARIATION = 20; // Max deviation from base size
-const ASTEROID_MIN_SPEED = 0.5;
-const ASTEROID_SPEED_VARIATION = 1.5;
-const LEADERBOARD_MAX_ENTRIES = 20; // Match API
+const INVINCIBILITY_TIME = 3000; // milliseconds
+
+// Bullets
+const BULLET_RADIUS = 2;
+const BULLET_SPEED = 8; // Faster bullets
+const BULLET_LIFESPAN = 50; // frames
+const SHOOT_COOLDOWN = 120; // Reduced cooldown for faster shooting
+
+// Asteroids
+const ASTEROID_MIN_SPEED = 0.6; // Faster base asteroid speed
+const ASTEROID_SPEED_VARIATION = 1.6; // More speed variation
+
+// Leaderboard
+const LEADERBOARD_MAX_ENTRIES = 10;
 
 // --- Difficulty Settings --- //
 const difficultySettings = {
     easy: {
-        playerAcceleration: 0.15,
-        shootCooldown: 120,
-        asteroidMinSpeed: 0.4,
-        asteroidSpeedVariation: 1.0,
+        playerAcceleration: PLAYER_ACCELERATION,
+        shootCooldown: SHOOT_COOLDOWN,
+        asteroidMinSpeed: ASTEROID_MIN_SPEED,
+        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION,
         initialAsteroidCountBase: 2,
         lives: 5,
     },
     medium: {
-        playerAcceleration: PLAYER_ACCELERATION, // Use original constant
-        shootCooldown: SHOOT_COOLDOWN,       // Use original constant
-        asteroidMinSpeed: ASTEROID_MIN_SPEED,      // Use original constant
-        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION, // Use original constant
+        // Medium is 1.5x faster than Easy
+        playerAcceleration: PLAYER_ACCELERATION * 1.5,
+        shootCooldown: Math.floor(SHOOT_COOLDOWN * 0.7), // Lower cooldown = faster shooting
+        asteroidMinSpeed: ASTEROID_MIN_SPEED * 1.5,
+        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 1.2,
         initialAsteroidCountBase: 3,
         lives: 3,
     },
     difficult: {
-        playerAcceleration: 0.08,
-        shootCooldown: 180,
-        asteroidMinSpeed: 0.7,
-        asteroidSpeedVariation: 2.0,
+        // Difficult is 2x faster than Easy
+        playerAcceleration: PLAYER_ACCELERATION * 2.0,
+        shootCooldown: Math.floor(SHOOT_COOLDOWN * 0.5), // Half the cooldown = twice as fast shooting
+        asteroidMinSpeed: ASTEROID_MIN_SPEED * 2.0,
+        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 1.5,
         initialAsteroidCountBase: 4,
         lives: 2,
     }
@@ -724,29 +733,33 @@ function drawStartScreen() {
     ctx.textAlign = 'center';
 
     const centerX = canvas.width / 2;
-    
-    // ------------------------------------
-    // SECTION 1: BIG TITLE
-    // ------------------------------------
-    const titleY = 100; // More space at the top for a prominent title
-    
-    // Title
-    ctx.font = '72px Arial'; // Bigger font for more impact
-    ctx.textBaseline = 'top';
-    ctx.fillText('DINOSTROIDS', centerX, titleY);
-    
-    // ------------------------------------
-    // SECTION 2: LEADERBOARD
-    // ------------------------------------
-    const leaderboardTitleY = titleY + 120; // Space after the title
+    const topMargin = 60;
+    const titleY = topMargin;
+    const startPromptY = titleY + 60;
+    const helpY = startPromptY + 40;
+    const leaderboardTitleY = helpY + 60;
     const leaderboardStartY = leaderboardTitleY + 40;
-    const lineHeight = 25; // Line height for leaderboard entries
-    
-    // Leaderboard header
-    ctx.font = '28px Arial';
-    ctx.fillText('TOP SCORES', centerX, leaderboardTitleY);
-    
-    // Leaderboard content
+    const lineHeight = 25; // Smaller line height for leaderboard entries
+
+    // Title
+    ctx.font = '48px Arial';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Dinostroids', centerX, titleY); // Renamed
+
+    // Start prompt - CHANGED
+    ctx.font = '26px Arial'; // Slightly smaller for difficulty
+    ctx.fillText('Select Difficulty:', centerX, startPromptY);
+    ctx.font = '22px Arial';
+    ctx.fillText('E)asy   M)edium   D)ifficult', centerX, startPromptY + 40);
+
+    // Help hint
+    ctx.font = '20px Arial';
+    ctx.fillText('? for Help', centerX, helpY + 20); // Adjusted Y
+
+    // --- Leaderboard Display --- //
+    ctx.font = '24px Arial';
+    ctx.fillText('Top Scores', centerX, leaderboardTitleY + 20); // Adjusted Y
+
     ctx.font = '16px Arial';
     ctx.textBaseline = 'top'; // Align leaderboard text from the top
     if (isFetchingLeaderboard) {
@@ -794,25 +807,12 @@ function drawStartScreen() {
     } else {
         ctx.fillText('No scores yet! Be the first!', centerX, leaderboardStartY);
     }
-    
-    // ------------------------------------
-    // SECTION 3: GAME INSTRUCTIONS
-    // ------------------------------------
-    // Calculate position based on how much of the leaderboard is filled
-    const entriesCount = leaderboardData ? Math.min(leaderboardData.length, LEADERBOARD_MAX_ENTRIES) : 0;
-    const instructionsY = leaderboardStartY + lineHeight * (entriesCount + 3) + 40; // Add extra spacing
-    
+
+    // Copyright
+    ctx.font = '14px Arial';
     ctx.textAlign = 'center';
-    ctx.font = '24px Arial';
-    ctx.fillText('Start Game:', centerX, instructionsY);
-    
-    ctx.font = '22px Arial';
-    ctx.fillText('E)asy   M)edium   D)ifficult', centerX, instructionsY + 40);
-    
-    // "? for Help" at the very bottom
-    ctx.font = '18px Arial';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText('? for Help', centerX, canvas.height - 20);
+    ctx.textBaseline = 'bottom'; // Align copyright to bottom
+    ctx.fillText('(c) Dinostroids, 2025', centerX, canvas.height - 20); // Renamed
 }
 
 // --- Set Difficulty Function ---
