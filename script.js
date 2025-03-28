@@ -218,11 +218,15 @@ class Asteroid {
     }
 
     draw() {
+        // Log asteroid position before drawing
+        console.log(`Drawing asteroid at (${this.x.toFixed(1)}, ${this.y.toFixed(1)}) with radius ${this.radius}`);
+
         // Don't draw if outside game field
         if (this.x + this.radius < gameField.offsetX ||
             this.x - this.radius > gameField.offsetX + gameField.width ||
             this.y + this.radius < gameField.offsetY ||
             this.y - this.radius > gameField.offsetY + gameField.height) {
+            console.log('Asteroid outside draw boundaries, skipping draw.');
             return;
         }
 
@@ -341,28 +345,34 @@ function spawnAsteroid(size = 'large', x = null, y = null) {
     // If position not specified, spawn at edge of game field
     if (x === null || y === null) {
         const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
+        const spawnRadius = asteroidSizes[size]; // Use radius for offset
         switch(side) {
             case 0: // top
                 x = gameField.offsetX + Math.random() * gameField.width;
-                y = gameField.offsetY - asteroidSizes[size];
+                y = gameField.offsetY - spawnRadius;
                 break;
             case 1: // right
-                x = gameField.offsetX + gameField.width + asteroidSizes[size];
+                x = gameField.offsetX + gameField.width + spawnRadius;
                 y = gameField.offsetY + Math.random() * gameField.height;
                 break;
             case 2: // bottom
                 x = gameField.offsetX + Math.random() * gameField.width;
-                y = gameField.offsetY + gameField.height + asteroidSizes[size];
+                y = gameField.offsetY + gameField.height + spawnRadius;
                 break;
             case 3: // left
-                x = gameField.offsetX - asteroidSizes[size];
+                x = gameField.offsetX - spawnRadius;
                 y = gameField.offsetY + Math.random() * gameField.height;
                 break;
         }
     }
 
+    // Log before creating
+    console.log(`Spawning ${size} asteroid at (${x.toFixed(1)}, ${y.toFixed(1)})`);
+
     // Create and add the asteroid
-    asteroids.push(new Asteroid(size, x, y));
+    const newAsteroid = new Asteroid(size, x, y);
+    asteroids.push(newAsteroid);
+    console.log(`Asteroids array length: ${asteroids.length}`);
 }
 
 // Simple Circular Collision Check (Approximation)
@@ -957,10 +967,8 @@ function updateAsteroids() {
     for (let i = asteroids.length - 1; i >= 0; i--) {
         const asteroid = asteroids[i];
         
-        // Move asteroid
-        asteroid.x += Math.cos(asteroid.angle) * asteroid.speed;
-        asteroid.y += Math.sin(asteroid.angle) * asteroid.speed;
-        asteroid.rotation += asteroid.rotationSpeed;
+        // Call the asteroid's own update method for movement
+        asteroid.update();
 
         // Check if asteroid is completely outside the game field
         const isOutside = (
@@ -971,7 +979,8 @@ function updateAsteroids() {
         );
 
         if (isOutside) {
-            // Remove asteroid if it's completely outside the game field
+            // Log before removing
+            console.log(`Removing asteroid at (${asteroid.x.toFixed(1)}, ${asteroid.y.toFixed(1)}) because it's outside game field.`);
             asteroids.splice(i, 1);
             continue;
         }
@@ -982,7 +991,8 @@ function updateAsteroids() {
             const dy = player.y - asteroid.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < asteroid.radius + PLAYER_SIZE / 2) {
+            // Use asteroid.radius and player.size for collision check
+            if (distance < asteroid.radius + player.size / 2) { 
                 handlePlayerCollision();
             }
         }
@@ -994,13 +1004,15 @@ function updateAsteroids() {
             const dy = bullet.y - asteroid.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < asteroid.radius) {
+            // Use asteroid.radius and bullet.radius for collision check
+            if (distance < asteroid.radius + bullet.radius) { 
                 // Remove bullet
                 bullets.splice(j, 1);
                 
-                // Handle asteroid destruction
+                // Handle asteroid destruction (which might remove the asteroid)
                 handleAsteroidDestruction(asteroid, i);
-                break;
+                // Important: break after destruction as the asteroid at index 'i' is gone
+                break; 
             }
         }
     }
