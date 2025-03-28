@@ -97,6 +97,8 @@ let player = {
 let bullets = [];
 let asteroids = [];
 let score = 0;
+let lives = 3; // Initialize directly
+let level = 1; // Initialize directly
 let gameRunning = true;
 let lastAsteroidSpawn = 0;
 let isHelpScreenVisible = false; // Added for help screen state
@@ -839,10 +841,6 @@ window.addEventListener('resize', () => {
     // player.x = canvas.width / 2;
     // player.y = canvas.height / 2;
 });
-
-// Ensure lives and level vars are declared if not already
-if (typeof lives === 'undefined') { let lives = 3; }
-if (typeof level === 'undefined') { let level = 1; }
 
 // Initialize game state variables
 initGame();
