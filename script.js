@@ -12,23 +12,27 @@ canvas.height = window.innerHeight;
 
 // --- Game Constants ---
 const TWO_PI = Math.PI * 2;
+const FRICTION = 0.98;
 
 // Player
-const PLAYER_SIZE = 15; // Slightly smaller for faster gameplay feel
-const PLAYER_ROTATION_SPEED = 0.07; // Faster rotation
-const PLAYER_ACCELERATION = 0.18; // Increased base acceleration
+const PLAYER_SIZE = 15;
+const PLAYER_ROTATION_SPEED = 0.07;
+// Increased base speed for Easy mode
+const PLAYER_ACCELERATION = 0.18; 
 const PLAYER_FRICTION = 0.98;
 const INVINCIBILITY_TIME = 3000; // milliseconds
 
 // Bullets
 const BULLET_RADIUS = 2;
-const BULLET_SPEED = 8; // Faster bullets
+const BULLET_SPEED = 8; // Increased from original
 const BULLET_LIFESPAN = 50; // frames
-const SHOOT_COOLDOWN = 120; // Reduced cooldown for faster shooting
+// Reduced cooldown for faster shooting
+const SHOOT_COOLDOWN = 120; // milliseconds
 
 // Asteroids
-const ASTEROID_MIN_SPEED = 0.6; // Faster base asteroid speed
-const ASTEROID_SPEED_VARIATION = 1.6; // More speed variation
+// Increased base speeds for asteroids
+const ASTEROID_MIN_SPEED = 0.6;
+const ASTEROID_SPEED_VARIATION = 1.6;
 
 // Leaderboard
 const LEADERBOARD_MAX_ENTRIES = 10;
@@ -46,7 +50,7 @@ const difficultySettings = {
     medium: {
         // Medium is 1.5x faster than Easy
         playerAcceleration: PLAYER_ACCELERATION * 1.5,
-        shootCooldown: Math.floor(SHOOT_COOLDOWN * 0.7), // Lower cooldown = faster shooting
+        shootCooldown: SHOOT_COOLDOWN * 0.8, // Lower cooldown = faster shooting
         asteroidMinSpeed: ASTEROID_MIN_SPEED * 1.5,
         asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 1.2,
         initialAsteroidCountBase: 3,
@@ -55,7 +59,7 @@ const difficultySettings = {
     difficult: {
         // Difficult is 2x faster than Easy
         playerAcceleration: PLAYER_ACCELERATION * 2.0,
-        shootCooldown: Math.floor(SHOOT_COOLDOWN * 0.5), // Half the cooldown = twice as fast shooting
+        shootCooldown: SHOOT_COOLDOWN * 0.5, // Half the cooldown = twice as fast shooting
         asteroidMinSpeed: ASTEROID_MIN_SPEED * 2.0,
         asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 1.5,
         initialAsteroidCountBase: 4,
@@ -733,39 +737,39 @@ function drawStartScreen() {
     ctx.textAlign = 'center';
 
     const centerX = canvas.width / 2;
-    
-    // ------------------------------------
-    // SECTION 1: BIG TITLE
-    // ------------------------------------
-    const titleY = canvas.height * 0.15; // 15% from top
-    
-    // Title
-    ctx.font = '84px Arial'; // Even bigger font for more impact
-    ctx.textBaseline = 'middle';
-    ctx.fillText('DINOSTROIDS', centerX, titleY);
-    
-    // ------------------------------------
-    // SECTION 2: LEADERBOARD
-    // ------------------------------------
-    const leaderboardTitleY = titleY + 100; // Space after the title
+    const topMargin = 60;
+    const titleY = topMargin;
+    const startPromptY = titleY + 60;
+    const helpY = startPromptY + 40;
+    const leaderboardTitleY = helpY + 60;
     const leaderboardStartY = leaderboardTitleY + 40;
-    const lineHeight = 25; // Line height for leaderboard entries
-    
-    // Leaderboard header
-    ctx.font = '32px Arial';
-    ctx.fillText('TOP SCORES', centerX, leaderboardTitleY);
-    
-    // Leaderboard content
-    ctx.font = '16px Arial';
+    const lineHeight = 25; // Smaller line height for leaderboard entries
+
+    // Title
+    ctx.font = '48px Arial';
     ctx.textBaseline = 'top';
-    let leaderboardEndY = leaderboardStartY;
-    
+    ctx.fillText('Dinostroids', centerX, titleY); // Renamed
+
+    // Start prompt - CHANGED
+    ctx.font = '26px Arial'; // Slightly smaller for difficulty
+    ctx.fillText('Select Difficulty:', centerX, startPromptY);
+    ctx.font = '22px Arial';
+    ctx.fillText('E)asy   M)edium   D)ifficult', centerX, startPromptY + 40);
+
+    // Help hint
+    ctx.font = '20px Arial';
+    ctx.fillText('? for Help', centerX, helpY + 20); // Adjusted Y
+
+    // --- Leaderboard Display --- //
+    ctx.font = '24px Arial';
+    ctx.fillText('Top Scores', centerX, leaderboardTitleY + 20); // Adjusted Y
+
+    ctx.font = '16px Arial';
+    ctx.textBaseline = 'top'; // Align leaderboard text from the top
     if (isFetchingLeaderboard) {
         ctx.fillText('Loading...', centerX, leaderboardStartY);
-        leaderboardEndY += lineHeight;
     } else if (leaderboardError) {
         ctx.fillText(`Error loading scores: ${leaderboardError}`, centerX, leaderboardStartY);
-        leaderboardEndY += lineHeight;
     } else if (leaderboardData && leaderboardData.length > 0) {
         // Calculate layout for centered leaderboard
         const rankX = centerX - 180;
@@ -780,14 +784,14 @@ function drawStartScreen() {
         ctx.fillText('Initials', initialsX, headerY);
         ctx.textAlign = 'right';
         ctx.fillText('Score', scoreX + 40, headerY);
-        ctx.textAlign = 'left';
+        ctx.textAlign = 'left'; // Reset for date
         ctx.fillText('Date', dateX, headerY);
 
         // Draw entries
         ctx.font = '14px Arial';
         leaderboardData.forEach((entry, index) => {
-            if (index >= LEADERBOARD_MAX_ENTRIES) return;
-            const yPos = headerY + lineHeight * (index + 1.5);
+            if (index >= LEADERBOARD_MAX_ENTRIES) return; // Should be handled by API, but safe check
+            const yPos = headerY + lineHeight * (index + 1.5); // Start 1.5 lines below header
             ctx.textAlign = 'left';
             ctx.fillText(`${index + 1}.`, rankX, yPos);
             ctx.fillText(entry.initials, initialsX, yPos);
@@ -803,33 +807,16 @@ function drawStartScreen() {
             } catch (e) {
                 ctx.fillText('Invalid Date', dateX, yPos);
             }
-            leaderboardEndY = yPos + lineHeight;
         });
     } else {
         ctx.fillText('No scores yet! Be the first!', centerX, leaderboardStartY);
-        leaderboardEndY += lineHeight;
     }
-    
-    // ------------------------------------
-    // SECTION 3: GAME INSTRUCTIONS
-    // ------------------------------------
-    const instructionsY = leaderboardEndY + 60;
-    
+
+    // Copyright
+    ctx.font = '14px Arial';
     ctx.textAlign = 'center';
-    ctx.font = '28px Arial';
-    ctx.fillText('Start Game:', centerX, instructionsY);
-    
-    ctx.font = '24px Arial';
-    ctx.fillText('E)asy   M)edium   D)ifficult', centerX, instructionsY + 40);
-    
-    // Help text near bottom
-    ctx.font = '20px Arial';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText('? for Help', centerX, canvas.height - 50);
-    
-    // Copyright at very bottom
-    ctx.font = '16px Arial';
-    ctx.fillText('(c) Brad Feld, 2025', centerX, canvas.height - 20);
+    ctx.textBaseline = 'bottom'; // Align copyright to bottom
+    ctx.fillText('(c) Dinostroids, 2025', centerX, canvas.height - 20); // Renamed
 }
 
 // --- Set Difficulty Function ---

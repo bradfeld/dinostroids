@@ -2,7 +2,7 @@
 
 A classic arcade-style shooter game built with HTML Canvas and pure JavaScript. Pilot your spaceship, dodge and destroy waves of incoming dinosaur-shaped asteroids!
 
-Written entirely by vibe coding using Cursor and gemini-2.5.-pro-exp-03-25 with assists from claude-3.7-sonnet
+Written entirely by vibe coding using Cursor and gemini-2.5.-pro-exp-03-25 with assists from claude-3.7-sonnet and claude-3.5-sonnet. Well, not entirely.
 
 ## Gameplay
 
