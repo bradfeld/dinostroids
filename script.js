@@ -194,18 +194,19 @@ let isFetchingLeaderboard = false; // Flag for loading state
 // --- Classes ---
 
 class Asteroid {
-    constructor(size, x, y) {
-        this.size = size;
+    constructor(sizeType, x, y) {
+        this.sizeType = sizeType; // Store the string size type ('large', 'medium', 'small')
         this.x = x;
         this.y = y;
-        this.radius = asteroidSizes[size];
-        this.speed = Math.random() * (asteroidSpeeds[currentDifficulty][size].max - asteroidSpeeds[currentDifficulty][size].min) + asteroidSpeeds[currentDifficulty][size].min;
+        this.radius = asteroidSizes[this.sizeType]; // Use sizeType to get radius
+        this.size = this.radius; // Add numeric size for wrapAround/collision
+        this.speed = Math.random() * (asteroidSpeeds[currentDifficulty][this.sizeType].max - asteroidSpeeds[currentDifficulty][this.sizeType].min) + asteroidSpeeds[currentDifficulty][this.sizeType].min;
         this.angle = Math.random() * TWO_PI;
         this.rotation = Math.random() * TWO_PI;
         this.rotationSpeed = (Math.random() - 0.5) * 0.05;
 
         // Assign shape based on size
-        switch (size) {
+        switch (this.sizeType) { // Use sizeType
             case 'large':
                 this.vertices = DINO_SHAPES[1]; // T-Rex
                 break;
@@ -227,7 +228,7 @@ class Asteroid {
             this.x - this.radius > canvas.width ||
             this.y + this.radius < 0 ||
             this.y - this.radius > canvas.height) {
-            console.log('Asteroid outside canvas draw boundaries, skipping draw.');
+            // console.log('Asteroid outside canvas draw boundaries, skipping draw.'); // Commented out for less noise
             return;
         }
 
@@ -336,14 +337,16 @@ document.addEventListener('keyup', (event) => { keys[event.key] = false; });
 
 // --- Helper Functions ---
 function wrapAround(object) {
-  if (object.x < -object.size) object.x = canvas.width + object.size;
-  if (object.x > canvas.width + object.size) object.x = -object.size;
-  if (object.y < -object.size) object.y = canvas.height + object.size;
-  if (object.y > canvas.height + object.size) object.y = -object.size;
+  // Use object.radius if it exists (for Asteroids), otherwise use object.size (for Player)
+  const size = typeof object.radius !== 'undefined' ? object.radius : object.size;
+  if (object.x < -size) object.x = canvas.width + size;
+  if (object.x > canvas.width + size) object.x = -size;
+  if (object.y < -size) object.y = canvas.height + size;
+  if (object.y > canvas.height + size) object.y = -size;
 }
 
-function spawnAsteroid(size = 'large', x = null, y = null) {
-    const spawnRadius = asteroidSizes[size];
+function spawnAsteroid(sizeType = 'large', x = null, y = null) { // Renamed parameter
+    const spawnRadius = asteroidSizes[sizeType];
     const minSpawnDistFromPlayer = player.size + spawnRadius + 100; // Safe distance from player
 
     // If position is not specified (initial level spawn), find a random safe spot INSIDE the canvas
@@ -363,15 +366,15 @@ function spawnAsteroid(size = 'large', x = null, y = null) {
         }
 
         // Log before creating
-        console.log(`Spawning ${size} asteroid randomly inside canvas at (${x.toFixed(1)}, ${y.toFixed(1)})`);
+        console.log(`Spawning ${sizeType} asteroid randomly inside canvas at (${x.toFixed(1)}, ${y.toFixed(1)})`);
     
     } else {
         // If position IS specified (e.g., when an asteroid splits), use those coordinates directly
-        console.log(`Spawning split ${size} asteroid at provided location (${x.toFixed(1)}, ${y.toFixed(1)})`);
+        console.log(`Spawning split ${sizeType} asteroid at provided location (${x.toFixed(1)}, ${y.toFixed(1)})`);
     }
 
     // Create and add the asteroid
-    const newAsteroid = new Asteroid(size, x, y);
+    const newAsteroid = new Asteroid(sizeType, x, y); // Pass sizeType
     asteroids.push(newAsteroid);
     console.log(`Asteroids array length: ${asteroids.length}`);
 }
@@ -381,8 +384,10 @@ function checkCollision(obj1, obj2) {
     const dx = obj1.x - obj2.x;
     const dy = obj1.y - obj2.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    // Use 'size' property which approximates radius for both player and asteroids
-    return distance < obj1.size + obj2.size;
+    // Use .radius if available, otherwise .size
+    const size1 = typeof obj1.radius !== 'undefined' ? obj1.radius : obj1.size;
+    const size2 = typeof obj2.radius !== 'undefined' ? obj2.radius : obj2.size;
+    return distance < size1 + size2;
 }
 
 // --- Game Over Logic with Leaderboard Check ---
@@ -931,22 +936,18 @@ function updateAsteroids() {
 
         // Check collision with player first
         if (gameRunning && !player.isInvulnerable) {
-            const dx = player.x - asteroid.x;
-            const dy = player.y - asteroid.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < asteroid.radius + player.size / 2) {
+            // Use the checkCollision function for consistency
+            if (checkCollision(player, asteroid)) {
                 handlePlayerCollision();
+                // No 'continue' here, player collision doesn't destroy the asteroid immediately
             }
         }
 
         // Check collision with bullets
         for (let j = bullets.length - 1; j >= 0; j--) {
             const bullet = bullets[j];
-            const dxBullet = bullet.x - asteroid.x;
-            const dyBullet = bullet.y - asteroid.y;
-            const distanceBullet = Math.sqrt(dxBullet * dxBullet + dyBullet * dyBullet);
-            
-            if (distanceBullet < asteroid.radius + bullet.radius) {
+            // Use the checkCollision function
+            if (checkCollision(bullet, asteroid)) {
                 bullets.splice(j, 1); // Remove bullet
                 handleAsteroidDestruction(asteroid, i); // Handle destruction (might splice asteroid)
                 destroyed = true; // Mark as destroyed
@@ -971,8 +972,8 @@ function handleAsteroidDestruction(asteroid, index) {
     // Remove the hit asteroid
     asteroids.splice(index, 1);
     
-    // Update score based on asteroid size
-    switch(asteroid.size) {
+    // Update score based on asteroid size type
+    switch(asteroid.sizeType) { // Use sizeType
         case 'large':
             score += 20;
             // Spawn medium asteroids
