@@ -724,33 +724,29 @@ function drawStartScreen() {
     ctx.textAlign = 'center';
 
     const centerX = canvas.width / 2;
-    const topMargin = 60;
-    const titleY = topMargin;
-    const startPromptY = titleY + 60;
-    const helpY = startPromptY + 40;
-    const leaderboardTitleY = helpY + 60;
-    const leaderboardStartY = leaderboardTitleY + 40;
-    const lineHeight = 25; // Smaller line height for leaderboard entries
-
+    
+    // ------------------------------------
+    // SECTION 1: BIG TITLE
+    // ------------------------------------
+    const titleY = 100; // More space at the top for a prominent title
+    
     // Title
-    ctx.font = '48px Arial';
+    ctx.font = '72px Arial'; // Bigger font for more impact
     ctx.textBaseline = 'top';
-    ctx.fillText('Dinostroids', centerX, titleY); // Renamed
-
-    // Start prompt - CHANGED
-    ctx.font = '26px Arial'; // Slightly smaller for difficulty
-    ctx.fillText('Select Difficulty:', centerX, startPromptY);
-    ctx.font = '22px Arial';
-    ctx.fillText('E)asy   M)edium   D)ifficult', centerX, startPromptY + 40);
-
-    // Help hint
-    ctx.font = '20px Arial';
-    ctx.fillText('? for Help', centerX, helpY + 20); // Adjusted Y
-
-    // --- Leaderboard Display --- //
-    ctx.font = '24px Arial';
-    ctx.fillText('Top Scores', centerX, leaderboardTitleY + 20); // Adjusted Y
-
+    ctx.fillText('DINOSTROIDS', centerX, titleY);
+    
+    // ------------------------------------
+    // SECTION 2: LEADERBOARD
+    // ------------------------------------
+    const leaderboardTitleY = titleY + 120; // Space after the title
+    const leaderboardStartY = leaderboardTitleY + 40;
+    const lineHeight = 25; // Line height for leaderboard entries
+    
+    // Leaderboard header
+    ctx.font = '28px Arial';
+    ctx.fillText('TOP SCORES', centerX, leaderboardTitleY);
+    
+    // Leaderboard content
     ctx.font = '16px Arial';
     ctx.textBaseline = 'top'; // Align leaderboard text from the top
     if (isFetchingLeaderboard) {
@@ -798,12 +794,25 @@ function drawStartScreen() {
     } else {
         ctx.fillText('No scores yet! Be the first!', centerX, leaderboardStartY);
     }
-
-    // Copyright
-    ctx.font = '14px Arial';
+    
+    // ------------------------------------
+    // SECTION 3: GAME INSTRUCTIONS
+    // ------------------------------------
+    // Calculate position based on how much of the leaderboard is filled
+    const entriesCount = leaderboardData ? Math.min(leaderboardData.length, LEADERBOARD_MAX_ENTRIES) : 0;
+    const instructionsY = leaderboardStartY + lineHeight * (entriesCount + 3) + 40; // Add extra spacing
+    
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom'; // Align copyright to bottom
-    ctx.fillText('(c) Dinostroids, 2025', centerX, canvas.height - 20); // Renamed
+    ctx.font = '24px Arial';
+    ctx.fillText('Start Game:', centerX, instructionsY);
+    
+    ctx.font = '22px Arial';
+    ctx.fillText('E)asy   M)edium   D)ifficult', centerX, instructionsY + 40);
+    
+    // "? for Help" at the very bottom
+    ctx.font = '18px Arial';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('? for Help', centerX, canvas.height - 20);
 }
 
 // --- Set Difficulty Function ---
