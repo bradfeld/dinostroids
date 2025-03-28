@@ -4,6 +4,8 @@ A classic arcade-style shooter game built with HTML Canvas and pure JavaScript. 
 
 Written entirely by vibe coding using Cursor and gemini-2.5.-pro-exp-03-25 with assists from claude-3.7-sonnet and claude-3.5-sonnet. Well, not entirely.
 
+Inspiration and emotional support from Quinn McIntyre.
+
 ## Gameplay
 
 *   **Objective:** Survive as long as possible by shooting asteroids and avoiding collisions.

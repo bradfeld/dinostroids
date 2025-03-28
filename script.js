@@ -63,12 +63,14 @@ const asteroidSpeeds = {
 const LEADERBOARD_MAX_ENTRIES = 10;
 
 // Add field size variables after the game constants
+/* // Remove gameField object
 let gameField = {
     width: window.innerWidth,
-    height: window.innerHeight,
+    height: window.innerHeight, // Added missing height initialization
     offsetX: 0,
     offsetY: 0
 };
+*/
 
 // Update difficulty settings to include field size
 const difficultySettings = {
@@ -79,7 +81,7 @@ const difficultySettings = {
         asteroidSpeedVariation: ASTEROID_SPEED_VARIATION,
         initialAsteroidCountBase: 2,
         lives: 5,
-        fieldSizePercent: 100 // Full screen
+        // fieldSizePercent: 100 // Full screen - REMOVED
     },
     medium: {
         playerAcceleration: PLAYER_ACCELERATION * 1.5,
@@ -88,7 +90,7 @@ const difficultySettings = {
         asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 1.2,
         initialAsteroidCountBase: 3,
         lives: 3,
-        fieldSizePercent: 67 // 67% of screen size
+        // fieldSizePercent: 67 // 67% of screen size - REMOVED
     },
     difficult: {
         playerAcceleration: PLAYER_ACCELERATION * 2.0,
@@ -97,7 +99,7 @@ const difficultySettings = {
         asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 1.5,
         initialAsteroidCountBase: 4,
         lives: 2,
-        fieldSizePercent: 50 // 50% of screen size
+        // fieldSizePercent: 50 // 50% of screen size - REMOVED
     }
 };
 
@@ -221,12 +223,12 @@ class Asteroid {
         // Log asteroid position before drawing
         console.log(`Drawing asteroid at (${this.x.toFixed(1)}, ${this.y.toFixed(1)}) with radius ${this.radius}`);
 
-        // Don't draw if outside game field
-        if (this.x + this.radius < gameField.offsetX ||
-            this.x - this.radius > gameField.offsetX + gameField.width ||
-            this.y + this.radius < gameField.offsetY ||
-            this.y - this.radius > gameField.offsetY + gameField.height) {
-            console.log('Asteroid outside draw boundaries, skipping draw.');
+        // Don't draw if outside canvas boundaries
+        if (this.x + this.radius < 0 ||
+            this.x - this.radius > canvas.width ||
+            this.y + this.radius < 0 ||
+            this.y - this.radius > canvas.height) {
+            console.log('Asteroid outside canvas draw boundaries, skipping draw.');
             return;
         }
 
@@ -270,9 +272,9 @@ class Bullet {
     }
 
     draw() {
-        // Don't draw if outside game field
-        if (this.x < gameField.offsetX || this.x > gameField.offsetX + gameField.width ||
-            this.y < gameField.offsetY || this.y > gameField.offsetY + gameField.height) {
+        // Don't draw if outside canvas boundaries
+        if (this.x < -this.radius || this.x > canvas.width + this.radius ||
+            this.y < -this.radius || this.y > canvas.height + this.radius) {
             return;
         }
         
@@ -290,12 +292,12 @@ class Bullet {
         // Decrease lifespan
         this.lifespan--;
         
-        // Return true if bullet should be kept, false if it should be removed
+        // Return true if bullet should be kept (within canvas bounds)
         return this.lifespan > 0 &&
-               this.x >= gameField.offsetX - this.radius &&
-               this.x <= gameField.offsetX + gameField.width + this.radius &&
-               this.y >= gameField.offsetY - this.radius &&
-               this.y <= gameField.offsetY + gameField.height + this.radius;
+               this.x >= -this.radius &&
+               this.x <= canvas.width + this.radius &&
+               this.y >= -this.radius &&
+               this.y <= canvas.height + this.radius;
     }
 }
 
@@ -345,14 +347,15 @@ function spawnAsteroid(size = 'large', x = null, y = null) {
     const spawnRadius = asteroidSizes[size];
     const minSpawnDistFromPlayer = player.size + spawnRadius + 100; // Safe distance from player
 
-    // If position is not specified (initial level spawn), find a random safe spot INSIDE the field
+    // If position is not specified (initial level spawn), find a random safe spot INSIDE the canvas
     if (x === null || y === null) {
         let attempts = 0;
         do {
-            x = gameField.offsetX + spawnRadius + Math.random() * (gameField.width - 2 * spawnRadius);
-            y = gameField.offsetY + spawnRadius + Math.random() * (gameField.height - 2 * spawnRadius);
+            // Spawn within canvas, accounting for radius
+            x = spawnRadius + Math.random() * (canvas.width - 2 * spawnRadius);
+            y = spawnRadius + Math.random() * (canvas.height - 2 * spawnRadius);
             attempts++;
-            // Ensure not too close to player, retry if needed (limit attempts to prevent infinite loop)
+            // Ensure not too close to player
         } while (attempts < 50 && 
                  Math.sqrt(Math.pow(x - player.x, 2) + Math.pow(y - player.y, 2)) < minSpawnDistFromPlayer);
         
@@ -361,11 +364,10 @@ function spawnAsteroid(size = 'large', x = null, y = null) {
         }
 
         // Log before creating
-        console.log(`Spawning ${size} asteroid randomly inside field at (${x.toFixed(1)}, ${y.toFixed(1)})`);
+        console.log(`Spawning ${size} asteroid randomly inside canvas at (${x.toFixed(1)}, ${y.toFixed(1)})`);
     
     } else {
         // If position IS specified (e.g., when an asteroid splits), use those coordinates directly
-        // No need to log here as it's not the initial random spawn
         console.log(`Spawning split ${size} asteroid at provided location (${x.toFixed(1)}, ${y.toFixed(1)})`);
     }
 
@@ -532,13 +534,6 @@ function updateGame(currentTime) {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw game field boundary if not in easy mode
-    if (currentDifficulty !== 'easy') {
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(gameField.offsetX, gameField.offsetY, gameField.width, gameField.height);
-    }
-
     // --- Input ---
     if (keys['ArrowLeft']) {
         player.angle -= player.rotationSpeed;
@@ -567,32 +562,14 @@ function updateGame(currentTime) {
     }
 
     // --- Update Positions ---
-    // Player movement with boundary constraints
-    const newX = player.x + Math.cos(player.angle) * player.speed;
-    const newY = player.y + Math.sin(player.angle) * player.speed;
+    // Player movement with wrap-around instead of boundary constraints
+    player.x += Math.cos(player.angle) * player.speed;
+    player.y += Math.sin(player.angle) * player.speed;
+    wrapAround(player); // Use wrapAround for player movement
 
-    // Constrain player to game field
-    player.x = Math.max(gameField.offsetX + player.size,
-                Math.min(gameField.offsetX + gameField.width - player.size, newX));
-    player.y = Math.max(gameField.offsetY + player.size,
-                Math.min(gameField.offsetY + gameField.height - player.size, newY));
-
-    // If player hits boundary, reduce speed
-    if (player.x === gameField.offsetX + player.size || 
-        player.x === gameField.offsetX + gameField.width - player.size ||
-        player.y === gameField.offsetY + player.size || 
-        player.y === gameField.offsetY + gameField.height - player.size) {
-        player.speed *= 0.5;
-    }
-
-    // Update bullets and check boundaries
+    // Update bullets and check canvas boundaries
     for (let i = bullets.length - 1; i >= 0; i--) {
-        bullets[i].update();
-        // Remove bullets that are outside game field
-        if (bullets[i].x < gameField.offsetX || 
-            bullets[i].x > gameField.offsetX + gameField.width ||
-            bullets[i].y < gameField.offsetY || 
-            bullets[i].y > gameField.offsetY + gameField.height) {
+        if (!bullets[i].update()) { // update() now returns false if outside bounds or lifespan ended
             bullets.splice(i, 1);
         }
     }
@@ -852,13 +829,6 @@ function setDifficulty(difficulty) {
     currentInitialAsteroidCountBase = settings.initialAsteroidCountBase;
     currentMaxLives = settings.lives;
 
-    // Set field size
-    const percent = settings.fieldSizePercent / 100;
-    gameField.width = Math.floor(canvas.width * percent);
-    gameField.height = Math.floor(canvas.height * percent);
-    gameField.offsetX = Math.floor((canvas.width - gameField.width) / 2);
-    gameField.offsetY = Math.floor((canvas.height - gameField.height) / 2);
-
     // Apply initial lives
     lives = currentMaxLives;
     console.log(`Difficulty set to: ${difficulty}`);
@@ -873,9 +843,9 @@ function startGame() {
     score = 0;
     level = 1;
 
-    // Reset player to center of game field
-    player.x = gameField.offsetX + gameField.width / 2;
-    player.y = gameField.offsetY + gameField.height / 2;
+    // Reset player to center of canvas
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
     player.speed = 0;
     player.angle = -Math.PI / 2;
 
@@ -894,15 +864,9 @@ function initGame() {
     isGameStarted = false;
     isHelpScreenVisible = false;
 
-    // Initialize game field to full screen (will be updated when difficulty is selected)
-    gameField.width = canvas.width;
-    gameField.height = canvas.height;
-    gameField.offsetX = 0;
-    gameField.offsetY = 0;
-
-    // Reset player to center of screen
-    player.x = gameField.offsetX + gameField.width / 2;
-    player.y = gameField.offsetY + gameField.height / 2;
+    // Reset player to center of canvas
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
     player.speed = 0;
     player.angle = -Math.PI / 2;
     
@@ -939,21 +903,18 @@ window.addEventListener('resize', () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     
-    // Recalculate game field size if in a game
-    if (currentDifficulty) {
-        const percent = difficultySettings[currentDifficulty].fieldSizePercent / 100;
-        gameField.width = Math.floor(canvas.width * percent);
-        gameField.height = Math.floor(canvas.height * percent);
-        gameField.offsetX = Math.floor((canvas.width - gameField.width) / 2);
-        gameField.offsetY = Math.floor((canvas.height - gameField.height) / 2);
-    }
-
-    // Keep player within bounds
+    // Re-center player roughly on resize, or use wrapAround logic
     if (player) {
-        player.x = Math.max(gameField.offsetX + player.size,
-                  Math.min(gameField.offsetX + gameField.width - player.size, player.x));
-        player.y = Math.max(gameField.offsetY + player.size,
-                  Math.min(gameField.offsetY + gameField.height - player.size, player.y));
+         // Option 1: Re-center (might feel abrupt)
+         // player.x = canvas.width / 2;
+         // player.y = canvas.height / 2;
+
+         // Option 2: Ensure player stays within new bounds using wrapAround idea
+         // This requires modifying wrapAround or ensuring it's called after resize
+         // For simplicity, let's just ensure player is not completely lost.
+         // The wrapAround in updateGame should handle it mostly.
+         if (player.x > canvas.width + player.size) player.x = canvas.width / 2; // Basic reset if way off
+         if (player.y > canvas.height + player.size) player.y = canvas.height / 2;
     }
 });
 
@@ -975,8 +936,6 @@ function updateAsteroids() {
             const distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < asteroid.radius + player.size / 2) {
                 handlePlayerCollision();
-                // Note: Player collision doesn't destroy the asteroid in this version, 
-                // but could potentially stun or push it.
             }
         }
 
@@ -1003,19 +962,8 @@ function updateAsteroids() {
         // If not destroyed, THEN update its position
         asteroid.update();
 
-        // NOW, check if it moved completely outside the game field
-        const isOutside = (
-            asteroid.x + asteroid.radius < gameField.offsetX ||
-            asteroid.x - asteroid.radius > gameField.offsetX + gameField.width ||
-            asteroid.y + asteroid.radius < gameField.offsetY ||
-            asteroid.y - asteroid.radius > gameField.offsetY + gameField.height
-        );
-
-        if (isOutside) {
-            console.log(`Removing asteroid at (${asteroid.x.toFixed(1)}, ${asteroid.y.toFixed(1)}) because it moved outside game field.`);
-            asteroids.splice(i, 1);
-            // continue; // Already at end of loop iteration
-        }
+        // Use wrapAround for asteroids
+        wrapAround(asteroid); 
     }
 }
 
@@ -1061,9 +1009,9 @@ function handlePlayerCollision() {
         return;
     }
 
-    // Reset player position to center of game field
-    player.x = gameField.offsetX + gameField.width / 2;
-    player.y = gameField.offsetY + gameField.height / 2;
+    // Reset player position to center of canvas
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
     player.speed = 0;
     player.angle = -Math.PI / 2;
 
