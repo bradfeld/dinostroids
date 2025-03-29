@@ -74,28 +74,28 @@ let gameField = {
 // Update difficulty settings to include field size
 const difficultySettings = {
     easy: {
-        playerAcceleration: PLAYER_ACCELERATION,
+        playerAcceleration: PLAYER_ACCELERATION * 0.67,
         shootCooldown: SHOOT_COOLDOWN,
-        asteroidMinSpeed: ASTEROID_MIN_SPEED,
-        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION,
+        asteroidMinSpeed: ASTEROID_MIN_SPEED * 0.67,
+        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 0.67,
         initialAsteroidCountBase: 2,
         lives: 5,
         // fieldSizePercent: 100 // Full screen - REMOVED
     },
     medium: {
-        playerAcceleration: PLAYER_ACCELERATION * 1.5,
+        playerAcceleration: PLAYER_ACCELERATION * 1.0,
         shootCooldown: Math.floor(SHOOT_COOLDOWN * 0.7),
-        asteroidMinSpeed: ASTEROID_MIN_SPEED * 1.5,
-        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 1.2,
+        asteroidMinSpeed: ASTEROID_MIN_SPEED * 1.0,
+        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 0.8,
         initialAsteroidCountBase: 3,
         lives: 3,
         // fieldSizePercent: 67 // 67% of screen size - REMOVED
     },
     difficult: {
-        playerAcceleration: PLAYER_ACCELERATION * 2.0,
+        playerAcceleration: PLAYER_ACCELERATION * 1.33,
         shootCooldown: Math.floor(SHOOT_COOLDOWN * 0.5),
-        asteroidMinSpeed: ASTEROID_MIN_SPEED * 2.0,
-        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 1.5,
+        asteroidMinSpeed: ASTEROID_MIN_SPEED * 1.33,
+        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 1.0,
         initialAsteroidCountBase: 4,
         lives: 2,
         // fieldSizePercent: 50 // 50% of screen size - REMOVED
