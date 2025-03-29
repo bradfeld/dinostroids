@@ -956,25 +956,36 @@ function initGame() {
 
     // Set canvas dimensions
     resizeCanvas();
-    // Add resize listener
+
+    // Setup resize listener
+    // Use a basic resize handling for now
     window.addEventListener('resize', resizeCanvas);
-    
-    // Preload images and then start showing the menu/starting the game
+
+    // Reset game state variables
+    isGameStarted = false;
+    isHelpScreenVisible = false;
+    // gameRunning = false; // Should be false by default or handled by start screen
+    score = 0;
+    level = 1;
+    lives = 3; // Default lives, will be set by difficulty
+    asteroids = [];
+    bullets = [];
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+    player.speed = 0;
+    player.angle = -Math.PI / 2;
+    player.canShoot = true;
+    player.isInvulnerable = false;
+
+    // Preload images and then show the start screen
     preloadImages(() => {
-        console.log("Image preloading complete, proceeding with game setup.");
-        // Reset game state for a fresh start if needed (optional here, might be better in startGame)
-        // score = 0;
-        // lives = 3;
-        // level = 1;
-        // player = { ... }; // Reset player if necessary
-        // asteroids = [];
-        // bullets = [];
-        
+        console.log("Image loading complete, showing start screen.");
         // Now that images are loaded (or failed), show the start screen
-        showStartScreen(); 
-        // Don't automatically start the game loop here, wait for player input
-        // requestAnimationFrame(updateGame); 
+        showStartScreen(); // Directly draw the start screen once images are processed
     });
+
+    // Ensure the animation loop starts/continues after init
+    requestAnimationFrame(updateGame); 
 }
 
 // Function to display the start screen and wait for difficulty selection
