@@ -941,6 +941,10 @@ function resizeCanvas() {
 
 function initGame() {
     console.log("Initializing game...");
+
+    // Fetch leaderboard data right away
+    fetchLeaderboard();
+
     // Set canvas dimensions
     resizeCanvas();
     // Add resize listener
