@@ -347,6 +347,14 @@ document.addEventListener('keydown', (event) => {
 });
 document.addEventListener('keyup', (event) => { keys[event.key] = false; });
 
+// New listener for specific key actions like Esc
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && isGameStarted) {
+        returnToMainMenu();
+    }
+    // Can add other single-press key actions here if needed (e.g., pause)
+});
+
 // --- Helper Functions ---
 function wrapAround(object) {
   // Use object.radius if it exists (for Asteroids), otherwise use object.size (for Player)
@@ -526,6 +534,32 @@ async function submitScore(initials, score) {
         console.error("Error submitting score:", error);
         throw error; // Re-throw to be caught in gameOver
     }
+}
+
+// Function to reset game state and return to the main menu
+function returnToMainMenu() {
+    console.log("Returning to main menu via Esc key...");
+    isGameStarted = false; // This signals updateGame to show the start screen
+    gameRunning = false;   // Stop any potential game-related timeouts/intervals if needed
+
+    // Clear dynamic game elements
+    asteroids = [];
+    bullets = [];
+
+    // Optional: Reset player position/state for a clean menu start
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+    player.speed = 0;
+    player.angle = -Math.PI / 2; // Point up
+    player.canShoot = true; // Reset shooting state
+
+    // Reset game statistics
+    score = 0;
+    level = 1;
+    // Lives are reset upon selecting a new difficulty
+
+    // No need to call showStartScreen() directly,
+    // updateGame loop will handle drawing it because isGameStarted is false.
 }
 
 // --- Update and Draw (Modified for Async Drawing) ---
