@@ -13,10 +13,10 @@ canvas.height = window.innerHeight;
 // --- Game Constants ---
 const TWO_PI = Math.PI * 2;
 const FRICTION = 0.98;
+const ROTATION_INCREMENT = Math.PI / 18; // 10 degrees in radians
 
 // Player
 const PLAYER_SIZE = 20;
-const PLAYER_ROTATION_SPEED = 0.07 * 3; // ~0.21
 const PLAYER_ACCELERATION = 0.1;
 const PLAYER_FRICTION = 0.98;
 const INVINCIBILITY_TIME = 3000; // milliseconds
@@ -175,7 +175,6 @@ let player = {
   y: canvas.height / 2,
   angle: -Math.PI / 2, // Point up
   speed: 0,
-  rotationSpeed: PLAYER_ROTATION_SPEED,
   acceleration: PLAYER_ACCELERATION,
   friction: PLAYER_FRICTION,
   size: PLAYER_SIZE,
@@ -313,16 +312,22 @@ class Bullet {
     }
 }
 
-// --- Input Handling ---
+// --- Global Event Listeners ---
+// Consolidated keydown listener
 const keys = {};
-document.addEventListener('keydown', (event) => {
+window.addEventListener('keydown', (event) => {
+    // Set key state for held keys (thrust, shoot)
     keys[event.key] = true;
-    // Toggle help screen on '?' press
+
+    // --- Single Press Actions ---
+
+    // Help Screen Toggle (?)
     if (event.key === '?') {
-        isHelpScreenVisible = !isHelpScreenVisible;
+        toggleHelpScreen();
         event.preventDefault(); // Prevent browser find (?)
     }
-    // Select difficulty and start game if not started
+
+    // Difficulty Selection & Start (only if not started and help is off)
     if (!isGameStarted && !isHelpScreenVisible) {
         const key = event.key.toLowerCase();
         let selectedDifficulty = null;
@@ -336,23 +341,30 @@ document.addEventListener('keydown', (event) => {
             event.preventDefault();
         }
     }
-    // End game on 'Escape' press if game is running and help isn't visible
-    if (event.key === 'Escape' && isGameStarted && !isHelpScreenVisible) {
-        // Prevent triggering if already in gameOver state (e.g. multiple ESC presses)
-        if (gameRunning) { // Only trigger if game is logically running
-            gameOver();
-        }
-        event.preventDefault();
-    }
-});
-document.addEventListener('keyup', (event) => { keys[event.key] = false; });
 
-// New listener for specific key actions like Esc
-window.addEventListener('keydown', (event) => {
+    // Rotation (only if game started and help is off)
+    if (isGameStarted && !isHelpScreenVisible) {
+        if (event.key === 'ArrowLeft') {
+            player.angle -= ROTATION_INCREMENT;
+        } else if (event.key === 'ArrowRight') {
+            player.angle += ROTATION_INCREMENT;
+        }
+    }
+
+    // Escape to Main Menu (only if game started)
     if (event.key === 'Escape' && isGameStarted) {
         returnToMainMenu();
     }
-    // Can add other single-press key actions here if needed (e.g., pause)
+
+    // Prevent default browser action for spacebar (scrolling)
+    if (event.key === ' ') {
+        event.preventDefault();
+    }
+});
+
+// Keyup listener remains the same
+window.addEventListener('keyup', (event) => {
+    keys[event.key] = false;
 });
 
 // --- Helper Functions ---
@@ -585,12 +597,6 @@ async function updateGame(currentTime) { // Make updateGame async
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // --- Input ---
-    if (keys['ArrowLeft']) {
-        player.angle -= player.rotationSpeed;
-    }
-    if (keys['ArrowRight']) {
-        player.angle += player.rotationSpeed;
-    }
     if (keys['ArrowUp']) {
         player.speed += player.acceleration;
     } else {
@@ -1203,6 +1209,21 @@ function handlePlayerCollision() {
     setTimeout(() => {
         player.isInvulnerable = false;
     }, INVINCIBILITY_TIME);
+}
+
+// --- Toggle Help Screen ---
+function toggleHelpScreen() {
+    isHelpScreenVisible = !isHelpScreenVisible;
+    // If turning help off, ensure game loop continues if it was running
+    if (!isHelpScreenVisible && isGameStarted && !gameRunning) {
+        // Potentially needed if pausing was implemented alongside help
+        // gameRunning = true;
+        // requestAnimationFrame(updateGame);
+    }
+    // If turning help on while game is running, maybe pause?
+    // else if (isHelpScreenVisible && isGameStarted && gameRunning) {
+        // gameRunning = false;
+    // }
 }
 
 // --- Start Game Initialization ---
