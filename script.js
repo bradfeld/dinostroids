@@ -590,6 +590,15 @@ async function updateGame(currentTime) { // Make updateGame async
         return;
     }
 
+    // Priority 3: Game Over state check
+    if (!gameRunning) {
+        // If gameRunning is false, it means gameOver() was called.
+        // gameOver() handles drawing the final screen.
+        // We just need to stop the loop here until initGame() is called.
+        // requestAnimationFrame is NOT called here, pausing the updates.
+        return; 
+    }
+
     // --- Game is running ---
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
