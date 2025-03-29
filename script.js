@@ -15,9 +15,9 @@ const TWO_PI = Math.PI * 2;
 const FRICTION = 0.98;
 
 // Player
-const PLAYER_SIZE = 15;
+const PLAYER_SIZE = 20;
 const PLAYER_ROTATION_SPEED = 0.07 * 3; // ~0.21
-const PLAYER_ACCELERATION = 0.18 * 3; // 0.54
+const PLAYER_ACCELERATION = 0.1;
 const PLAYER_FRICTION = 0.98;
 const INVINCIBILITY_TIME = 3000; // milliseconds
 
@@ -127,41 +127,47 @@ const ASTEROID_PROPERTIES = {
 // Size variation for initial spawns
 const ASTEROID_INITIAL_SIZE_VARIATION = 15;
 
-// --- Dinosaur Shapes ---
-const DINO_SHAPES = [
-    // Shape 1: Sauropod-like (small)
-    [
-        {x: 0.8, y: -0.6}, {x: 1, y: -0.4}, {x: 0.9, y: 0}, {x: 0.5, y: 0.3},
-        {x: 0.2, y: 0.8}, {x: -0.5, y: 0.7}, {x: -1, y: 0.5},
-        {x: -0.8, y: 0}, {x: -0.9, y: -0.3},
-        {x: -0.4, y: -0.6},
-        {x: 0, y: -0.7},
-        {x: 0.3, y: -0.6},
-        {x: 0.6, y: -0.8}
-    ],
-    // Shape 2: T-Rex-like (large)
-    [
-        {x: 0.5, y: -0.9}, {x: 0.9, y: -0.7}, {x: 0.6, y: -0.2}, {x: 0.9, y: 0.1},
-        {x: 0.5, y: 0.3},
-        {x: 0.4, y: 0.8}, {x: -0.3, y: 0.9}, {x: -0.8, y: 0.6},
-        {x: -1.0, y: 0.0}, {x: -0.8, y: -0.3},
-        {x: -0.9, y: -0.6}, {x: -0.7, y: -0.7},
-        {x: -0.3, y: -0.8},
-        {x: 0.2, y: -0.3}, {x: 0.3, y: -0.5},
-        {x: 0.1, y: -0.8}
-    ],
-    // Shape 3: Pterodactyl-like (medium)
-    [
-        {x: 0.4, y: -0.8}, {x: 0.8, y: -0.6}, {x: 1.0, y: -0.7}, {x: 0.6, y: 0},
-        {x: 0.8, y: 0.4},
-        {x: 0.3, y: 0.1},
-        {x: 0.9, y: 0.9}, {x: 0.5, y: 1.0}, {x: 0.0, y: 0.5},
-        {x: -0.6, y: 0.8}, {x: -1.0, y: 0.6}, {x: -0.7, y: 0.1},
-        {x: -0.5, y: 0.3},
-        {x: -0.6, y: -0.5}, {x: -0.4, y: -0.6},
-        {x: 0, y: -0.3}
-    ]
-];
+// --- Constants ---
+const INITIAL_ASTEROID_COUNT = 7;
+
+// --- Image Loading ---
+const dinoImagePaths = {
+    small: 'images/bront.png',
+    medium: 'images/steg.png',
+    large: 'images/trex.png'
+};
+const dinoImages = {}; // To store loaded Image objects
+let imagesLoaded = false;
+let imagesSuccessfullyLoaded = 0;
+const totalImages = Object.keys(dinoImagePaths).length;
+
+function preloadImages(callback) {
+    console.log("Preloading images...");
+    Object.keys(dinoImagePaths).forEach(key => {
+        const img = new Image();
+        img.onload = () => {
+            console.log(`Image loaded: ${dinoImagePaths[key]}`);
+            imagesSuccessfullyLoaded++;
+            dinoImages[key] = img; // Store the loaded image
+            if (imagesSuccessfullyLoaded === totalImages) {
+                console.log("All images successfully preloaded.");
+                imagesLoaded = true;
+                if (callback) callback(); // Signal completion
+            }
+        };
+        img.onerror = () => {
+            console.error(`Failed to load image: ${dinoImagePaths[key]}`);
+            // Decide how to handle error - maybe use fallback shapes?
+             imagesSuccessfullyLoaded++; // Count as processed even on error to avoid blocking
+             if (imagesSuccessfullyLoaded === totalImages) {
+                 console.warn("Finished processing images, some failed to load.");
+                 imagesLoaded = true; // Still allow game to start, but with potential missing images
+                 if (callback) callback();
+             }
+        };
+        img.src = dinoImagePaths[key];
+    });
+}
 
 // --- Game state ---
 let player = {
@@ -195,68 +201,74 @@ let isFetchingLeaderboard = false; // Flag for loading state
 
 class Asteroid {
     constructor(sizeType, x, y) {
-        this.sizeType = sizeType; // Store the string size type ('large', 'medium', 'small')
+        this.sizeType = sizeType;
         this.x = x;
         this.y = y;
-        this.radius = asteroidSizes[this.sizeType]; // Use sizeType to get radius
-        this.size = this.radius; // Add numeric size for wrapAround/collision
+        this.radius = asteroidSizes[this.sizeType];
+        this.size = this.radius; // Keep numeric size for collision/wrap
         this.speed = Math.random() * (asteroidSpeeds[currentDifficulty][this.sizeType].max - asteroidSpeeds[currentDifficulty][this.sizeType].min) + asteroidSpeeds[currentDifficulty][this.sizeType].min;
         this.angle = Math.random() * TWO_PI;
-        this.rotation = Math.random() * TWO_PI;
+        this.rotation = Math.random() * TWO_PI; // Keep for rotation
         this.rotationSpeed = (Math.random() - 0.5) * 0.05;
 
-        // Assign shape based on size
-        switch (this.sizeType) { // Use sizeType
-            case 'large':
-                this.vertices = DINO_SHAPES[1]; // T-Rex
-                break;
-            case 'medium':
-                this.vertices = DINO_SHAPES[2]; // Pterodactyl
-                break;
-            case 'small':
-                this.vertices = DINO_SHAPES[0]; // Sauropod
-                break;
+        // Get the preloaded image for this asteroid type
+        this.image = dinoImages[this.sizeType];
+        if (!this.image) {
+            console.error(`Image not loaded for sizeType: ${this.sizeType}. Asteroid may not render correctly.`);
+            // Optionally assign a fallback or handle error
         }
     }
 
+    // Draw method using Image
     draw() {
-        // Log asteroid position before drawing
-        console.log(`Drawing asteroid at (${this.x.toFixed(1)}, ${this.y.toFixed(1)}) with radius ${this.radius}`);
+        // Basic visibility check (can be refined)
+        if (this.x + this.radius < 0 || this.x - this.radius > canvas.width ||
+            this.y + this.radius < 0 || this.y - this.radius > canvas.height) {
+            return; // Don't draw if completely off-screen
+        }
 
-        // Don't draw if outside canvas boundaries
-        if (this.x + this.radius < 0 ||
-            this.x - this.radius > canvas.width ||
-            this.y + this.radius < 0 ||
-            this.y - this.radius > canvas.height) {
-            // console.log('Asteroid outside canvas draw boundaries, skipping draw.'); // Commented out for less noise
+        if (!this.image) {
+            // Optional: Draw a fallback if image failed to load
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, TWO_PI);
+            ctx.strokeStyle = 'grey'; // Indicate missing image
+            ctx.stroke();
             return;
         }
 
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
+        ctx.rotate(this.rotation); // Apply rotation
 
-        // Draw the dinosaur shape
-        ctx.beginPath();
-        ctx.moveTo(this.vertices[0].x * this.radius, this.vertices[0].y * this.radius);
-        for (let i = 1; i < this.vertices.length; i++) {
-            ctx.lineTo(this.vertices[i].x * this.radius, this.vertices[i].y * this.radius);
+        // Calculate draw size based on radius (maintain aspect ratio)
+        const aspectRatio = this.image.naturalWidth / this.image.naturalHeight;
+        const targetDiameter = this.radius * 2;
+        let drawWidth, drawHeight;
+        if (aspectRatio > 1) { // Wider than tall
+            drawWidth = targetDiameter;
+            drawHeight = targetDiameter / aspectRatio;
+        } else { // Taller than wide or square
+            drawHeight = targetDiameter;
+            drawWidth = targetDiameter * aspectRatio;
         }
-        ctx.closePath();
+        
+        // Draw the image centered
+        const offsetX = -drawWidth / 2;
+        const offsetY = -drawHeight / 2;
 
-        // Style the asteroid
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        ctx.drawImage(this.image, offsetX, offsetY, drawWidth, drawHeight);
 
         ctx.restore();
     }
 
     update() {
-        // Move asteroid
+        // Move asteroid (same logic)
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;
-        this.rotation += this.rotationSpeed;
+        this.rotation += this.rotationSpeed; // Apply rotation speed
+
+        // Apply screen wrapping
+        wrapAround(this);
     }
 }
 
@@ -516,8 +528,8 @@ async function submitScore(initials, score) {
     }
 }
 
-// --- Update and Draw ---
-function updateGame(currentTime) {
+// --- Update and Draw (Modified for Async Drawing) ---
+async function updateGame(currentTime) { // Make updateGame async
     // Priority 1: Help Screen
     if (isHelpScreenVisible) {
         drawHelpScreen();
@@ -578,10 +590,10 @@ function updateGame(currentTime) {
         }
     }
 
-    // Update asteroids
-    updateAsteroids();
+    // Update asteroids (position, rotation) - Synchronous part
+    updateAsteroids(); // This just updates x, y, rotation
 
-    // Draw Top UI (Level, Score, Lives)
+    // Draw Top UI (Sync)
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
     ctx.textBaseline = 'top';
@@ -603,12 +615,23 @@ function updateGame(currentTime) {
         bullet.draw();
     }
 
-    // Draw asteroids
+    // Draw asteroids (Async) - Trigger all draws, they will render when ready
+    // Use Promise.all to wait for all asteroid rendering promises to resolve for this frame
+    // This ensures we don't request the next frame until all SVGs are drawn
+    const asteroidDrawPromises = [];
     for (const asteroid of asteroids) {
-        asteroid.draw();
+        // The draw() method is now async
+        asteroidDrawPromises.push(asteroid.draw());
     }
 
-    // Request next frame
+    try {
+        await Promise.all(asteroidDrawPromises); // Wait for all asteroids to finish drawing
+    } catch (renderError) {
+        console.error("Error during asteroid drawing batch:", renderError);
+        // Decide how to handle batch rendering errors if necessary
+    }
+
+    // Request next frame only after all drawing for the current frame is complete
     requestAnimationFrame(updateGame);
 }
 
@@ -817,7 +840,7 @@ function drawStartScreen() {
     
     // Copyright at very bottom
     ctx.font = '16px Arial';
-    ctx.fillText('(c) Brad Feld, 2025', centerX, canvas.height - 20);
+    ctx.fillText('(c) Intensity Ventures, 2025', centerX, canvas.height - 20);
 }
 
 // --- Set Difficulty Function ---
@@ -859,26 +882,141 @@ function startGame() {
     startLevel();
 }
 
-// --- Initialization (Setup but doesn't start) ---
+// --- Main Initialization ---
 function initGame() {
-    // Reset core game state variables
-    score = 0;
-    lives = 3;
-    level = 1;
-    isGameStarted = false;
-    isHelpScreenVisible = false;
-
-    // Reset player to center of canvas
-    player.x = canvas.width / 2;
-    player.y = canvas.height / 2;
-    player.speed = 0;
-    player.angle = -Math.PI / 2;
+    console.log("Initializing game...");
+    // Set canvas dimensions
+    resizeCanvas();
+    // Add resize listener
+    window.addEventListener('resize', resizeCanvas);
     
-    bullets = [];
-    asteroids = [];
+    // Preload images and then start showing the menu/starting the game
+    preloadImages(() => {
+        console.log("Image preloading complete, proceeding with game setup.");
+        // Reset game state for a fresh start if needed (optional here, might be better in startGame)
+        // score = 0;
+        // lives = 3;
+        // level = 1;
+        // player = { ... }; // Reset player if necessary
+        // asteroids = [];
+        // bullets = [];
+        
+        // Now that images are loaded (or failed), show the start screen
+        showStartScreen(); 
+        // Don't automatically start the game loop here, wait for player input
+        // requestAnimationFrame(updateGame); 
+    });
+}
 
-    // Fetch leaderboard data for the start screen
-    fetchLeaderboard();
+// Function to display the start screen and wait for difficulty selection
+function showStartScreen() {
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Set text style
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+
+    const centerX = canvas.width / 2;
+    
+    // ------------------------------------
+    // SECTION 1: BIG TITLE
+    // ------------------------------------
+    const titleY = canvas.height * 0.15; // 15% from top
+    
+    // Title
+    ctx.font = '84px Arial';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('DINOSTROIDS', centerX, titleY);
+    
+    // ------------------------------------
+    // SECTION 2: LEADERBOARD
+    // ------------------------------------
+    const leaderboardTitleY = titleY + 100;
+    const leaderboardStartY = leaderboardTitleY + 40;
+    const lineHeight = 25;
+    
+    // Leaderboard header
+    ctx.font = '32px Arial';
+    ctx.fillText('TOP SCORES', centerX, leaderboardTitleY);
+    
+    // Leaderboard content
+    ctx.font = '16px Arial';
+    ctx.textBaseline = 'top';
+    let leaderboardEndY = leaderboardStartY;
+    
+    if (isFetchingLeaderboard) {
+        ctx.fillText('Loading...', centerX, leaderboardStartY);
+        leaderboardEndY += lineHeight;
+    } else if (leaderboardError) {
+        ctx.fillText(`Error loading scores: ${leaderboardError}`, centerX, leaderboardStartY);
+        leaderboardEndY += lineHeight;
+    } else if (leaderboardData && leaderboardData.length > 0) {
+        // Calculate layout for centered leaderboard
+        const rankX = centerX - 180;
+        const initialsX = centerX - 100;
+        const scoreX = centerX + 50;
+        const dateX = centerX + 110;
+        const headerY = leaderboardStartY;
+
+        // Draw header
+        ctx.textAlign = 'left';
+        ctx.fillText('Rank', rankX, headerY);
+        ctx.fillText('Initials', initialsX, headerY);
+        ctx.textAlign = 'right';
+        ctx.fillText('Score', scoreX + 40, headerY);
+        ctx.textAlign = 'left';
+        ctx.fillText('Date', dateX, headerY);
+
+        // Draw entries
+        ctx.font = '14px Arial';
+        leaderboardData.forEach((entry, index) => {
+            if (index >= LEADERBOARD_MAX_ENTRIES) return;
+            const yPos = headerY + lineHeight * (index + 1.5);
+            ctx.textAlign = 'left';
+            ctx.fillText(`${index + 1}.`, rankX, yPos);
+            ctx.fillText(entry.initials, initialsX, yPos);
+            ctx.textAlign = 'right';
+            ctx.fillText(entry.score.toLocaleString(), scoreX + 40, yPos);
+
+            // Format date nicely
+            ctx.textAlign = 'left';
+            try {
+                const date = new Date(entry.createdAt);
+                const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                ctx.fillText(formattedDate, dateX, yPos);
+            } catch (e) {
+                ctx.fillText('Invalid Date', dateX, yPos);
+            }
+            leaderboardEndY = yPos + lineHeight;
+        });
+    } else {
+        ctx.fillText('No scores yet! Be the first!', centerX, leaderboardStartY);
+        leaderboardEndY += lineHeight;
+    }
+    
+    // ------------------------------------
+    // SECTION 3: GAME INSTRUCTIONS
+    // ------------------------------------
+    const instructionsY = leaderboardEndY + 60;
+    
+    ctx.textAlign = 'center';
+    ctx.font = '28px Arial';
+    ctx.fillText('Start Game:', centerX, instructionsY);
+    
+    ctx.font = '24px Arial';
+    ctx.fillText('E)asy   M)edium   D)ifficult', centerX, instructionsY + 40);
+    
+    // Help text near bottom
+    ctx.font = '20px Arial';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('? for Help', centerX, canvas.height - 50);
+    
+    // Copyright at very bottom
+    ctx.font = '16px Arial';
+    ctx.fillText('(c) Intensity Ventures, 2025', centerX, canvas.height - 20);
 }
 
 // --- Level Handling ---
@@ -926,45 +1064,39 @@ window.addEventListener('resize', () => {
 // Initialize game state variables (will fetch leaderboard)
 initGame();
 
-// Start the animation loop - it will initially draw the start screen
+// Start the animation loop
 requestAnimationFrame(updateGame);
 
 function updateAsteroids() {
     for (let i = asteroids.length - 1; i >= 0; i--) {
         const asteroid = asteroids[i];
-        let destroyed = false; // Flag to check if asteroid was destroyed by collision
+        let destroyed = false; // Flag
 
-        // Check collision with player first
+        // Collision checks (sync)
         if (gameRunning && !player.isInvulnerable) {
-            // Use the checkCollision function for consistency
             if (checkCollision(player, asteroid)) {
                 handlePlayerCollision();
-                // No 'continue' here, player collision doesn't destroy the asteroid immediately
             }
         }
-
-        // Check collision with bullets
         for (let j = bullets.length - 1; j >= 0; j--) {
             const bullet = bullets[j];
-            // Use the checkCollision function
             if (checkCollision(bullet, asteroid)) {
-                bullets.splice(j, 1); // Remove bullet
-                handleAsteroidDestruction(asteroid, i); // Handle destruction (might splice asteroid)
-                destroyed = true; // Mark as destroyed
-                break; // Stop checking bullets for this asteroid
+                bullets.splice(j, 1);
+                handleAsteroidDestruction(asteroid, i);
+                destroyed = true;
+                break;
             }
         }
 
-        // If asteroid was destroyed by a bullet, skip update and boundary check for this iteration
         if (destroyed) {
-            continue;
+            continue; // Skip update if destroyed
         }
 
-        // If not destroyed, THEN update its position
+        // Update position/rotation (sync)
         asteroid.update();
 
-        // Use wrapAround for asteroids
-        wrapAround(asteroid); 
+        // Wrap around (sync)
+        wrapAround(asteroid);
     }
 }
 
@@ -1022,3 +1154,6 @@ function handlePlayerCollision() {
         player.isInvulnerable = false;
     }, INVINCIBILITY_TIME);
 }
+
+// --- Start Game Initialization ---
+initGame(); // Call initGame to start loading images and show menu
