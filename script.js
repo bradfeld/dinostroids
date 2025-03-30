@@ -127,6 +127,61 @@ const ASTEROID_PROPERTIES = {
 // Size variation for initial spawns
 const ASTEROID_INITIAL_SIZE_VARIATION = 15;
 
+// --- Image Paths ---
+const DINO_IMAGES = {
+    small: './images/bront.png',
+    medium: './images/steg.png',
+    large: './images/trex.png'
+};
+
+// Object to store loaded images
+const dinoImages = {
+    small: null,
+    medium: null,
+    large: null
+};
+
+// Preload images function
+function preloadImages(callback) {
+    console.log("Preloading dinosaur images...");
+    let imagesLoaded = 0;
+    const totalImages = Object.keys(DINO_IMAGES).length;
+    
+    // Function to handle when all images are loaded
+    const onAllImagesLoaded = () => {
+        console.log("All dinosaur images loaded successfully!");
+        if (callback) callback();
+    };
+    
+    // Function to handle individual image load
+    const onImageLoad = (size) => {
+        console.log(`${size} dinosaur image loaded.`);
+        imagesLoaded++;
+        if (imagesLoaded === totalImages) {
+            onAllImagesLoaded();
+        }
+    };
+    
+    // Function to handle load errors
+    const onImageError = (size, e) => {
+        console.error(`Error loading ${size} dinosaur image:`, e);
+        // Continue even if an image fails to load
+        imagesLoaded++;
+        if (imagesLoaded === totalImages) {
+            onAllImagesLoaded();
+        }
+    };
+    
+    // Load each image
+    Object.entries(DINO_IMAGES).forEach(([size, path]) => {
+        const img = new Image();
+        img.onload = () => onImageLoad(size);
+        img.onerror = (e) => onImageError(size, e);
+        img.src = path;
+        dinoImages[size] = img;
+    });
+}
+
 // Helper function to convert vertex array to SVG path data
 function verticesToPathData(vertices) {
     if (!vertices || vertices.length === 0) return "";
@@ -214,26 +269,15 @@ class Asteroid {
         this.rotation = Math.random() * TWO_PI; // Keep for rotation
         this.rotationSpeed = (Math.random() - 0.5) * 0.05;
 
-        // Store the SVG string for this asteroid type
-        this.svgString = DINO_SVGS[this.sizeType];
-        this.canvgInstance = null; // To potentially cache canvg instance
-        this.isRendering = false; // Flag to prevent concurrent rendering calls
-
-        // Pre-parse base dimensions from SVG string
-        try {
-            const widthMatch = this.svgString.match(/width="([^"]+)"/);
-            const heightMatch = this.svgString.match(/height="([^"]+)"/);
-            this.baseWidth = widthMatch ? parseFloat(widthMatch[1]) : 2; // Default fallback
-            this.baseHeight = heightMatch ? parseFloat(heightMatch[1]) : 2; // Default fallback
-        } catch (e) {
-            console.error("Error parsing SVG dimensions, using defaults.", e);
-            this.baseWidth = 2;
-            this.baseHeight = 2;
+        // Get the image for this asteroid type
+        this.image = dinoImages[this.sizeType];
+        if (!this.image) {
+            console.error(`Image for ${this.sizeType} asteroid not loaded!`);
         }
     }
 
-    // Make draw async to handle canvg rendering
-    async draw() {
+    // Make draw async to handle rendering
+    draw() {
         // Check visibility based on radius, simple check
         if (this.x + this.radius < 0 ||
             this.x - this.radius > canvas.width ||
@@ -242,69 +286,33 @@ class Asteroid {
             return; // Skip drawing if entirely off-screen
         }
         
-        if (this.isRendering) return; // Don't start new render if one is ongoing
-
-        this.isRendering = true; // Set flag
-
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation); // Apply rotation
 
-        // Calculate scaling
-        const targetDiameter = this.radius * 2;
-        const scaleX = targetDiameter / this.baseWidth;
-        const scaleY = targetDiameter / this.baseHeight;
-        const scale = Math.min(scaleX, scaleY); // Maintain aspect ratio
-
-        const drawWidth = this.baseWidth * scale;
-        const drawHeight = this.baseHeight * scale;
-        const offsetX = -drawWidth / 2; // Center the drawing
-        const offsetY = -drawHeight / 2;
-
-        // Use Canvg
-        try {
-            // Set the stroke color based on the main context's strokeStyle
-            // NOTE: This replaces "currentColor" in the SVG string temporarily.
-            // A more robust solution might involve passing parameters to canvg if possible,
-            // but direct string replacement is simpler here.
-            const currentStrokeStyle = ctx.strokeStyle; // Usually 'white'
-            const svgWithColor = this.svgString.replace(/currentColor/g, currentStrokeStyle);
-
-            // If Canvg is available globally (from CDN script)
-            if (typeof Canvg !== 'undefined') {
-                 // Using Canvg v5+ API (async)
-                 const v = await Canvg.fromString(ctx, svgWithColor, {
-                     offsetX: offsetX,
-                     offsetY: offsetY,
-                     scaleWidth: drawWidth,
-                     scaleHeight: drawHeight,
-                     ignoreClear: true, // Don't clear the main canvas
-                     useCORS: true // In case paths use external resources (not applicable here, but good practice)
-                 });
-                 await v.render(); // Await the rendering completion
-                 this.canvgInstance = v; // Cache instance? Maybe not needed per frame.
-            } else {
-                console.error("Canvg library not loaded.");
-                // Fallback: draw a circle?
-                ctx.beginPath();
-                ctx.arc(0, 0, this.radius, 0, TWO_PI);
-                ctx.strokeStyle = 'red'; // Indicate error
-                ctx.lineWidth = 1;
-                ctx.stroke();
-            }
-
-        } catch (e) {
-            console.error('Error rendering SVG for asteroid:', e, this.svgString);
-            // Optional: Draw fallback shape on error
+        // Calculate scaling to maintain size consistency 
+        const scale = this.radius * 2 / Math.max(this.image?.width || 100, this.image?.height || 100);
+        
+        // Draw the image if loaded
+        if (this.image && this.image.complete) {
+            // Draw the image centered at asteroid position with appropriate scaling
+            ctx.drawImage(
+                this.image, 
+                -this.image.width * scale / 2, 
+                -this.image.height * scale / 2,
+                this.image.width * scale,
+                this.image.height * scale
+            );
+        } else {
+            // Fallback: draw a circle if image not available
             ctx.beginPath();
             ctx.arc(0, 0, this.radius, 0, TWO_PI);
-            ctx.strokeStyle = 'red';
+            ctx.strokeStyle = 'gray'; // Indicate fallback with gray color
             ctx.lineWidth = 1;
             ctx.stroke();
-        } finally {
-           this.isRendering = false; // Reset flag
-           ctx.restore();
         }
+        
+        ctx.restore();
     }
 
     update() {
@@ -707,7 +715,7 @@ function drawPlayer() {
     ctx.restore();
 }
 
-// --- Draw Help Screen ---
+// --- Draw Help Screen (Separate function) ---
 function drawHelpScreen() {
     // Draw semi-transparent background
     ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
@@ -938,51 +946,46 @@ function startGame() {
     startLevel();
 }
 
-// --- Main Initialization ---
-function resizeCanvas() {
-    console.log("Resizing canvas..."); // Log for confirmation
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    // Redraw the appropriate screen immediately after resize
-    if (isHelpScreenVisible) {
-        drawHelpScreen();
-    } else if (!isGameStarted) {
-        // If the game hasn't started, we are on the start screen
-        drawStartScreen(); // Corrected function name
-    }
-    // No need for an 'else' here, as the main game loop (updateGame)
-    // handles redraws when the game is running.
-}
-
 // --- Initialization (Setup but doesn't start) ---
 function initGame() {
     console.log("Initializing game...");
 
-    // Fetch GLOBAL games played count
-    fetchGamesPlayed();
-
-    // Fetch leaderboard data right away
-    fetchLeaderboard();
-
     // Set canvas dimensions
-    resizeCanvas();
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    // Reset core game state variables
-    score = 0;
-    lives = 3;
-    level = 1;
-    isGameStarted = false;
-    isHelpScreenVisible = false;
+    // Add window resize event listener
+    window.addEventListener('resize', resizeCanvas);
 
-    // Reset player to center of canvas
-    player.x = canvas.width / 2;
-    player.y = canvas.height / 2;
-    player.speed = 0;
-    player.angle = -Math.PI / 2;
-    
-    bullets = [];
-    asteroids = [];
+    // Preload images before initializing game
+    preloadImages(() => {
+        console.log("Images loaded, initializing game...");
+        
+        // Fetch GLOBAL games played count
+        fetchGamesPlayed();
+
+        // Fetch leaderboard data right away
+        fetchLeaderboard();
+
+        // Reset core game state variables
+        score = 0;
+        lives = 3;
+        level = 1;
+        isGameStarted = false;
+        isHelpScreenVisible = false;
+
+        // Reset player to center of canvas
+        player.x = canvas.width / 2;
+        player.y = canvas.height / 2;
+        player.speed = 0;
+        player.angle = -Math.PI / 2;
+        
+        bullets = [];
+        asteroids = [];
+        
+        // Show start screen now that everything is loaded
+        drawStartScreen();
+    });
 }
 
 // --- Level Handling ---
@@ -1042,8 +1045,9 @@ function toggleHelpScreen() {
     // }
 }
 
-// --- Initialize and Start Loop --- 
-
+// --- Start Game Initialization ---
+initGame();
+requestAnimationFrame(updateGame);
 
 function updateAsteroids() {
     for (let i = asteroids.length - 1; i >= 0; i--) {
@@ -1156,6 +1160,17 @@ async function fetchGamesPlayed() {
     // No explicit redraw needed here, drawStartScreen will use the updated value
 }
 
-initGame();
-requestAnimationFrame(updateGame);
+// Add resize canvas function that was removed
+function resizeCanvas() {
+    console.log("Resizing canvas to fit window...");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    // Redraw the appropriate screen based on game state
+    if (!isGameStarted) {
+        drawStartScreen();
+    } else if (isHelpScreenVisible) {
+        drawHelpScreen();
+    }
+}
 
