@@ -938,6 +938,23 @@ function startGame() {
     startLevel();
 }
 
+// --- Main Initialization ---
+function resizeCanvas() {
+    console.log("Resizing canvas..."); // Log for confirmation
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Redraw the appropriate screen immediately after resize
+    if (isHelpScreenVisible) {
+        drawHelpScreen();
+    } else if (!isGameStarted) {
+        // If the game hasn't started, we are on the start screen
+        showStartScreen(); // Use the correct function to draw the start screen
+    }
+    // No need for an 'else' here, as the main game loop (updateGame)
+    // handles redraws when the game is running.
+}
+
 // --- Initialization (Setup but doesn't start) ---
 function initGame() {
     console.log("Initializing game...");
