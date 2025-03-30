@@ -4,10 +4,10 @@
  * This class represents a bullet fired by the player.
  */
 
-import { BULLET_RADIUS, BULLET_SPEED, BULLET_LIFESPAN } from '../constants.js';
-import { getCanvas } from '../canvas.js';
+import { getDimensions } from '../canvas.js';
+import { BULLET_SETTINGS } from '../constants.js';
 
-export class Bullet {
+class Bullet {
     /**
      * Create a new bullet
      * @param {number} x - Starting x position
@@ -18,49 +18,80 @@ export class Bullet {
         this.x = x;
         this.y = y;
         this.angle = angle;
-        this.speed = BULLET_SPEED;
-        this.radius = BULLET_RADIUS;
-        this.size = this.radius; // for collision check consistency
-        this.lifespan = BULLET_LIFESPAN;
+        this.velocityX = Math.cos(angle) * BULLET_SETTINGS.SPEED;
+        this.velocityY = Math.sin(angle) * BULLET_SETTINGS.SPEED;
+        this.radius = BULLET_SETTINGS.RADIUS;
+        this.lifespan = BULLET_SETTINGS.LIFESPAN;
+        this.active = true;
     }
 
     /**
-     * Draw the bullet on the canvas
+     * Update the bullet's position and lifespan
+     * @param {number} deltaTime - Time since last update in milliseconds
+     * @returns {boolean} Whether the bullet is still active
      */
-    draw() {
-        const { ctx, canvas } = getCanvas();
+    update(deltaTime) {
+        if (!this.active) return false;
         
-        // Don't draw if outside canvas boundaries
-        if (this.x < -this.radius || this.x > canvas.width + this.radius ||
-            this.y < -this.radius || this.y > canvas.height + this.radius) {
-            return;
+        // Update position
+        this.x += this.velocityX * deltaTime;
+        this.y += this.velocityY * deltaTime;
+        
+        // Decrease lifespan
+        this.lifespan -= deltaTime * 1000; // Convert to ms
+        
+        // Check if bullet is still active
+        if (this.lifespan <= 0) {
+            this.active = false;
+            return false;
         }
+        
+        // Check screen boundaries
+        const { width, height } = getDimensions();
+        
+        if (this.x < -this.radius || this.x > width + this.radius ||
+            this.y < -this.radius || this.y > height + this.radius) {
+            this.active = false;
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * Draw the bullet
+     * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
+     */
+    draw(ctx) {
+        if (!this.active) return;
         
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = 'white';
         ctx.fill();
     }
-
+    
     /**
-     * Update the bullet's position and lifespan
-     * @returns {boolean} False if the bullet should be removed
+     * Check if this bullet is colliding with an entity
+     * @param {Object} entity - The entity to check collision with
+     * @returns {boolean} Whether a collision occurred
      */
-    update() {
-        const { canvas } = getCanvas();
+    isCollidingWith(entity) {
+        if (!this.active) return false;
         
-        // Update position
-        this.x += Math.cos(this.angle) * this.speed;
-        this.y += Math.sin(this.angle) * this.speed;
+        const dx = this.x - entity.x;
+        const dy = this.y - entity.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Decrease lifespan
-        this.lifespan--;
-        
-        // Return true if bullet should be kept (within canvas bounds and alive)
-        return this.lifespan > 0 &&
-               this.x >= -this.radius &&
-               this.x <= canvas.width + this.radius &&
-               this.y >= -this.radius &&
-               this.y <= canvas.height + this.radius;
+        return distance < this.radius + entity.radius;
     }
-} 
+    
+    /**
+     * Deactivate the bullet
+     */
+    deactivate() {
+        this.active = false;
+    }
+}
+
+export default Bullet; 

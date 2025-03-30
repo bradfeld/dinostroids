@@ -5,6 +5,26 @@
  */
 
 /**
+ * Generate a random integer between min and max (inclusive)
+ * @param {number} min - Minimum value
+ * @param {number} max - Maximum value
+ * @returns {number} Random integer between min and max
+ */
+export function randomIntBetween(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/**
+ * Generate a random float between min and max
+ * @param {number} min - Minimum value
+ * @param {number} max - Maximum value
+ * @returns {number} Random float between min and max
+ */
+export function randomFloatBetween(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+/**
  * Wraps an object around the screen boundaries
  * @param {Object} object - The object to wrap (must have x, y properties)
  * @param {number} canvasWidth - The width of the canvas

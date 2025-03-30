@@ -4,14 +4,10 @@
  * This service handles loading and caching of images used in the game.
  */
 
-import { DINO_IMAGES } from '../constants.js';
+import { IMAGES } from '../constants.js';
 
 // Object to store loaded images
-const imageCache = {
-    small: null,
-    medium: null,
-    large: null
-};
+const imageCache = {};
 
 /**
  * Preload all images needed for the game
@@ -20,7 +16,7 @@ const imageCache = {
 export function preloadImages(callback) {
     console.log("Preloading dinosaur images...");
     let imagesLoaded = 0;
-    const totalImages = Object.keys(DINO_IMAGES).length;
+    const totalImages = Object.keys(IMAGES).length;
     
     // Function to handle when all images are loaded
     const onAllImagesLoaded = () => {
@@ -29,8 +25,8 @@ export function preloadImages(callback) {
     };
     
     // Function to handle individual image load
-    const onImageLoad = (size) => {
-        console.log(`${size} dinosaur image loaded.`);
+    const onImageLoad = (key) => {
+        console.log(`${key} dinosaur image loaded.`);
         imagesLoaded++;
         if (imagesLoaded === totalImages) {
             onAllImagesLoaded();
@@ -38,8 +34,8 @@ export function preloadImages(callback) {
     };
     
     // Function to handle load errors
-    const onImageError = (size, e) => {
-        console.error(`Error loading ${size} dinosaur image:`, e);
+    const onImageError = (key, e) => {
+        console.error(`Error loading ${key} dinosaur image:`, e);
         // Continue even if an image fails to load
         imagesLoaded++;
         if (imagesLoaded === totalImages) {
@@ -48,22 +44,22 @@ export function preloadImages(callback) {
     };
     
     // Load each image
-    Object.entries(DINO_IMAGES).forEach(([size, path]) => {
+    Object.entries(IMAGES).forEach(([key, path]) => {
         const img = new Image();
-        img.onload = () => onImageLoad(size);
-        img.onerror = (e) => onImageError(size, e);
+        img.onload = () => onImageLoad(key);
+        img.onerror = (e) => onImageError(key, e);
         img.src = path;
-        imageCache[size] = img;
+        imageCache[key] = img;
     });
 }
 
 /**
- * Get a loaded image by size
- * @param {string} size - Size of the image (small, medium, large)
+ * Get a loaded image by key
+ * @param {string} key - Key of the image (bront, steg, trex)
  * @returns {HTMLImageElement|null} - The loaded image or null if not found
  */
-export function getImage(size) {
-    return imageCache[size] || null;
+export function getImageByKey(key) {
+    return imageCache[key] || null;
 }
 
 /**

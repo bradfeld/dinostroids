@@ -5,6 +5,102 @@
  * Centralizing these values makes it easier to tweak game parameters.
  */
 
+// Game settings
+export const GAME_SETTINGS = {
+  FPS: 60,
+  INITIAL_LIVES: 3,
+  LEVEL_MULTIPLIER: 0.5,
+  INITIAL_ASTEROIDS: 4,
+  ASTEROID_INCREMENT_PER_LEVEL: 2,
+  EXTRA_LIFE_SCORE_THRESHOLD: 10000,
+  FRAME_DURATION: 1000 / 60, // milliseconds per frame at 60 FPS
+  SPAWN_BUFFER: 100 // Distance from player to avoid spawning asteroids
+};
+
+// Player settings
+export const PLAYER_SETTINGS = {
+  RADIUS: 15,
+  ROTATION_SPEED: 4, // radians per second
+  ACCELERATION: 200, // pixels per second per second
+  FRICTION: 0.98,
+  INVINCIBILITY_TIME: 3000, // milliseconds
+  SHOOT_COOLDOWN: 250 // milliseconds
+};
+
+// Bullet settings
+export const BULLET_SETTINGS = {
+  RADIUS: 2,
+  SPEED: 500, // pixels per second
+  LIFESPAN: 1000 // milliseconds
+};
+
+// Asteroid settings
+export const ASTEROID_SETTINGS = {
+  BASE_RADIUS: 50, // For size 1 (largest)
+  SPEED_MULTIPLIER: 50, // pixels per second
+  ROTATION_SPEED: 1, // radians per second
+  POINTS_BASE: 100, // Points multiplied by size
+  COLLISION_DAMAGE: 1, // Lives lost when hit
+  SPAWN_DISTANCE_MIN: 100, // Minimum distance from player to spawn
+  // Points awarded for destroying an asteroid based on size
+  SCORE_VALUES: {
+    1: 100, // Large
+    2: 200, // Medium
+    3: 300  // Small
+  },
+  // Available dino types
+  TYPES: ['bront', 'steg', 'trex']
+};
+
+// UI settings
+export const UI_SETTINGS = {
+  FONT_FAMILY: 'Arial',
+  TEXT_COLOR: 'white',
+  TITLE_SIZE: 48,
+  SUBTITLE_SIZE: 24,
+  BODY_SIZE: 16,
+  HUD_SIZE: 20
+};
+
+// Image paths
+export const IMAGES = {
+  // Map of image keys to file paths
+  bront: './images/bront.png',
+  steg: './images/steg.png',
+  trex: './images/trex.png'
+};
+
+// Sound settings
+export const SOUND_SETTINGS = {
+  ENABLED: true,
+  VOLUME: 0.5
+};
+
+// Keyboard controls
+export const CONTROLS = {
+  LEFT: 'ArrowLeft',
+  RIGHT: 'ArrowRight',
+  UP: 'ArrowUp',
+  SHOOT: 'Space',
+  START: 'Space',
+  HELP: 'KeyH',
+  PAUSE: 'KeyP',
+  MUTE: 'KeyM'
+};
+
+// API endpoints
+export const API_ENDPOINTS = {
+  GAMES_PLAYED: '/api/gamesPlayed',
+  INCREMENT_GAMES_PLAYED: '/api/incrementGamesPlayed',
+  LEADERBOARD: '/api/leaderboard'
+};
+
+// Animation settings
+export const ANIMATION_SETTINGS = {
+  EXPLOSION_DURATION: 500, // milliseconds
+  SHIP_BLINK_RATE: 100 // milliseconds
+};
+
 // Math constants
 export const TWO_PI = Math.PI * 2;
 export const FRICTION = 0.98;
@@ -96,11 +192,4 @@ export const ASTEROID_PROPERTIES = {
     [ASTEROID_TYPE.BIG]: { baseSize: 45, score: 20 },
     [ASTEROID_TYPE.MEDIUM]: { baseSize: 25, score: 50 },
     [ASTEROID_TYPE.LITTLE]: { baseSize: 15, score: 100 }
-};
-
-// Image paths
-export const DINO_IMAGES = {
-    small: './images/bront.png',
-    medium: './images/steg.png',
-    large: './images/trex.png'
 }; 
