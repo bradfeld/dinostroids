@@ -1,6 +1,7 @@
 // api/incrementGamesPlayed.js
 import { kv } from '@vercel/kv';
-import { NextResponse } from 'next/server'; // Using Next.js structure
+// Remove Next.js specific import
+// import { NextResponse } from 'next/server';
 
 export const runtime = 'edge'; // Use Edge Runtime for speed
 
@@ -12,12 +13,18 @@ export async function POST(request) {
     // kv.incr initializes the key to 0 if it doesn't exist, then increments.
     const newCount = await kv.incr(key);
 
-    // We don't strictly need to return the new count, but it's good practice/useful
-    return NextResponse.json({ message: 'Counter incremented successfully', newCount: newCount }, { status: 200 });
+    // Use standard Response object
+    return new Response(JSON.stringify({ message: 'Counter incremented successfully', newCount: newCount }), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 200
+    });
 
   } catch (error) {
     console.error('KV Error incrementing gamesPlayed count:', error);
-    // Return an error response if KV fails
-    return NextResponse.json({ message: 'Error incrementing counter' }, { status: 500, statusText: 'Internal Server Error' });
+    // Use standard Response object for error
+    return new Response(JSON.stringify({ message: 'Error incrementing counter' }), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 500
+    });
   }
 }

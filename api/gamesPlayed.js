@@ -1,6 +1,7 @@
 // api/gamesPlayed.js
 import { kv } from '@vercel/kv';
-import { NextResponse } from 'next/server'; // Using Next.js structure
+// Remove Next.js specific import
+// import { NextResponse } from 'next/server'; 
 
 export const runtime = 'edge'; // Use Edge Runtime for speed
 
@@ -19,11 +20,19 @@ export async function GET(request) {
     }
 
     // Ensure the count is treated as a number before returning
-    return NextResponse.json({ count: Number(count) });
+    // Use standard Response object
+    return new Response(JSON.stringify({ count: Number(count) }), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 200
+    });
 
   } catch (error) {
     console.error('KV Error getting gamesPlayed count:', error);
     // Return 0 in case of error so the frontend doesn't break, but log server-side
-    return NextResponse.json({ count: 0 }, { status: 500, statusText: 'Internal Server Error: Failed to retrieve count' });
+    // Use standard Response object for error
+    return new Response(JSON.stringify({ count: 0, error: 'Failed to retrieve count' }), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 500
+    });
   }
 }

@@ -1010,11 +1010,23 @@ window.addEventListener('resize', () => {
     }
 });
 
-// Initialize game state variables (will fetch leaderboard)
-initGame();
+// --- Toggle Help Screen ---
+function toggleHelpScreen() {
+    isHelpScreenVisible = !isHelpScreenVisible;
+    // If turning help off, ensure game loop continues if it was running
+    if (!isHelpScreenVisible && isGameStarted && !gameRunning) {
+        // Potentially needed if pausing was implemented alongside help
+        // gameRunning = true;
+        // requestAnimationFrame(updateGame);
+    }
+    // If turning help on while game is running, maybe pause?
+    // else if (isHelpScreenVisible && isGameStarted && gameRunning) {
+        // gameRunning = false;
+    // }
+}
 
-// Start the animation loop
-requestAnimationFrame(updateGame);
+// --- Initialize and Start Loop --- 
+
 
 function updateAsteroids() {
     for (let i = asteroids.length - 1; i >= 0; i--) {
@@ -1126,3 +1138,6 @@ async function fetchGamesPlayed() {
     }
     // No explicit redraw needed here, drawStartScreen will use the updated value
 }
+
+initGame();
+requestAnimationFrame(updateGame);
