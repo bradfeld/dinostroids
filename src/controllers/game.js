@@ -192,7 +192,7 @@ function gameLoop(timestamp) {
     // Clear the canvas
     clear('black');
     
-    const { ctx } = getCanvas();
+    const { ctx, canvas } = getCanvas();
     
     // Update player
     if (player) {
@@ -293,6 +293,11 @@ function gameLoop(timestamp) {
     
     // Draw game status
     drawGameStatus(ctx, score, lives, level);
+    
+    // Draw leaderboard on the right side during gameplay
+    if (leaderboardData && leaderboardData.length > 0) {
+        drawLeaderboard(ctx, leaderboardData, canvas.width - 200, 50);
+    }
     
     // Continue the game loop
     animationFrameId = requestAnimationFrame(gameLoop);
