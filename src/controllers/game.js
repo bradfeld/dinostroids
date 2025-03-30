@@ -64,6 +64,10 @@ function drawStartScreen() {
         ctx.fillText(`Games Played: ${gamesPlayedCount}`, canvas.width / 2, canvas.height - 50);
     }
     
+    // Copyright text
+    ctx.font = '14px Arial';
+    ctx.fillText('© Intensity Ventures, 2025', canvas.width / 2, canvas.height - 20);
+    
     // Draw leaderboard if data is available
     if (leaderboardData && leaderboardData.length > 0) {
         drawLeaderboard(ctx, leaderboardData, canvas.width - 200, 50);
@@ -293,11 +297,6 @@ function gameLoop(timestamp) {
     
     // Draw game status
     drawGameStatus(ctx, score, lives, level);
-    
-    // Draw leaderboard on the right side during gameplay
-    if (leaderboardData && leaderboardData.length > 0) {
-        drawLeaderboard(ctx, leaderboardData, canvas.width - 200, 50);
-    }
     
     // Continue the game loop
     animationFrameId = requestAnimationFrame(gameLoop);
