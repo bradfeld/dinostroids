@@ -1045,6 +1045,20 @@ function toggleHelpScreen() {
     // }
 }
 
+// --- Resize Canvas Function ---
+function resizeCanvas() {
+    console.log("Resizing canvas to fit window...");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    // Redraw the appropriate screen based on game state
+    if (!isGameStarted) {
+        drawStartScreen();
+    } else if (isHelpScreenVisible) {
+        drawHelpScreen();
+    }
+}
+
 // --- Initialize and Start Loop --- 
 
 
