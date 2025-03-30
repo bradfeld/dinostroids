@@ -8,7 +8,7 @@
 import { initCanvas, resizeToWindow, getCanvas, clear, getDimensions } from '../canvas.js';
 import { fetchGamesPlayed, fetchLeaderboard, submitScore, incrementGamesPlayed } from '../services/api.js';
 import { preloadImages } from '../services/images.js';
-import { initInput, onStart, onHelp, isKeyPressed } from './input.js';
+import { initInput, onStart, onHelp, isKeyPressed, onEscape } from './input.js';
 import { GAME_SETTINGS, PLAYER_SETTINGS, ASTEROID_SETTINGS } from '../constants.js';
 import Player from '../entities/player.js';
 import Asteroid from '../entities/asteroid.js';
@@ -75,6 +75,32 @@ function drawStartScreen() {
 }
 
 /**
+ * End the current game and go back to the start screen
+ */
+function endGame() {
+    console.log("Game ended by user (ESC key)");
+    
+    // Reset game state
+    isGameStarted = false;
+    isGameOver = false;
+    gameRunning = false;
+    
+    // Cancel the animation frame
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
+    
+    // Clear entities
+    player = null;
+    asteroids = [];
+    bullets = [];
+    
+    // Show the start screen
+    drawStartScreen();
+}
+
+/**
  * Draw the help screen
  */
 function drawHelpScreen() {
@@ -97,6 +123,7 @@ function drawHelpScreen() {
         '• Arrow Keys: Move ship',
         '• Space: Fire',
         '• H: Toggle help screen',
+        '• ESC: End game and return to menu',
         '',
         'OBJECTIVE:',
         '• Destroy all dinosaur asteroids',
@@ -417,6 +444,14 @@ export function initGame() {
     
     onHelp(() => {
         toggleHelpScreen();
+    });
+    
+    // Register escape key to end the game
+    onEscape(() => {
+        // Only end the game if we're actually playing
+        if (isGameStarted && !isGameOver) {
+            endGame();
+        }
     });
     
     // Preload images before starting game

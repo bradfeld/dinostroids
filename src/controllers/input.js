@@ -10,6 +10,7 @@ const keys = {};
 // Input event handlers
 let onStartCallback = null;
 let onHelpCallback = null;
+let onEscapeCallback = null;
 
 /**
  * Initialize keyboard input handlers
@@ -35,6 +36,11 @@ function handleKeyDown(event) {
     // Handle H key for help screen
     if ((event.code === 'KeyH' || event.key === 'h') && onHelpCallback) {
         onHelpCallback();
+    }
+    
+    // Handle Escape key to end game and return to start screen
+    if (event.code === 'Escape' && onEscapeCallback) {
+        onEscapeCallback();
     }
 }
 
@@ -69,6 +75,14 @@ export function onStart(callback) {
  */
 export function onHelp(callback) {
     onHelpCallback = callback;
+}
+
+/**
+ * Register a callback for when the escape key is pressed
+ * @param {Function} callback - The function to call when escape is pressed
+ */
+export function onEscape(callback) {
+    onEscapeCallback = callback;
 }
 
 /**
