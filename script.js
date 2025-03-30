@@ -919,17 +919,32 @@ function startGame() {
     level = 1;
 
     // --- Increment Global Games Played Count ---
-    fetch('/api/incrementGamesPlayed', { method: 'POST' })
+    // Add a timeout to prevent long fetch operations
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3-second timeout
+    
+    fetch('/api/incrementGamesPlayed', { 
+        method: 'POST',
+        signal: controller.signal,
+        cache: 'no-store'
+    })
         .then(response => {
+            clearTimeout(timeoutId);
             if (!response.ok) {
-                console.error('Failed to increment games played count on server.');
+                console.error(`Failed to increment games played count on server. Status: ${response.status}`);
+                throw new Error(`HTTP error! status: ${response.status}`);
             } else {
                 console.log('Successfully triggered server-side games played increment.');
                 // Optionally parse response if needed: response.json().then(data => console.log(data));
             }
         })
         .catch(error => {
-            console.error('Network error trying to increment games played count:', error);
+            if (error.name === 'AbortError') {
+                console.error("API request to increment games count timed out after 3 seconds");
+            } else {
+                console.error('Network error trying to increment games played count:', error);
+            }
+            // Game continues regardless of counter increment success
         });
     // Note: We don't wait for this fetch to finish before starting the game.
     // We also don't update the local gamesPlayedCount here, it will be fetched next time.
@@ -961,12 +976,6 @@ function initGame() {
     preloadImages(() => {
         console.log("Images loaded, initializing game...");
         
-        // Fetch GLOBAL games played count
-        fetchGamesPlayed();
-
-        // Fetch leaderboard data right away
-        fetchLeaderboard();
-
         // Reset core game state variables
         score = 0;
         lives = 3;
@@ -985,6 +994,33 @@ function initGame() {
         
         // Show start screen now that everything is loaded
         drawStartScreen();
+        
+        // Fetch API data in the background - don't block game start
+        Promise.allSettled([
+            // Wrap in additional try-catch to ensure any errors don't affect the game
+            (async () => {
+                try {
+                    await fetchGamesPlayed();
+                } catch (err) {
+                    console.error("Failed to fetch games played:", err);
+                    // Game will still work with default value (0)
+                }
+            })(),
+            
+            (async () => {
+                try {
+                    await fetchLeaderboard();
+                } catch (err) {
+                    console.error("Failed to fetch leaderboard:", err);
+                    // Game will still work with empty leaderboard
+                }
+            })()
+        ]).then(() => {
+            // Optionally redraw start screen after data is loaded
+            if (!isGameStarted) {
+                drawStartScreen();
+            }
+        });
     });
 }
 
@@ -1141,10 +1177,24 @@ function handlePlayerCollision() {
 async function fetchGamesPlayed() {
     console.log("Fetching global games played count...");
     try {
-        const response = await fetch('/api/gamesPlayed');
+        // Add a timeout to the fetch to prevent long hangs if the API is unresponsive
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3-second timeout
+        
+        const response = await fetch('/api/gamesPlayed', {
+            signal: controller.signal,
+            // Add cache: 'no-store' to prevent caching issues
+            cache: 'no-store'
+        });
+        
+        // Clear the timeout
+        clearTimeout(timeoutId);
+        
         if (!response.ok) {
+            console.warn(`API returned error status: ${response.status}`);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
         const data = await response.json();
         if (typeof data.count === 'number') {
             gamesPlayedCount = data.count;
@@ -1154,10 +1204,19 @@ async function fetchGamesPlayed() {
             gamesPlayedCount = 0; // Fallback
         }
     } catch (error) {
-        console.error("Failed to fetch games played count:", error);
-        gamesPlayedCount = 0; // Fallback on error
+        // More detailed error logging
+        if (error.name === 'AbortError') {
+            console.error("API request timed out after 3 seconds");
+        } else {
+            console.error("Failed to fetch games played count:", error);
+        }
+        
+        // Always use the fallback
+        gamesPlayedCount = 0;
+        
+        // Continue the game despite the error
+        console.log("Using fallback games played count: 0");
     }
-    // No explicit redraw needed here, drawStartScreen will use the updated value
 }
 
 // Add resize canvas function that was removed
