@@ -1,80 +1,80 @@
 /**
  * Input Controller
  * 
- * This controller handles keyboard input and maintains the state of keys.
+ * This controller handles user input for the game.
  */
 
-// Object to store key states
+// Track pressed keys
 const keys = {};
 
+// Input event handlers
+let onStartCallback = null;
+let onHelpCallback = null;
+
 /**
- * Initialize input handlers
- * @param {Object} callbacks - Callback functions for specific keys
+ * Initialize keyboard input handlers
  */
-export function initInputHandlers(callbacks = {}) {
-    const {
-        onHelpToggle,
-        onDifficultySelect,
-        onEscape
-    } = callbacks;
+export function initInput() {
+    // Add event listeners for keyboard input
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+}
+
+/**
+ * Handle keydown events
+ * @param {KeyboardEvent} event - The keyboard event
+ */
+function handleKeyDown(event) {
+    keys[event.code] = true;
     
-    // Set up keydown event listener
-    document.addEventListener('keydown', (event) => {
-        keys[event.key] = true;
-        
-        // Toggle help screen on '?' press
-        if (event.key === '?' && onHelpToggle) {
-            onHelpToggle();
-            event.preventDefault(); // Prevent browser find (?)
-        }
-        
-        // Select difficulty
-        if (event.key.toLowerCase() === 'e' && onDifficultySelect) {
-            onDifficultySelect('easy');
-            event.preventDefault();
-        } else if (event.key.toLowerCase() === 'm' && onDifficultySelect) {
-            onDifficultySelect('medium');
-            event.preventDefault();
-        } else if (event.key.toLowerCase() === 'd' && onDifficultySelect) {
-            onDifficultySelect('difficult');
-            event.preventDefault();
-        }
-        
-        // Handle escape key
-        if (event.key === 'Escape' && onEscape) {
-            onEscape();
-            event.preventDefault();
-        }
-    });
+    // Handle space bar for starting game
+    if (event.code === 'Space' && onStartCallback) {
+        onStartCallback();
+    }
     
-    // Set up keyup event listener
-    document.addEventListener('keyup', (event) => {
-        keys[event.key] = false;
-    });
+    // Handle H key for help screen
+    if ((event.code === 'KeyH' || event.key === 'h') && onHelpCallback) {
+        onHelpCallback();
+    }
+}
+
+/**
+ * Handle keyup events
+ * @param {KeyboardEvent} event - The keyboard event
+ */
+function handleKeyUp(event) {
+    keys[event.code] = false;
 }
 
 /**
  * Check if a key is currently pressed
- * @param {string} key - The key to check
- * @returns {boolean} - True if the key is pressed
+ * @param {string} code - The key code to check
+ * @returns {boolean} - Whether the key is pressed
  */
-export function isKeyPressed(key) {
-    return !!keys[key];
+export function isKeyPressed(code) {
+    return keys[code] === true;
 }
 
 /**
- * Get the state of all keys
- * @returns {Object} - The current state of all keys
+ * Register a callback for when the start button (space) is pressed
+ * @param {Function} callback - The function to call when start is pressed
  */
-export function getKeys() {
-    return keys;
+export function onStart(callback) {
+    onStartCallback = callback;
 }
 
 /**
- * Clear all key states
+ * Register a callback for when the help button (H) is pressed
+ * @param {Function} callback - The function to call when help is pressed
  */
-export function clearKeys() {
-    for (const key in keys) {
-        keys[key] = false;
-    }
+export function onHelp(callback) {
+    onHelpCallback = callback;
+}
+
+/**
+ * Clean up event listeners
+ */
+export function cleanupInput() {
+    window.removeEventListener('keydown', handleKeyDown);
+    window.removeEventListener('keyup', handleKeyUp);
 } 
