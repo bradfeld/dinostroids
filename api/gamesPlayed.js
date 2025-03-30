@@ -27,8 +27,10 @@ export default async function handler(request, response) {
 
     // Initialize count if it doesn't exist in KV yet
     if (count === null || count === undefined) {
-      console.log('Initializing gamesPlayed count in KV to 0.');
-      count = 0;
+      console.log('Initializing gamesPlayed count in KV to 50.');
+      count = 50;
+      // Set the initial value explicitly
+      await kv.set(key, 50);
     }
 
     // Ensure the count is treated as a number before returning
@@ -36,9 +38,9 @@ export default async function handler(request, response) {
 
   } catch (error) {
     console.error('KV Error getting gamesPlayed count:', error);
-    // Return 0 in case of error so the frontend doesn't break, but log server-side
+    // Return 50 in case of error so the frontend doesn't break, but log server-side
     return response.status(500).json({ 
-      count: 0, 
+      count: 50, 
       error: 'Internal Server Error: Failed to retrieve count',
       message: error.message 
     });

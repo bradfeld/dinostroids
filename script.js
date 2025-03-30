@@ -1201,7 +1201,7 @@ async function fetchGamesPlayed() {
             console.log(`Global games played count: ${gamesPlayedCount}`);
         } else {
             console.warn('Received invalid count from API.');
-            gamesPlayedCount = 0; // Fallback
+            gamesPlayedCount = 50; // Default fallback value of 50
         }
     } catch (error) {
         // More detailed error logging
@@ -1211,11 +1211,11 @@ async function fetchGamesPlayed() {
             console.error("Failed to fetch games played count:", error);
         }
         
-        // Always use the fallback
-        gamesPlayedCount = 0;
+        // Use 50 as the fallback value
+        gamesPlayedCount = 50;
         
         // Continue the game despite the error
-        console.log("Using fallback games played count: 0");
+        console.log("Using fallback games played count: 50");
     }
 }
 
