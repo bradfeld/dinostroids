@@ -127,61 +127,6 @@ const ASTEROID_PROPERTIES = {
 // Size variation for initial spawns
 const ASTEROID_INITIAL_SIZE_VARIATION = 15;
 
-// --- Image Paths ---
-const DINO_IMAGES = {
-    small: './images/bront.png',
-    medium: './images/steg.png',
-    large: './images/trex.png'
-};
-
-// Object to store loaded images
-const dinoImages = {
-    small: null,
-    medium: null,
-    large: null
-};
-
-// Preload images function
-function preloadImages(callback) {
-    console.log("Preloading dinosaur images...");
-    let imagesLoaded = 0;
-    const totalImages = Object.keys(DINO_IMAGES).length;
-    
-    // Function to handle when all images are loaded
-    const onAllImagesLoaded = () => {
-        console.log("All dinosaur images loaded successfully!");
-        if (callback) callback();
-    };
-    
-    // Function to handle individual image load
-    const onImageLoad = (size) => {
-        console.log(`${size} dinosaur image loaded.`);
-        imagesLoaded++;
-        if (imagesLoaded === totalImages) {
-            onAllImagesLoaded();
-        }
-    };
-    
-    // Function to handle load errors
-    const onImageError = (size, e) => {
-        console.error(`Error loading ${size} dinosaur image:`, e);
-        // Continue even if an image fails to load
-        imagesLoaded++;
-        if (imagesLoaded === totalImages) {
-            onAllImagesLoaded();
-        }
-    };
-    
-    // Load each image
-    Object.entries(DINO_IMAGES).forEach(([size, path]) => {
-        const img = new Image();
-        img.onload = () => onImageLoad(size);
-        img.onerror = (e) => onImageError(size, e);
-        img.src = path;
-        dinoImages[size] = img;
-    });
-}
-
 // Helper function to convert vertex array to SVG path data
 function verticesToPathData(vertices) {
     if (!vertices || vertices.length === 0) return "";
@@ -269,15 +214,26 @@ class Asteroid {
         this.rotation = Math.random() * TWO_PI; // Keep for rotation
         this.rotationSpeed = (Math.random() - 0.5) * 0.05;
 
-        // Get the image for this asteroid type
-        this.image = dinoImages[this.sizeType];
-        if (!this.image) {
-            console.error(`Image for ${this.sizeType} asteroid not loaded!`);
+        // Store the SVG string for this asteroid type
+        this.svgString = DINO_SVGS[this.sizeType];
+        this.canvgInstance = null; // To potentially cache canvg instance
+        this.isRendering = false; // Flag to prevent concurrent rendering calls
+
+        // Pre-parse base dimensions from SVG string
+        try {
+            const widthMatch = this.svgString.match(/width="([^"]+)"/);
+            const heightMatch = this.svgString.match(/height="([^"]+)"/);
+            this.baseWidth = widthMatch ? parseFloat(widthMatch[1]) : 2; // Default fallback
+            this.baseHeight = heightMatch ? parseFloat(heightMatch[1]) : 2; // Default fallback
+        } catch (e) {
+            console.error("Error parsing SVG dimensions, using defaults.", e);
+            this.baseWidth = 2;
+            this.baseHeight = 2;
         }
     }
 
-    // Make draw async to handle rendering
-    draw() {
+    // Make draw async to handle canvg rendering
+    async draw() {
         // Check visibility based on radius, simple check
         if (this.x + this.radius < 0 ||
             this.x - this.radius > canvas.width ||
@@ -286,33 +242,69 @@ class Asteroid {
             return; // Skip drawing if entirely off-screen
         }
         
+        if (this.isRendering) return; // Don't start new render if one is ongoing
+
+        this.isRendering = true; // Set flag
+
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation); // Apply rotation
 
-        // Calculate scaling to maintain size consistency 
-        const scale = this.radius * 2 / Math.max(this.image?.width || 100, this.image?.height || 100);
-        
-        // Draw the image if loaded
-        if (this.image && this.image.complete) {
-            // Draw the image centered at asteroid position with appropriate scaling
-            ctx.drawImage(
-                this.image, 
-                -this.image.width * scale / 2, 
-                -this.image.height * scale / 2,
-                this.image.width * scale,
-                this.image.height * scale
-            );
-        } else {
-            // Fallback: draw a circle if image not available
+        // Calculate scaling
+        const targetDiameter = this.radius * 2;
+        const scaleX = targetDiameter / this.baseWidth;
+        const scaleY = targetDiameter / this.baseHeight;
+        const scale = Math.min(scaleX, scaleY); // Maintain aspect ratio
+
+        const drawWidth = this.baseWidth * scale;
+        const drawHeight = this.baseHeight * scale;
+        const offsetX = -drawWidth / 2; // Center the drawing
+        const offsetY = -drawHeight / 2;
+
+        // Use Canvg
+        try {
+            // Set the stroke color based on the main context's strokeStyle
+            // NOTE: This replaces "currentColor" in the SVG string temporarily.
+            // A more robust solution might involve passing parameters to canvg if possible,
+            // but direct string replacement is simpler here.
+            const currentStrokeStyle = ctx.strokeStyle; // Usually 'white'
+            const svgWithColor = this.svgString.replace(/currentColor/g, currentStrokeStyle);
+
+            // If Canvg is available globally (from CDN script)
+            if (typeof Canvg !== 'undefined') {
+                 // Using Canvg v5+ API (async)
+                 const v = await Canvg.fromString(ctx, svgWithColor, {
+                     offsetX: offsetX,
+                     offsetY: offsetY,
+                     scaleWidth: drawWidth,
+                     scaleHeight: drawHeight,
+                     ignoreClear: true, // Don't clear the main canvas
+                     useCORS: true // In case paths use external resources (not applicable here, but good practice)
+                 });
+                 await v.render(); // Await the rendering completion
+                 this.canvgInstance = v; // Cache instance? Maybe not needed per frame.
+            } else {
+                console.error("Canvg library not loaded.");
+                // Fallback: draw a circle?
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, TWO_PI);
+                ctx.strokeStyle = 'red'; // Indicate error
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+        } catch (e) {
+            console.error('Error rendering SVG for asteroid:', e, this.svgString);
+            // Optional: Draw fallback shape on error
             ctx.beginPath();
             ctx.arc(0, 0, this.radius, 0, TWO_PI);
-            ctx.strokeStyle = 'gray'; // Indicate fallback with gray color
+            ctx.strokeStyle = 'red';
             ctx.lineWidth = 1;
             ctx.stroke();
+        } finally {
+           this.isRendering = false; // Reset flag
+           ctx.restore();
         }
-        
-        ctx.restore();
     }
 
     update() {
@@ -715,7 +707,7 @@ function drawPlayer() {
     ctx.restore();
 }
 
-// --- Draw Help Screen (Separate function) ---
+// --- Draw Help Screen ---
 function drawHelpScreen() {
     // Draw semi-transparent background
     ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
@@ -755,26 +747,46 @@ function drawHelpScreen() {
 async function fetchLeaderboard() {
     isFetchingLeaderboard = true;
     leaderboardError = null;
-    // leaderboardData = null; // Don't clear immediately, keep old data while fetching
-    // Force redraw to show loading state on start screen
-    // if (!isGameStarted) drawStartScreen(); // Redraw start screen if visible
-
+    
+    console.log("Fetching leaderboard data...");
+    
     try {
-        const response = await fetch('/api/leaderboard');
+        // Add a timeout to the fetch to prevent long hangs
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+        
+        const response = await fetch('/api/leaderboard', {
+            signal: controller.signal,
+            cache: 'no-store', // Prevent caching issues
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        // Clear the timeout
+        clearTimeout(timeoutId);
+        
         if (!response.ok) {
+            console.warn(`Leaderboard API returned error status: ${response.status}`);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        leaderboardData = await response.json();
+        
+        const data = await response.json();
+        console.log("Leaderboard data received:", data.length ? `${data.length} entries` : "Empty array");
+        
+        // Debug the first entry if available
+        if (data.length > 0) {
+            console.log("First entry:", JSON.stringify(data[0]));
+        }
+        
+        leaderboardData = data;
     } catch (error) {
         console.error("Failed to fetch leaderboard:", error);
         leaderboardError = error.message;
-        // leaderboardData = []; // Keep old data on error? Or clear?
     } finally {
         isFetchingLeaderboard = false;
-        // Force redraw to show data or error on start screen
-        // if (!isGameStarted) drawStartScreen(); // Redraw start screen if visible
+        console.log("Leaderboard fetch completed. Success:", !leaderboardError);
     }
-    // No explicit redraw here, relies on updateGame loop calling drawStartScreen
 }
 
 // --- Toggle Leaderboard Visibility ---
@@ -919,32 +931,17 @@ function startGame() {
     level = 1;
 
     // --- Increment Global Games Played Count ---
-    // Add a timeout to prevent long fetch operations
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3-second timeout
-    
-    fetch('/api/incrementGamesPlayed', { 
-        method: 'POST',
-        signal: controller.signal,
-        cache: 'no-store'
-    })
+    fetch('/api/incrementGamesPlayed', { method: 'POST' })
         .then(response => {
-            clearTimeout(timeoutId);
             if (!response.ok) {
-                console.error(`Failed to increment games played count on server. Status: ${response.status}`);
-                throw new Error(`HTTP error! status: ${response.status}`);
+                console.error('Failed to increment games played count on server.');
             } else {
                 console.log('Successfully triggered server-side games played increment.');
                 // Optionally parse response if needed: response.json().then(data => console.log(data));
             }
         })
         .catch(error => {
-            if (error.name === 'AbortError') {
-                console.error("API request to increment games count timed out after 3 seconds");
-            } else {
-                console.error('Network error trying to increment games played count:', error);
-            }
-            // Game continues regardless of counter increment success
+            console.error('Network error trying to increment games played count:', error);
         });
     // Note: We don't wait for this fetch to finish before starting the game.
     // We also don't update the local gamesPlayedCount here, it will be fetched next time.
@@ -965,63 +962,30 @@ function startGame() {
 function initGame() {
     console.log("Initializing game...");
 
+    // Fetch GLOBAL games played count
+    fetchGamesPlayed();
+
+    // Fetch leaderboard data right away
+    fetchLeaderboard();
+
     // Set canvas dimensions
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    resizeCanvas();
 
-    // Add window resize event listener
-    window.addEventListener('resize', resizeCanvas);
+    // Reset core game state variables
+    score = 0;
+    lives = 3;
+    level = 1;
+    isGameStarted = false;
+    isHelpScreenVisible = false;
 
-    // Preload images before initializing game
-    preloadImages(() => {
-        console.log("Images loaded, initializing game...");
-        
-        // Reset core game state variables
-        score = 0;
-        lives = 3;
-        level = 1;
-        isGameStarted = false;
-        isHelpScreenVisible = false;
-
-        // Reset player to center of canvas
-        player.x = canvas.width / 2;
-        player.y = canvas.height / 2;
-        player.speed = 0;
-        player.angle = -Math.PI / 2;
-        
-        bullets = [];
-        asteroids = [];
-        
-        // Show start screen now that everything is loaded
-        drawStartScreen();
-        
-        // Fetch API data in the background - don't block game start
-        Promise.allSettled([
-            // Wrap in additional try-catch to ensure any errors don't affect the game
-            (async () => {
-                try {
-                    await fetchGamesPlayed();
-                } catch (err) {
-                    console.error("Failed to fetch games played:", err);
-                    // Game will still work with default value (0)
-                }
-            })(),
-            
-            (async () => {
-                try {
-                    await fetchLeaderboard();
-                } catch (err) {
-                    console.error("Failed to fetch leaderboard:", err);
-                    // Game will still work with empty leaderboard
-                }
-            })()
-        ]).then(() => {
-            // Optionally redraw start screen after data is loaded
-            if (!isGameStarted) {
-                drawStartScreen();
-            }
-        });
-    });
+    // Reset player to center of canvas
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+    player.speed = 0;
+    player.angle = -Math.PI / 2;
+    
+    bullets = [];
+    asteroids = [];
 }
 
 // --- Level Handling ---
@@ -1081,9 +1045,8 @@ function toggleHelpScreen() {
     // }
 }
 
-// --- Start Game Initialization ---
-initGame();
-requestAnimationFrame(updateGame);
+// --- Initialize and Start Loop --- 
+
 
 function updateAsteroids() {
     for (let i = asteroids.length - 1; i >= 0; i--) {
@@ -1177,59 +1140,25 @@ function handlePlayerCollision() {
 async function fetchGamesPlayed() {
     console.log("Fetching global games played count...");
     try {
-        // Add a timeout to the fetch to prevent long hangs if the API is unresponsive
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3-second timeout
-        
-        const response = await fetch('/api/gamesPlayed', {
-            signal: controller.signal,
-            // Add cache: 'no-store' to prevent caching issues
-            cache: 'no-store'
-        });
-        
-        // Clear the timeout
-        clearTimeout(timeoutId);
-        
+        const response = await fetch('/api/gamesPlayed');
         if (!response.ok) {
-            console.warn(`API returned error status: ${response.status}`);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
         const data = await response.json();
         if (typeof data.count === 'number') {
             gamesPlayedCount = data.count;
             console.log(`Global games played count: ${gamesPlayedCount}`);
         } else {
             console.warn('Received invalid count from API.');
-            gamesPlayedCount = 50; // Default fallback value of 50
+            gamesPlayedCount = 0; // Fallback
         }
     } catch (error) {
-        // More detailed error logging
-        if (error.name === 'AbortError') {
-            console.error("API request timed out after 3 seconds");
-        } else {
-            console.error("Failed to fetch games played count:", error);
-        }
-        
-        // Use 50 as the fallback value
-        gamesPlayedCount = 50;
-        
-        // Continue the game despite the error
-        console.log("Using fallback games played count: 50");
+        console.error("Failed to fetch games played count:", error);
+        gamesPlayedCount = 0; // Fallback on error
     }
+    // No explicit redraw needed here, drawStartScreen will use the updated value
 }
 
-// Add resize canvas function that was removed
-function resizeCanvas() {
-    console.log("Resizing canvas to fit window...");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    
-    // Redraw the appropriate screen based on game state
-    if (!isGameStarted) {
-        drawStartScreen();
-    } else if (isHelpScreenVisible) {
-        drawHelpScreen();
-    }
-}
+initGame();
+requestAnimationFrame(updateGame);
 

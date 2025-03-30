@@ -1,8 +1,7 @@
 {
   "dependencies": {
     "@vercel/analytics": "^1.5.0",
-    "@vercel/kv": "^3.0.0",
-    "next": "^14.1.0"
+    "@vercel/kv": "^3.0.0"
   },
   "name": "dinostroids",
   "version": "1.0.0",
