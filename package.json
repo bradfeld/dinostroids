@@ -1,15 +1,17 @@
 {
   "dependencies": {
     "@vercel/analytics": "^1.5.0",
-    "@vercel/kv": "^3.0.0"
+    "@vercel/kv": "^3.0.0",
+    "next": "^14.1.0"
   },
   "name": "dinostroids",
   "version": "1.0.0",
   "description": "A classic arcade-style shooter game built with HTML Canvas and pure JavaScript, done entirely with vibe coding in Cursor.",
-  "main": "script.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "esbuild script.js --bundle --outfile=bundle.js --format=esm --minify"
+    "build": "esbuild src/index.js --bundle --outfile=bundle.js --format=esm --minify",
+    "dev": "esbuild src/index.js --bundle --outfile=bundle.js --format=esm --watch --servedir=."
   },
   "repository": {
     "type": "git",
