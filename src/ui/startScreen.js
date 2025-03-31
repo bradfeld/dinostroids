@@ -70,6 +70,7 @@ export function drawStartScreen(ctx, currentDifficulty, leaderboardData = [], ga
     
     // Draw leaderboard if data is available
     if (leaderboardData && leaderboardData.length > 0) {
-        drawLeaderboard(width - 200, 50, leaderboardData, ctx);
+        // Center the leaderboard horizontally on the screen
+        drawLeaderboard(width / 2, 50, leaderboardData, ctx);
     }
 } 
