@@ -373,15 +373,18 @@ function handleGameOver() {
     isGameOver = true;
     gameRunning = false;
     
+    // Calculate game time (in milliseconds)
+    const gameTime = currentTime;
+    
     // Cancel the animation frame
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
     }
     
-    // Draw game over screen
+    // Draw game over screen with level and time information
     const { ctx } = getCanvas();
-    drawGameOver(ctx, score, leaderboardData);
+    drawGameOver(ctx, score, leaderboardData, level, gameTime);
     
     // Check if this is a high score
     const isHighScore = isNewHighScore();
@@ -391,13 +394,14 @@ function handleGameOver() {
         // Set up the score submission handler
         onSubmitScore(async (initials) => {
             try {
-                await submitScore(initials, score);
+                // Submit score with level and time information
+                await submitScore(initials, score, gameTime, level, currentDifficulty);
                 
                 // Refresh leaderboard after submitting
                 leaderboardData = await fetchLeaderboard();
                 
-                // Draw updated game over screen
-                drawGameOver(ctx, score, leaderboardData);
+                // Draw updated game over screen with level and time
+                drawGameOver(ctx, score, leaderboardData, level, gameTime);
             } catch (error) {
                 console.error("Failed to submit score:", error);
             }
@@ -464,7 +468,7 @@ export function initGame() {
             }
         } else if (isGameOver) {
             const { ctx } = getCanvas();
-            drawGameOver(ctx, score, leaderboardData);
+            drawGameOver(ctx, score, leaderboardData, level, currentTime);
         }
     });
     
@@ -577,18 +581,22 @@ function drawHUD() {
 function drawGameOverScreen() {
     const { ctx } = getCanvas();
     
+    // Format time for display
+    const formattedTime = formatTime(currentTime);
+    
     // Draw title
     ctx.fillStyle = 'white';
     ctx.font = 'bold 48px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('GAME OVER', ctx.canvas.width / 2, 80);
     
-    // Draw score and time
+    // Draw score, level, time and difficulty
     ctx.font = '24px Arial';
     ctx.textAlign = 'center';
     ctx.fillText(`Score: ${score}`, ctx.canvas.width / 2, 150);
-    ctx.fillText(`Time: ${formatTime(currentTime)}`, ctx.canvas.width / 2, 190);
-    ctx.fillText(`Difficulty: ${currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}`, ctx.canvas.width / 2, 230);
+    ctx.fillText(`Level: ${level}`, ctx.canvas.width / 2, 190);
+    ctx.fillText(`Time: ${formattedTime}`, ctx.canvas.width / 2, 230);
+    ctx.fillText(`Difficulty: ${currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}`, ctx.canvas.width / 2, 270);
     
     // Draw instructions to restart
     ctx.font = '24px Arial';

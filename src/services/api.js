@@ -132,14 +132,15 @@ export async function fetchLeaderboard() {
 
 /**
  * Submit a score to the leaderboard
+ * @param {string} initials - Player initials (1-3 characters)
  * @param {number} score - The player's score
  * @param {number} time - Time in milliseconds the game lasted
+ * @param {number} level - The level reached in the game
  * @param {string} difficulty - Difficulty level ('easy', 'medium', 'difficult')
- * @param {string} initials - Player initials (optional, 1-3 characters)
  * @returns {Promise<boolean>} True if submission was successful
  */
-export async function submitScore(score, time, difficulty = 'medium', initials = '') {
-    console.log(`Submitting score: ${score} points, ${time}ms, ${difficulty} difficulty`);
+export async function submitScore(initials, score, time = 0, level = 1, difficulty = 'medium') {
+    console.log(`Submitting score: ${score} points, Level ${level}, ${time}ms, ${difficulty} difficulty`);
     try {
         const response = await fetch('/api/leaderboard', {
             method: 'POST',
@@ -150,7 +151,9 @@ export async function submitScore(score, time, difficulty = 'medium', initials =
                 initials, 
                 score, 
                 time,
-                difficulty 
+                level,
+                difficulty,
+                date: new Date().toISOString()
             }),
         });
 

@@ -23,66 +23,95 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
     const maxVisibleScores = Math.min(
         top20Scores.length, 
         20, // Never show more than 20
-        Math.floor((ctx.canvas.height - y - 50) / 25) // Based on available space
+        Math.floor((ctx.canvas.height - y - 50) / 30) // Increased row height for more data
     );
     
     // Draw semi-transparent background
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(
-        x - 200, 
+        x - 250, 
         y, 
-        400, 
-        maxVisibleScores * 25 + 50
+        500, // Wider to accommodate more columns
+        maxVisibleScores * 30 + 60
     );
     
     // Draw title
     ctx.fillStyle = 'white';
     ctx.font = 'bold 24px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('High Scores', x, y + 30);
+    ctx.fillText('LEADERBOARD', x, y + 30);
     
     // Draw column headers
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText('Rank', x - 180, y + 60);
-    ctx.fillText('Score', x - 130, y + 60);
-    ctx.fillText('Difficulty', x - 10, y + 60);
-    ctx.textAlign = 'right';
-    ctx.fillText('Date', x + 180, y + 60);
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'center';
+    
+    // Horizontal positions for each column
+    const rankX = x - 220;
+    const scoreX = x - 160;
+    const levelX = x - 80;
+    const initialsX = x;
+    const dateX = x + 100;
+    const timeX = x + 190;
+    
+    // Draw column headers
+    ctx.fillText('RANK', rankX, y + 55);
+    ctx.fillText('SCORE', scoreX, y + 55);
+    ctx.fillText('LEVEL', levelX, y + 55);
+    ctx.fillText('PLAYER', initialsX, y + 55);
+    ctx.fillText('DATE', dateX, y + 55);
+    ctx.fillText('TIME', timeX, y + 55);
+    
+    // Draw separator line
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.beginPath();
+    ctx.moveTo(x - 240, y + 60);
+    ctx.lineTo(x + 240, y + 60);
+    ctx.stroke();
     
     // Draw scores
     ctx.font = '16px Arial';
     for (let i = 0; i < maxVisibleScores; i++) {
         const score = top20Scores[i];
-        const yPos = y + 85 + (i * 25);
+        const yPos = y + 85 + (i * 30);
         
         // Highlight current score
         if (score.isCurrent) {
             ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
-            ctx.fillRect(x - 190, yPos - 15, 380, 20);
+            ctx.fillRect(x - 240, yPos - 15, 480, 20);
             ctx.fillStyle = 'white';
         }
         
         // Rank number
-        ctx.textAlign = 'left';
-        ctx.fillText(`${i + 1}.`, x - 180, yPos);
+        ctx.textAlign = 'center';
+        ctx.fillText(`${i + 1}`, rankX, yPos);
         
         // Score
-        ctx.fillText(`${score.score}`, x - 130, yPos);
+        ctx.fillText(`${score.score}`, scoreX, yPos);
         
-        // Difficulty (capitalize first letter)
-        const difficulty = score.difficulty || 'medium';
-        const displayDifficulty = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
-        ctx.fillText(displayDifficulty, x - 10, yPos);
+        // Level
+        ctx.fillText(`${score.level || '-'}`, levelX, yPos);
+        
+        // Initials
+        ctx.fillText(`${score.initials || '???'}`, initialsX, yPos);
         
         // Date (if available)
-        ctx.textAlign = 'right';
         if (score.date) {
             const date = new Date(score.date);
             const dateStr = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().substr(2)}`;
-            ctx.fillText(dateStr, x + 180, yPos);
+            ctx.fillText(dateStr, dateX, yPos);
         } else {
-            ctx.fillText('--/--/--', x + 180, yPos);
+            ctx.fillText('--/--/--', dateX, yPos);
+        }
+        
+        // Time (if available)
+        if (score.time) {
+            // Convert milliseconds to MM:SS format
+            const minutes = Math.floor(score.time / 60000);
+            const seconds = Math.floor((score.time % 60000) / 1000);
+            const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            ctx.fillText(timeStr, timeX, yPos);
+        } else {
+            ctx.fillText('--:--', timeX, yPos);
         }
     }
     
@@ -93,7 +122,7 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
         ctx.fillText(
             `Showing ${maxVisibleScores} of ${leaderboardData.length} scores`, 
             x, 
-            y + maxVisibleScores * 25 + 40
+            y + maxVisibleScores * 30 + 45
         );
     }
 }
@@ -117,9 +146,13 @@ export function formatLeaderboardEntry(entry) {
         }
     }
     
-    // Get difficulty with fallback to medium
-    const difficulty = entry.difficulty || 'medium';
-    const displayDifficulty = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+    // Format time if available
+    let timeStr = '';
+    if (entry.time) {
+        const minutes = Math.floor(entry.time / 60000);
+        const seconds = Math.floor((entry.time % 60000) / 1000);
+        timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
     
-    return `${entry.initials || '???'} - ${entry.score} (${displayDifficulty}) ${dateStr ? `${dateStr}` : ''}`;
+    return `${entry.initials || '???'} - ${entry.score} (L${entry.level || '-'}) ${dateStr}${timeStr ? ` ${timeStr}` : ''}`;
 } 

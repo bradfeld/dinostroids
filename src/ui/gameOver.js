@@ -19,8 +19,10 @@ let restartCallback = null;
  * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
  * @param {number} score - The player's final score
  * @param {Array} leaderboard - The current leaderboard data
+ * @param {number} level - The level reached
+ * @param {number} time - Time played in milliseconds
  */
-export function drawGameOver(ctx, score, leaderboard = []) {
+export function drawGameOver(ctx, score, leaderboard = [], level = 1, time = 0) {
     const { width, height } = getDimensions();
     
     // Clear canvas with dark background
@@ -32,23 +34,32 @@ export function drawGameOver(ctx, score, leaderboard = []) {
     ctx.textAlign = 'center';
     ctx.fillText('GAME OVER', width / 2, height / 4);
     
-    // Score display
+    // Format time
+    const minutes = Math.floor(time / 60000);
+    const seconds = Math.floor((time % 60000) / 1000);
+    const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Score and stats display
     ctx.font = '32px Arial';
     ctx.fillText(`Score: ${score}`, width / 2, height / 4 + 60);
+    
+    // Show level and time
+    ctx.font = '24px Arial';
+    ctx.fillText(`Level: ${level}  Time: ${timeStr}`, width / 2, height / 4 + 95);
     
     // Enter initials prompt if high score
     const isHighScore = isNewHighScore(score, leaderboard);
     
     if (isHighScore) {
         ctx.font = '24px Arial';
-        ctx.fillText('New High Score!', width / 2, height / 4 + 100);
-        ctx.fillText('Enter your initials:', width / 2, height / 4 + 140);
+        ctx.fillText('New High Score!', width / 2, height / 4 + 130);
+        ctx.fillText('Enter your initials:', width / 2, height / 4 + 165);
         
         // Draw initials input box
         const boxWidth = 120;
         const boxHeight = 40;
         const boxX = width / 2 - boxWidth / 2;
-        const boxY = height / 4 + 160;
+        const boxY = height / 4 + 180;
         
         // Draw box
         ctx.strokeStyle = 'white';
@@ -67,7 +78,7 @@ export function drawGameOver(ctx, score, leaderboard = []) {
     } else {
         // Draw restart prompt
         ctx.font = '24px Arial';
-        ctx.fillText('Press RETURN to play again', width / 2, height / 4 + 120);
+        ctx.fillText('Press RETURN to play again', width / 2, height / 4 + 140);
     }
     
     // Display leaderboard if available
