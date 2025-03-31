@@ -7,7 +7,7 @@
 import { getDimensions } from '../canvas.js';
 import { ASTEROID_SETTINGS, DIFFICULTY_SETTINGS } from '../constants.js';
 import { getImageByKey } from '../services/images.js';
-import { randomFloatBetween, randomIntBetween } from '../utils.js';
+import { randomFloatBetween, randomInt } from '../utils.js';
 
 class Asteroid {
   /**
@@ -71,7 +71,7 @@ class Asteroid {
    */
   getRandomType() {
     const types = ['bront', 'steg', 'trex'];
-    return types[randomIntBetween(0, types.length - 1)];
+    return types[randomInt(0, types.length - 1)];
   }
   
   /**
