@@ -93,8 +93,8 @@ function isNewHighScore(score, leaderboard) {
     // Always treat a score as high score if there's no leaderboard data
     if (!leaderboard || leaderboard.length === 0) return true;
     
-    // If leaderboard has fewer than 10 entries, any score qualifies
-    if (leaderboard.length < 10) return true;
+    // If leaderboard has fewer than 20 entries, any score qualifies
+    if (leaderboard.length < 20) return true;
     
     // Check if score is higher than the lowest score on the leaderboard
     const sortedScores = [...leaderboard].sort((a, b) => b.score - a.score);

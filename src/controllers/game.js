@@ -480,12 +480,12 @@ function handleGameOver() {
 function isNewHighScore() {
     if (!leaderboardData || leaderboardData.length === 0) return true;
     
-    // If leaderboard has fewer than 10 entries, any score qualifies
-    if (leaderboardData.length < 10) return true;
+    // If leaderboard has fewer than 20 entries, any score qualifies
+    if (leaderboardData.length < 20) return true;
     
     // Check if score is higher than the lowest score
     const sortedLeaderboard = [...leaderboardData].sort((a, b) => b.score - a.score);
-    return score > sortedLeaderboard[Math.min(9, sortedLeaderboard.length - 1)].score;
+    return score > sortedLeaderboard[Math.min(19, sortedLeaderboard.length - 1)].score;
 }
 
 /**
