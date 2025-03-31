@@ -57,6 +57,19 @@ let playerLives;
 function showStartScreen() {
     const { ctx } = getCanvas();
     
+    console.log("Showing start screen");
+    
+    // Make sure game state is reset
+    isGameStarted = false;
+    isHelpScreenVisible = false;
+    gameRunning = false;
+    
+    // Clean up event handlers that might be left over
+    document.removeEventListener('keydown', handleGameOverKeyInput);
+    
+    // Reset input state for the start screen
+    setupInputHandlers();
+    
     // Clear the canvas
     clear('black');
     
@@ -65,13 +78,12 @@ function showStartScreen() {
 }
 
 /**
- * End the current game and go to the game over screen
+ * End the current game and go back to the start screen
  */
 function endGame() {
     console.log("Game ended by user (ESC key)");
     
-    // Set game over state but don't reset everything yet
-    // We need to preserve the score, level, and other data for the game over screen
+    // Reset game state
     isGameStarted = false;
     isGameOver = true;
     gameRunning = false;
@@ -82,30 +94,34 @@ function endGame() {
         animationFrameId = null;
     }
     
-    // Instead of going to start screen, call handleGameOver to properly show score
-    // and check for high score entry
-    handleGameOver();
+    // Clear entities
+    player = null;
+    asteroids = [];
+    bullets = [];
+    
+    // Show the start screen
+    showStartScreen();
 }
 
 /**
  * Draw the help screen
  */
 function drawHelpScreen() {
-    const { ctx, width, height } = getCanvas();
+    const { canvas, ctx } = getCanvas();
     
-    // Draw semi-transparent background
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.fillRect(0, 0, width, height);
+    // Clear the canvas
+    clear('black');
     
-    // Draw title
+    // Title
     ctx.fillStyle = 'white';
     ctx.font = 'bold 36px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('HOW TO PLAY', width / 2, 80);
+    ctx.fillText('HOW TO PLAY', canvas.width / 2, 100);
     
-    // Draw instructions
+    // Instructions
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'left';
     const instructions = [
-        '',
         'CONTROLS:',
         '• Arrow Keys: Move ship',
         '• Space: Fire',
@@ -115,44 +131,34 @@ function drawHelpScreen() {
         'OBJECTIVE:',
         '• Destroy all dinosaur asteroids',
         '• Avoid collisions',
-        '• Score as many points as possible',
-        '',
-        'DIFFICULTY:',
-        '• Press E: Easy mode',
-        '• Press M: Medium mode',
-        '• Press D: Difficult mode',
-        '',
-        'START GAME:',
-        '• Press RETURN to begin'
+        '• Score as many points as possible'
     ];
     
-    // Draw each instruction line
-    ctx.font = '18px Arial';
-    ctx.textAlign = 'left';
-    
-    const startY = 130;
-    const lineHeight = 24;
+    const startY = 150;
+    const lineHeight = 30;
     
     instructions.forEach((line, index) => {
-        ctx.fillText(line, width / 2 - 180, startY + index * lineHeight);
+        ctx.fillText(line, canvas.width / 4, startY + (index * lineHeight));
     });
     
-    // Draw back button
+    // Back button
+    ctx.font = '24px Arial';
     ctx.textAlign = 'center';
-    ctx.font = '20px Arial';
-    ctx.fillText('Press ? to return', width / 2, height - 50);
+    ctx.fillText('Press ? to return', canvas.width / 2, canvas.height - 50);
 }
 
 /**
  * Initialize input handlers
  */
 function setupInputHandlers() {
+    // First, clear any existing handlers from previous instances
+    cleanupInputHandlers();
+    
     onStart(() => {
-        if (!isHelpScreenVisible && !isGameStarted && !isGameOver) {
-            startGame();
-        } else if (isGameOver) {
-            // Reset game state for new game
-            isGameOver = false;
+        console.log("Start key pressed");
+        
+        if (!isHelpScreenVisible && !isGameStarted) {
+            // Start a new game if we're on the start screen
             startGame();
         }
     });
@@ -169,9 +175,20 @@ function setupInputHandlers() {
     onDifficulty((difficulty) => {
         if (!isGameStarted || isGameOver) {
             currentDifficulty = difficulty;
+            updateDifficultySettings();
             showStartScreen();
         }
     });
+}
+
+/**
+ * Clean up any existing input handlers to prevent duplicates
+ */
+function cleanupInputHandlers() {
+    onStart(null);
+    onHelp(null);
+    onEscape(null);
+    onDifficulty(null);
 }
 
 /**
@@ -187,7 +204,6 @@ function startGame() {
     
     // Reset game state
     score = 0;
-    currentTime = 0; // Reset game time
     
     // Apply settings based on current difficulty
     const difficultySettings = DIFFICULTY_SETTINGS[currentDifficulty];
@@ -253,9 +269,6 @@ function gameLoop(timestamp) {
         animationFrameId = requestAnimationFrame(gameLoop);
         return;
     }
-    
-    // Update total game time
-    currentTime += deltaTime * 1000; // Convert to milliseconds
     
     // Clear the canvas
     clear('black');
@@ -326,21 +339,16 @@ function gameLoop(timestamp) {
             
             if (player.isCollidingWith(asteroid)) {
                 // Player is hit
-                console.log('Player collision detected! Lives before:', lives);
                 player.destroy();
                 lives -= ASTEROID_SETTINGS.COLLISION_DAMAGE;
-                console.log('Lives after collision:', lives);
                 
                 if (lives <= 0) {
                     // Game over
-                    console.log('Game over due to no lives left');
                     handleGameOver();
                 } else {
                     // Respawn player after a delay
-                    console.log('Player will respawn in 1 second, current lives:', lives);
                     setTimeout(() => {
                         player.reset();
-                        console.log('Player respawned, destroyed status:', player.isDestroyed, 'invincible:', player.invincible);
                     }, 1000);
                 }
                 
@@ -421,14 +429,20 @@ function handleGameOver() {
         });
     }
     
+    // Add keyboard handler for game over screen
+    document.addEventListener('keydown', handleGameOverKeyInput);
+    
     // Set up the restart handler to return to start screen
     onRestart(() => {
+        // Remove the game over keyboard handler to prevent duplicates
+        document.removeEventListener('keydown', handleGameOverKeyInput);
+        
+        // Reset game over state
+        isGameOver = false;
+        
         // Don't start new game, just go to start screen
         showStartScreen();
     });
-    
-    // Add keyboard handler for game over screen
-    document.addEventListener('keydown', handleGameOverKeyInput);
 }
 
 /**
@@ -438,12 +452,12 @@ function handleGameOver() {
 function isNewHighScore() {
     if (!leaderboardData || leaderboardData.length === 0) return true;
     
-    // If leaderboard has fewer than 20 entries, any score qualifies
-    if (leaderboardData.length < 20) return true;
+    // If leaderboard has fewer than 10 entries, any score qualifies
+    if (leaderboardData.length < 10) return true;
     
-    // Check if score is higher than the lowest score in the top 20
+    // Check if score is higher than the lowest score
     const sortedLeaderboard = [...leaderboardData].sort((a, b) => b.score - a.score);
-    return score > sortedLeaderboard[19].score;
+    return score > sortedLeaderboard[Math.min(9, sortedLeaderboard.length - 1)].score;
 }
 
 /**
@@ -482,7 +496,7 @@ export function initGame() {
             }
         } else if (isGameOver) {
             const { ctx } = getCanvas();
-            drawGameOver(ctx, score, leaderboardData, level, currentTime);
+            drawGameOver(ctx, score, leaderboardData);
         }
     });
     
@@ -586,7 +600,9 @@ function drawHUD() {
     ctx.font = '24px Arial';
     ctx.fillText(`Lives: ${lives}`, 20, 90);
     
-    // Difficulty is no longer displayed during active gameplay
+    // Draw current difficulty
+    ctx.font = '24px Arial';
+    ctx.fillText(`Difficulty: ${currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}`, 20, 120);
 }
 
 /**
@@ -595,27 +611,26 @@ function drawHUD() {
 function drawGameOverScreen() {
     const { ctx } = getCanvas();
     
-    // Format time for display
-    const formattedTime = formatTime(currentTime);
-    
     // Draw title
     ctx.fillStyle = 'white';
     ctx.font = 'bold 48px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('GAME OVER', ctx.canvas.width / 2, 80);
     
-    // Draw score, level, time and difficulty
+    // Draw score and time
     ctx.font = '24px Arial';
     ctx.textAlign = 'center';
     ctx.fillText(`Score: ${score}`, ctx.canvas.width / 2, 150);
-    ctx.fillText(`Level: ${level}`, ctx.canvas.width / 2, 190);
-    ctx.fillText(`Time: ${formattedTime}`, ctx.canvas.width / 2, 230);
-    ctx.fillText(`Difficulty: ${currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}`, ctx.canvas.width / 2, 270);
+    ctx.fillText(`Time: ${formatTime(currentTime)}`, ctx.canvas.width / 2, 190);
+    ctx.fillText(`Difficulty: ${currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}`, ctx.canvas.width / 2, 230);
     
-    // Draw instructions to return to start screen
+    // Draw instructions to restart
     ctx.font = '24px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('Press RETURN to return to start screen', ctx.canvas.width / 2, ctx.canvas.height - 100);
+    ctx.fillText('Press SPACE to play again', ctx.canvas.width / 2, ctx.canvas.height - 100);
+    
+    // Draw leaderboard
+    drawLeaderboard(ctx.canvas.width / 2, ctx.canvas.height - 80);
 }
 
 /**
@@ -638,11 +653,11 @@ function getAsteroidSpeed(size) {
 }
 
 /**
- * Update the game HUD with current information
+ * Update the game HUD with difficulty information
  */
 function updateHUD() {
     const { ctx } = getCanvas();
     
-    // Draw game status with current settings (difficulty is passed but not displayed)
+    // Draw game status with current settings
     drawGameStatus(ctx, score, lives, level, currentDifficulty);
 } 

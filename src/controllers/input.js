@@ -77,7 +77,7 @@ export function isKeyPressed(code) {
 
 /**
  * Register a callback for when the start button (Enter) is pressed
- * @param {Function} callback - The function to call when start is pressed
+ * @param {Function|null} callback - The function to call when start is pressed, or null to clear
  */
 export function onStart(callback) {
     onStartCallback = callback;
@@ -85,7 +85,7 @@ export function onStart(callback) {
 
 /**
  * Register a callback for when the help button (?) is pressed
- * @param {Function} callback - The function to call when help is pressed
+ * @param {Function|null} callback - The function to call when help is pressed, or null to clear
  */
 export function onHelp(callback) {
     onHelpCallback = callback;
@@ -93,7 +93,7 @@ export function onHelp(callback) {
 
 /**
  * Register a callback for when the escape key is pressed
- * @param {Function} callback - The function to call when escape is pressed
+ * @param {Function|null} callback - The function to call when escape is pressed, or null to clear
  */
 export function onEscape(callback) {
     onEscapeCallback = callback;
@@ -101,7 +101,7 @@ export function onEscape(callback) {
 
 /**
  * Register a callback for when a difficulty key is pressed
- * @param {Function} callback - The function to call with the selected difficulty
+ * @param {Function|null} callback - The function to call with the selected difficulty, or null to clear
  */
 export function onDifficulty(callback) {
     onDifficultyCallback = callback;

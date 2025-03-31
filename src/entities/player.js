@@ -5,15 +5,11 @@
  */
 
 import { getDimensions } from '../canvas.js';
-import { PLAYER_SETTINGS, GAME_SETTINGS, DIFFICULTY_SETTINGS } from '../constants.js';
+import { PLAYER_SETTINGS, GAME_SETTINGS } from '../constants.js';
 import { isKeyPressed } from '../controllers/input.js';
 
 class Player {
-  /**
-   * Create a new player ship
-   * @param {string} difficulty - Optional difficulty setting ('easy', 'medium', 'difficult')
-   */
-  constructor(difficulty = 'medium') {
+  constructor() {
     const { width, height } = getDimensions();
     
     // Position in the center of the screen
@@ -23,21 +19,18 @@ class Player {
     // Size and collision radius
     this.radius = PLAYER_SETTINGS.RADIUS;
     
-    // Apply difficulty-specific settings
-    const difficultySettings = DIFFICULTY_SETTINGS[difficulty];
-    
     // Movement properties
     this.rotation = 0; // Rotation in radians
     this.thrustPower = 0; // Current thrust
     this.velocityX = 0;
     this.velocityY = 0;
     this.rotationSpeed = PLAYER_SETTINGS.ROTATION_SPEED;
-    this.acceleration = difficultySettings.playerAcceleration;
+    this.acceleration = PLAYER_SETTINGS.ACCELERATION;
     this.friction = PLAYER_SETTINGS.FRICTION;
     
     // Weapon properties
     this.canShoot = true;
-    this.shootCooldown = difficultySettings.shootCooldown;
+    this.shootCooldown = PLAYER_SETTINGS.SHOOT_COOLDOWN;
     this.lastShot = 0;
     
     // State
@@ -49,7 +42,7 @@ class Player {
   
   /**
    * Update the player's state
-   * @param {number} deltaTime - Time since last update in seconds
+   * @param {number} deltaTime - Time since last update in milliseconds
    * @returns {Object|null} - New bullet or null
    */
   update(deltaTime) {
@@ -58,19 +51,9 @@ class Player {
     
     // Handle invincibility timer
     if (this.invincible) {
-      // Log invincibility time every second for debugging
-      if (Math.floor(this.invincibilityTime / 1000) !== Math.floor((this.invincibilityTime - deltaTime * 1000) / 1000)) {
-        console.log(`Invincibility remaining: ${(this.invincibilityTime / 1000).toFixed(1)}s, deltaTime: ${deltaTime.toFixed(3)}s`);
-      }
-      
-      // deltaTime is in seconds, but invincibilityTime is in milliseconds
-      this.invincibilityTime -= deltaTime * 1000;
-      
-      // Make sure invincibility turns off when timer expires
+      this.invincibilityTime -= deltaTime;
       if (this.invincibilityTime <= 0) {
-        console.log('Invincibility ended, setting invincible to false');
         this.invincible = false;
-        this.invincibilityTime = 0;
       }
     }
     
@@ -129,22 +112,6 @@ class Player {
     }
     
     return newBullet;
-  }
-  
-  /**
-   * Set the player's shoot cooldown
-   * @param {number} cooldown - New cooldown time in milliseconds
-   */
-  setShootCooldown(cooldown) {
-    this.shootCooldown = cooldown;
-  }
-  
-  /**
-   * Set the player's acceleration
-   * @param {number} acceleration - New acceleration value
-   */
-  setAcceleration(acceleration) {
-    this.acceleration = acceleration;
   }
   
   /**
@@ -215,10 +182,7 @@ class Player {
     
     // Make player temporarily invincible
     this.invincible = true;
-    
-    // Ensure we're using the correct invincibility time value
     this.invincibilityTime = PLAYER_SETTINGS.INVINCIBILITY_TIME;
-    console.log(`Player reset with ${this.invincibilityTime}ms invincibility time`);
   }
   
   /**
@@ -227,24 +191,13 @@ class Player {
    * @returns {boolean} Whether a collision occurred
    */
   isCollidingWith(entity) {
-    // Skip collision check if destroyed or invincible
-    if (this.isDestroyed) {
-      return false;
-    }
+    if (this.isDestroyed || this.invincible) return false;
     
-    // Check actual collision
     const dx = this.x - entity.x;
     const dy = this.y - entity.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const isColliding = distance < this.radius + entity.radius;
     
-    // If we are colliding but invincible, log it
-    if (isColliding && this.invincible) {
-      console.log('Collision ignored due to invincibility');
-      return false;
-    }
-    
-    return isColliding;
+    return distance < this.radius + entity.radius;
   }
 }
 
