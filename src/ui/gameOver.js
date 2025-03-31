@@ -19,8 +19,10 @@ let restartCallback = null;
  * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
  * @param {number} score - The player's final score
  * @param {Array} leaderboard - The current leaderboard data
+ * @param {number} level - The level reached (optional)
+ * @param {number} gameTime - The game time in milliseconds (optional)
  */
-export function drawGameOver(ctx, score, leaderboard = []) {
+export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime = 0) {
     const { width, height } = getDimensions();
     
     // Clear canvas with dark background
@@ -79,41 +81,6 @@ export function drawGameOver(ctx, score, leaderboard = []) {
         ctx.font = '24px Arial';
         ctx.fillText('Press SPACE to play again', width / 2, height / 4 + 120);
     }
-    
-    // Display leaderboard if available
-    if (leaderboard && leaderboard.length > 0) {
-        drawLeaderboard(ctx, leaderboard, width, height);
-    }
-}
-
-/**
- * Draw the leaderboard section
- * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
- * @param {Array} leaderboard - The leaderboard data
- * @param {number} width - Canvas width
- * @param {number} height - Canvas height
- */
-function drawLeaderboard(ctx, leaderboard, width, height) {
-    // Leaderboard title
-    ctx.font = 'bold 32px Arial';
-    ctx.fillText('TOP SCORES', width / 2, height / 2);
-    
-    // Sort leaderboard by score
-    const sortedLeaderboard = [...leaderboard].sort((a, b) => b.score - a.score).slice(0, 5);
-    
-    // Leaderboard entries
-    ctx.font = '20px Arial';
-    ctx.textAlign = 'left';
-    const startX = width / 2 - 100;
-    
-    sortedLeaderboard.forEach((entry, index) => {
-        const y = height / 2 + 40 + (index * 30);
-        ctx.fillText(`${index + 1}. ${entry.initials}`, startX, y);
-        
-        ctx.textAlign = 'right';
-        ctx.fillText(`${entry.score}`, startX + 200, y);
-        ctx.textAlign = 'left';
-    });
 }
 
 /**
