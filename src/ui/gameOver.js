@@ -13,6 +13,8 @@ let currentInitialIndex = 0;
 let inputActive = false;
 let submitCallback = null;
 let restartCallback = null;
+let lastBlinkTime = 0;
+let showCursor = true;
 
 /**
  * Draw the game over screen
@@ -51,6 +53,12 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, time = 0) 
     const isHighScore = isNewHighScore(score, leaderboard);
     
     if (isHighScore) {
+        // Blink cursor every 500ms for active field
+        if (Date.now() - lastBlinkTime > 500) {
+            showCursor = !showCursor;
+            lastBlinkTime = Date.now();
+        }
+        
         ctx.font = '24px Arial';
         ctx.fillText('New High Score!', width / 2, height / 4 + 130);
         ctx.fillText('Enter your initials:', width / 2, height / 4 + 165);
@@ -69,24 +77,22 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, time = 0) 
             ctx.lineWidth = currentInitialIndex === i && inputActive ? 3 : 2;
             ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
             
-            // Draw initial letter or cursor
+            // Draw initial letter with blinking cursor for active field
             ctx.fillStyle = 'white';
             ctx.font = '32px Arial';
             ctx.textAlign = 'center';
             
-            let displayChar = initials[i];
+            let displayText = initials[i];
             
-            // If this is the current field and it's empty, show a cursor
-            if (currentInitialIndex === i && inputActive && !displayChar) {
-                displayChar = '_';
-            } else if (!displayChar) {
-                displayChar = ' ';  // Empty space for unfilled fields
+            // Add blinking cursor to current field if it's empty or at the end if it has content
+            if (currentInitialIndex === i && inputActive && showCursor) {
+                displayText = displayText || '_';
             }
             
-            ctx.fillText(displayChar, boxX + boxWidth / 2, boxY + 30);
+            ctx.fillText(displayText, boxX + boxWidth / 2, boxY + 30);
         }
         
-        // Draw submit info if all initials are filled
+        // Draw submit info if all initials fields have content
         if (initials[0] && initials[1] && initials[2]) {
             ctx.font = '24px Arial';
             ctx.fillText('Press ENTER to submit', width / 2, boxY + 80);
@@ -95,6 +101,11 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, time = 0) 
         // Draw restart prompt
         ctx.font = '24px Arial';
         ctx.fillText('Press RETURN to return to start screen', width / 2, height / 2 + 50);
+    }
+    
+    // Request animation frame to keep cursor blinking
+    if (inputActive) {
+        requestAnimationFrame(() => drawGameOver(ctx, score, leaderboard, level, time));
     }
 }
 
@@ -135,7 +146,7 @@ export function handleGameOverKeyInput(event) {
                 currentInitialIndex--;
             }
         } else if (event.key === 'Enter' && initials[0] && initials[1] && initials[2]) {
-            // Submit score when all fields are filled
+            // Submit score when all fields have content
             if (submitCallback) {
                 submitCallback(initials.join(''));
             }
@@ -175,6 +186,8 @@ export function activateInput() {
     initials = ['', '', ''];
     currentInitialIndex = 0;
     inputActive = true;
+    lastBlinkTime = Date.now();
+    showCursor = true;
 }
 
 /**

@@ -8,21 +8,18 @@ import { getDimensions } from '../canvas.js';
 
 /**
  * Draw scores
- * @param {CanvasRenderingContext2D} ctx - Canvas context
- * @param {Array} top20Scores - Array of top 20 scores
+ * @param {Array} scores - Array of score objects
+ * @param {number} x - X-coordinate center
+ * @param {number} y - Y-coordinate start
  * @param {number} maxVisibleScores - Maximum number of scores to display
- * @param {number} x - X position for the leaderboard center
- * @param {number} y - Y position for the leaderboard top
- * @param {Object} columnPositions - X positions for each column
+ * @param {Object} positions - Object with x-positions for each column
+ * @param {CanvasRenderingContext2D} ctx - Canvas context
  */
-function drawScoreRows(ctx, top20Scores, maxVisibleScores, x, y, columnPositions) {
-    const { rankX, scoreX, levelX, initialsX, dateX, timeX } = columnPositions;
-    
+function drawScores(scores, x, y, maxVisibleScores, positions, ctx) {
     ctx.font = '16px Arial';
+    
     for (let i = 0; i < maxVisibleScores; i++) {
-        const score = top20Scores[i];
-        if (!score) continue; // Skip if no score entry exists
-        
+        const score = scores[i];
         const yPos = y + 85 + (i * 30);
         
         // Highlight current score
@@ -34,43 +31,72 @@ function drawScoreRows(ctx, top20Scores, maxVisibleScores, x, y, columnPositions
         
         // Rank number
         ctx.textAlign = 'center';
-        ctx.fillText(`${i + 1}`, rankX, yPos);
+        ctx.fillText(`${i + 1}`, positions.rankX, yPos);
         
         // Score
-        ctx.fillText(`${score.score}`, scoreX, yPos);
+        ctx.fillText(`${score.score}`, positions.scoreX, yPos);
         
         // Level
-        ctx.fillText(`${score.level || '1'}`, levelX, yPos);
+        ctx.fillText(`${score.level || '-'}`, positions.levelX, yPos);
         
         // Initials
-        ctx.fillText(`${score.initials || '???'}`, initialsX, yPos);
+        ctx.fillText(`${score.initials || '???'}`, positions.initialsX, yPos);
         
-        // Date (if available)
-        let dateStr = '--/--/--';
-        if (score.date) {
-            try {
-                const date = new Date(score.date);
-                if (!isNaN(date.getTime())) {
-                    dateStr = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear().toString().substr(2)}`;
-                }
-            } catch (e) {
-                console.error('Error parsing date:', e);
-            }
-        }
-        ctx.fillText(dateStr, dateX, yPos);
+        // Format and display date
+        const dateStr = formatDate(score);
+        ctx.fillText(dateStr, positions.dateX, yPos);
         
-        // Time (if available)
-        let timeStr = '--:--';
-        if (score.time && !isNaN(score.time)) {
-            try {
-                const minutes = Math.floor(score.time / 60000);
-                const seconds = Math.floor((score.time % 60000) / 1000);
-                timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            } catch (e) {
-                console.error('Error formatting time:', e);
-            }
+        // Format and display time
+        const timeStr = formatTime(score.time);
+        ctx.fillText(timeStr, positions.timeX, yPos);
+    }
+}
+
+/**
+ * Format date from score entry
+ * @param {Object} score - The score object
+ * @returns {string} Formatted date string
+ */
+function formatDate(score) {
+    // Try different possible date fields
+    const dateValue = score.date || score.createdAt || score.timestamp;
+    
+    if (!dateValue) {
+        return '--/--/--';
+    }
+    
+    try {
+        const date = new Date(dateValue);
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            return '--/--/--';
         }
-        ctx.fillText(timeStr, timeX, yPos);
+        
+        return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear().toString().substr(2)}`;
+    } catch (e) {
+        console.warn('Error formatting date:', e);
+        return '--/--/--';
+    }
+}
+
+/**
+ * Format time from milliseconds
+ * @param {number} ms - Time in milliseconds
+ * @returns {string} Formatted time string
+ */
+function formatTime(ms) {
+    if (!ms || typeof ms !== 'number') {
+        return '--:--';
+    }
+    
+    try {
+        const minutes = Math.floor(ms / 60000);
+        const seconds = Math.floor((ms % 60000) / 1000);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    } catch (e) {
+        console.warn('Error formatting time:', e);
+        return '--:--';
     }
 }
 
@@ -109,8 +135,12 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
     ctx.textAlign = 'center';
     ctx.fillText('LEADERBOARD', x, y + 30);
     
+    // Draw column headers
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'center';
+    
     // Horizontal positions for each column
-    const columnPositions = {
+    const positions = {
         rankX: x - 220,
         scoreX: x - 160,
         levelX: x - 80,
@@ -120,7 +150,12 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
     };
     
     // Draw column headers
-    drawColumnHeaders(ctx, y, columnPositions);
+    ctx.fillText('RANK', positions.rankX, y + 55);
+    ctx.fillText('SCORE', positions.scoreX, y + 55);
+    ctx.fillText('LEVEL', positions.levelX, y + 55);
+    ctx.fillText('PLAYER', positions.initialsX, y + 55);
+    ctx.fillText('DATE', positions.dateX, y + 55);
+    ctx.fillText('TIME', positions.timeX, y + 55);
     
     // Draw separator line
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
@@ -130,7 +165,7 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
     ctx.stroke();
     
     // Draw scores
-    drawScoreRows(ctx, top20Scores, maxVisibleScores, x, y, columnPositions);
+    drawScores(top20Scores, x, y, maxVisibleScores, positions, ctx);
     
     // Show total count if there are more scores than visible
     if (leaderboardData.length > maxVisibleScores) {
@@ -145,27 +180,6 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
 }
 
 /**
- * Draw column headers
- * @param {CanvasRenderingContext2D} ctx - Canvas context
- * @param {number} y - Y position for the headers
- * @param {Object} positions - X positions for each column
- */
-function drawColumnHeaders(ctx, y, positions) {
-    const { rankX, scoreX, levelX, initialsX, dateX, timeX } = positions;
-    
-    ctx.font = '14px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'white';
-    
-    ctx.fillText('RANK', rankX, y + 55);
-    ctx.fillText('SCORE', scoreX, y + 55);
-    ctx.fillText('LEVEL', levelX, y + 55);
-    ctx.fillText('PLAYER', initialsX, y + 55);
-    ctx.fillText('DATE', dateX, y + 55);
-    ctx.fillText('TIME', timeX, y + 55);
-}
-
-/**
  * Format a leaderboard entry for display
  * @param {Object} entry - Leaderboard entry
  * @returns {string} Formatted entry
@@ -173,34 +187,11 @@ function drawColumnHeaders(ctx, y, positions) {
 export function formatLeaderboardEntry(entry) {
     if (!entry) return '';
     
-    // Format date if available
-    let dateStr = '';
-    if (entry.date || entry.createdAt) {
-        try {
-            const date = new Date(entry.date || entry.createdAt);
-            if (!isNaN(date.getTime())) {
-                dateStr = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
-            }
-        } catch (e) {
-            // Ignore date parsing errors
-            console.error('Error parsing date in formatLeaderboardEntry:', e);
-        }
-    }
+    // Format date
+    const dateStr = formatDate(entry).split('/').slice(0, 2).join('/'); // Just month/day
     
-    // Format time if available
-    let timeStr = '';
-    if (entry.time && !isNaN(entry.time)) {
-        try {
-            const minutes = Math.floor(entry.time / 60000);
-            const seconds = Math.floor((entry.time % 60000) / 1000);
-            timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        } catch (e) {
-            // Ignore time formatting errors
-            console.error('Error formatting time in formatLeaderboardEntry:', e);
-        }
-    }
+    // Format time
+    const timeStr = formatTime(entry.time);
     
-    const level = entry.level || '1';
-    
-    return `${entry.initials || '???'} - ${entry.score} (L${level}) ${dateStr}${timeStr ? ` ${timeStr}` : ''}`;
+    return `${entry.initials || '???'} - ${entry.score} (L${entry.level || '-'}) ${dateStr}${timeStr !== '--:--' ? ` ${timeStr}` : ''}`;
 } 
