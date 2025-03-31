@@ -54,7 +54,7 @@ let playerLives;
 /**
  * Draw the start screen
  */
-function renderStartScreen() {
+function showStartScreen() {
     const { ctx } = getCanvas();
     
     // Clear the canvas
@@ -68,8 +68,6 @@ function renderStartScreen() {
  * End the current game and go back to the start screen
  */
 function endGame() {
-    console.log("Game ended by user (ESC key)");
-    
     // Reset game state
     isGameStarted = false;
     isGameOver = true;
@@ -87,7 +85,7 @@ function endGame() {
     bullets = [];
     
     // Show the start screen
-    renderStartScreen();
+    showStartScreen();
 }
 
 /**
@@ -159,8 +157,14 @@ function setupInputHandlers() {
     
     onDifficulty((difficulty) => {
         if (!isGameStarted || isGameOver) {
+            // Reset game state to ensure we can start a new game
+            isGameOver = false;
+            
+            // Update difficulty settings
             currentDifficulty = difficulty;
-            renderStartScreen();
+            
+            // Update the UI
+            showStartScreen();
         }
     });
 }
@@ -169,9 +173,10 @@ function setupInputHandlers() {
  * Start a new game with current difficulty settings
  */
 function startGame() {
-    if (isHelpScreenVisible || isGameStarted || isGameOver) return;
+    if (isHelpScreenVisible || isGameStarted || isGameOver) {
+        return;
+    }
     
-    console.log(`Starting game with ${currentDifficulty} difficulty...`);
     isGameStarted = true;
     isGameOver = false;
     gameRunning = true;
@@ -357,7 +362,6 @@ function gameLoop(timestamp) {
  * Handle game over state
  */
 function handleGameOver() {
-    console.log("Game over!");
     isGameOver = true;
     gameRunning = false;
     
@@ -427,7 +431,7 @@ function toggleHelpScreen() {
     if (isHelpScreenVisible) {
         drawHelpScreen();
     } else {
-        renderStartScreen();
+        showStartScreen();
     }
 }
 
@@ -435,8 +439,6 @@ function toggleHelpScreen() {
  * Initialize the game
  */
 export function initGame() {
-    console.log("Initializing game...");
-    
     // Initialize canvas
     const { canvas } = initCanvas();
     
@@ -448,7 +450,7 @@ export function initGame() {
             if (isHelpScreenVisible) {
                 drawHelpScreen();
             } else {
-                renderStartScreen();
+                showStartScreen();
             }
         } else if (isGameOver) {
             const { ctx } = getCanvas();
@@ -464,8 +466,6 @@ export function initGame() {
     
     // Preload images before starting game
     preloadImages(() => {
-        console.log("Images loaded, proceeding with game initialization...");
-        
         // Load game data in parallel
         Promise.allSettled([
             // Fetch games played count
@@ -486,8 +486,7 @@ export function initGame() {
                 }
             })()
         ]).then(() => {
-            console.log("Game data loaded, showing start screen");
-            renderStartScreen();
+            showStartScreen();
         });
     });
 }
@@ -532,7 +531,7 @@ function changeDifficulty(difficulty) {
         updateDifficultySettings();
         // Force redraw of the start screen to show updated difficulty
         if (!isHelpScreenVisible) {
-            renderStartScreen();
+            showStartScreen();
         }
     }
 }
@@ -586,7 +585,7 @@ function drawGameOverScreen() {
     ctx.fillText('Press SPACE to play again', ctx.canvas.width / 2, ctx.canvas.height - 100);
     
     // Draw leaderboard
-    drawLeaderboard(ctx.canvas.width / 2, ctx.canvas.height - 80);
+    drawLeaderboard(ctx.canvas.width / 2, ctx.canvas.height - 80, leaderboardData, ctx);
 }
 
 /**

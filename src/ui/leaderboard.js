@@ -108,14 +108,18 @@ export function formatLeaderboardEntry(entry) {
     
     // Format date if available
     let dateStr = '';
-    if (entry.createdAt) {
+    if (entry.date || entry.createdAt) {
         try {
-            const date = new Date(entry.createdAt);
+            const date = new Date(entry.date || entry.createdAt);
             dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
         } catch (e) {
             // Ignore date parsing errors
         }
     }
     
-    return `${entry.initials || '???'} - ${entry.score} ${dateStr ? `(${dateStr})` : ''}`;
+    // Get difficulty with fallback to medium
+    const difficulty = entry.difficulty || 'medium';
+    const displayDifficulty = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+    
+    return `${entry.initials || '???'} - ${entry.score} (${displayDifficulty}) ${dateStr ? `${dateStr}` : ''}`;
 } 
