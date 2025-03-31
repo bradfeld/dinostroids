@@ -52,11 +52,7 @@ function formatDifficulty(difficulty) {
  * @param {number} y - Y position
  */
 function drawLives(ctx, lives, x, y) {
-    // Draw text
-    ctx.textAlign = 'right';
-    ctx.fillText(`Lives: `, x - 30, y);
-    
-    // Draw ship icons for each life
+    // Only draw ship icons for each life (no text)
     for (let i = 0; i < lives; i++) {
         drawShipIcon(ctx, x - (i * 25), y - 5, 10);
     }
@@ -73,6 +69,8 @@ function drawShipIcon(ctx, x, y, size) {
     ctx.save();
     
     ctx.translate(x, y);
+    // Rotate 90 degrees counterclockwise to point up
+    ctx.rotate(-Math.PI/2);
     
     // Draw triangular ship
     ctx.strokeStyle = 'white';
