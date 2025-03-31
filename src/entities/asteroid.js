@@ -5,7 +5,7 @@
  */
 
 import { getDimensions } from '../canvas.js';
-import { ASTEROID_SETTINGS } from '../constants.js';
+import { ASTEROID_SETTINGS, DIFFICULTY_SETTINGS } from '../constants.js';
 import { getImageByKey } from '../services/images.js';
 import { randomFloatBetween, randomIntBetween } from '../utils.js';
 
@@ -16,11 +16,13 @@ class Asteroid {
    * @param {number} size - Size category (1: large, 2: medium, 3: small)
    * @param {number} x - Initial x position (optional)
    * @param {number} y - Initial y position (optional) 
+   * @param {string} difficulty - Difficulty level ('easy', 'medium', 'difficult')
    */
-  constructor(type, size, x, y) {
+  constructor(type, size, x, y, difficulty = 'medium') {
     const { width, height } = getDimensions();
     this.type = type || this.getRandomType();
     this.size = size || 1; // Default is large (1)
+    this.difficulty = difficulty;
     
     // Set radius based on size
     this.radius = ASTEROID_SETTINGS.BASE_RADIUS / this.size;
@@ -29,10 +31,14 @@ class Asteroid {
     this.x = x !== undefined ? x : randomFloatBetween(0, width);
     this.y = y !== undefined ? y : randomFloatBetween(0, height);
     
-    // Random velocity
-    const speedMultiplier = ASTEROID_SETTINGS.SPEED_MULTIPLIER * this.size;
-    this.velocityX = randomFloatBetween(-1, 1) * speedMultiplier;
-    this.velocityY = randomFloatBetween(-1, 1) * speedMultiplier;
+    // Get the appropriate speed based on difficulty and size
+    const sizeCategory = this.getSizeCategory();
+    const speedRange = DIFFICULTY_SETTINGS[difficulty].asteroidSpeed[sizeCategory];
+    const speed = randomFloatBetween(speedRange.min, speedRange.max);
+    
+    // Set velocity based on difficulty-adjusted speed
+    this.velocityX = randomFloatBetween(-1, 1) * speed;
+    this.velocityY = randomFloatBetween(-1, 1) * speed;
     
     // Rotation properties
     this.rotation = 0;
@@ -44,6 +50,19 @@ class Asteroid {
     
     // Calculate points based on size
     this.points = ASTEROID_SETTINGS.POINTS_BASE * this.size;
+  }
+  
+  /**
+   * Convert size number to category string
+   * @returns {string} Size category ('large', 'medium', 'small')
+   */
+  getSizeCategory() {
+    switch (this.size) {
+      case 1: return 'large';
+      case 2: return 'medium';
+      case 3: return 'small';
+      default: return 'large';
+    }
   }
   
   /**
@@ -143,12 +162,22 @@ class Asteroid {
         this.type,
         newSize,
         this.x + offsetX,
-        this.y + offsetY
+        this.y + offsetY,
+        this.difficulty // Pass the same difficulty to child asteroids
       );
       
-      // Make the velocity differ from the parent
-      asteroid.velocityX = this.velocityX + randomFloatBetween(-1, 1);
-      asteroid.velocityY = this.velocityY + randomFloatBetween(-1, 1);
+      // Make the velocity direction differ from the parent
+      const sizeCategory = asteroid.getSizeCategory();
+      const speedRange = DIFFICULTY_SETTINGS[this.difficulty].asteroidSpeed[sizeCategory];
+      const speed = randomFloatBetween(speedRange.min, speedRange.max);
+      
+      // Normalize and apply new speed
+      const vx = this.velocityX + randomFloatBetween(-1, 1);
+      const vy = this.velocityY + randomFloatBetween(-1, 1);
+      const mag = Math.sqrt(vx * vx + vy * vy);
+      
+      asteroid.velocityX = (vx / mag) * speed;
+      asteroid.velocityY = (vy / mag) * speed;
       
       newAsteroids.push(asteroid);
     }

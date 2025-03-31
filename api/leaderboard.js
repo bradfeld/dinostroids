@@ -1,8 +1,9 @@
 import { kv } from '@vercel/kv';
 
 // Constants
-const MAX_ENTRIES = 10;
+const MAX_ENTRIES = 20;
 const LEADERBOARD_KEY = 'dinostroids_leaderboard';
+const VALID_DIFFICULTIES = ['easy', 'medium', 'difficult'];
 
 // Export a standard Vercel serverless function (no Next.js dependencies)
 export default async function handler(request, response) {
@@ -53,19 +54,26 @@ export default async function handler(request, response) {
     if (request.method === 'POST') {
         try {
             // Parse body
-            const { initials, score } = request.body;
-            console.log(`[Leaderboard API] POST request received with initials: ${initials}, score: ${score}`);
+            const { initials, score, time, difficulty = 'medium' } = request.body;
+            console.log(`[Leaderboard API] POST request received with score: ${score}, difficulty: ${difficulty}`);
             
             // Validate input
-            if (!initials || typeof score !== 'number' || score < 0) {
-                console.error(`[Leaderboard API] Invalid input: initials=${initials}, score=${score}`);
+            if (typeof score !== 'number' || score < 0) {
+                console.error(`[Leaderboard API] Invalid score: ${score}`);
                 return response.status(400).json({ 
-                    error: 'Invalid input. Requires initials (string) and score (positive number).'
+                    error: 'Invalid input. Score must be a positive number.'
                 });
             }
             
-            // Sanitize initials - uppercase, max 3 chars
-            const sanitizedInitials = initials.toString().toUpperCase().substring(0, 3);
+            // Validate difficulty
+            const validatedDifficulty = VALID_DIFFICULTIES.includes(difficulty) 
+                ? difficulty 
+                : 'medium';
+            
+            // Sanitize initials - uppercase, max 3 chars, optional
+            const sanitizedInitials = initials 
+                ? initials.toString().toUpperCase().substring(0, 3) 
+                : '---';
             
             // Get existing entries
             let entries = await kv.get(LEADERBOARD_KEY) || [];
@@ -75,7 +83,9 @@ export default async function handler(request, response) {
             const newEntry = {
                 initials: sanitizedInitials,
                 score: score,
-                createdAt: new Date().toISOString()
+                time: time || 0,
+                difficulty: validatedDifficulty,
+                date: new Date().toISOString()
             };
             
             entries.push(newEntry);

@@ -8,14 +8,16 @@
 import { initCanvas, resizeToWindow, getCanvas, clear, getDimensions } from '../canvas.js';
 import { fetchGamesPlayed, fetchLeaderboard, submitScore, incrementGamesPlayed } from '../services/api.js';
 import { preloadImages } from '../services/images.js';
-import { initInput, onStart, onHelp, isKeyPressed, onEscape } from './input.js';
-import { GAME_SETTINGS, PLAYER_SETTINGS, ASTEROID_SETTINGS } from '../constants.js';
+import { initInput, onStart, onHelp, isKeyPressed, onEscape, onDifficulty } from './input.js';
+import { GAME_SETTINGS, PLAYER_SETTINGS, ASTEROID_SETTINGS, DIFFICULTY_SETTINGS } from '../constants.js';
 import Player from '../entities/player.js';
 import Asteroid from '../entities/asteroid.js';
 import Bullet from '../entities/bullet.js';
 import { drawGameStatus } from '../ui/gameStatus.js';
 import { drawGameOver, handleGameOverKeyInput, activateInput, onSubmitScore, onRestart } from '../ui/gameOver.js';
 import { drawLeaderboard } from '../ui/leaderboard.js';
+import { formatTime, randomInt } from '../utils.js';
+import { drawStartScreen } from '../ui/startScreen.js';
 
 // Game state variables
 let gameRunning = false;
@@ -29,6 +31,10 @@ let lives = GAME_SETTINGS.INITIAL_LIVES;
 let level = 1;
 let gamesPlayedCount = 0;
 let leaderboardData = [];
+let currentTime = 0;
+let startTime = 0;
+let gameLoopId = null;
+let currentDifficulty = 'medium'; // Default difficulty
 
 // Game entities
 let player = null;
@@ -38,40 +44,24 @@ let bullets = [];
 // Animation frame ID for cancellation
 let animationFrameId = null;
 
+// Game settings
+let playerAcceleration;
+let shootCooldown;
+let asteroidSpeed;
+let initialAsteroids;
+let playerLives;
+
 /**
  * Draw the start screen
  */
-function drawStartScreen() {
-    const { canvas, ctx } = getCanvas();
+function renderStartScreen() {
+    const { ctx } = getCanvas();
     
-    // Clear the canvas with a dark background
+    // Clear the canvas
     clear('black');
     
-    // Title
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('DINOSTROIDS', canvas.width / 2, canvas.height / 3);
-    
-    // Instructions
-    ctx.font = '24px Arial';
-    ctx.fillText('Press SPACE to start', canvas.width / 2, canvas.height / 2);
-    ctx.fillText('Press ? for help', canvas.width / 2, canvas.height / 2 + 40);
-    
-    // Games played info
-    if (gamesPlayedCount > 0) {
-        ctx.font = '16px Arial';
-        ctx.fillText(`Games Played: ${gamesPlayedCount}`, canvas.width / 2, canvas.height - 50);
-    }
-    
-    // Copyright text
-    ctx.font = '14px Arial';
-    ctx.fillText('© Intensity Ventures, 2025', canvas.width / 2, canvas.height - 20);
-    
-    // Draw leaderboard if data is available
-    if (leaderboardData && leaderboardData.length > 0) {
-        drawLeaderboard(ctx, leaderboardData, canvas.width - 200, 50);
-    }
+    // Draw start screen with current difficulty
+    drawStartScreen(ctx, currentDifficulty);
 }
 
 /**
@@ -82,7 +72,7 @@ function endGame() {
     
     // Reset game state
     isGameStarted = false;
-    isGameOver = false;
+    isGameOver = true;
     gameRunning = false;
     
     // Cancel the animation frame
@@ -97,7 +87,7 @@ function endGame() {
     bullets = [];
     
     // Show the start screen
-    drawStartScreen();
+    renderStartScreen();
 }
 
 /**
@@ -145,26 +135,60 @@ function drawHelpScreen() {
 }
 
 /**
- * Start a new game
+ * Initialize input handlers
+ */
+function setupInputHandlers() {
+    onStart(() => {
+        if (!isHelpScreenVisible && !isGameStarted && !isGameOver) {
+            startGame();
+        } else if (isGameOver) {
+            // Reset game state for new game
+            isGameOver = false;
+            startGame();
+        }
+    });
+    
+    onHelp(toggleHelpScreen);
+    
+    onEscape(() => {
+        // Only end the game if we're actually playing
+        if (isGameStarted && !isGameOver) {
+            endGame();
+        }
+    });
+    
+    onDifficulty((difficulty) => {
+        if (!isGameStarted || isGameOver) {
+            currentDifficulty = difficulty;
+            renderStartScreen();
+        }
+    });
+}
+
+/**
+ * Start a new game with current difficulty settings
  */
 function startGame() {
     if (isHelpScreenVisible || isGameStarted || isGameOver) return;
     
-    console.log("Starting game...");
+    console.log(`Starting game with ${currentDifficulty} difficulty...`);
     isGameStarted = true;
     isGameOver = false;
     gameRunning = true;
     
     // Reset game state
     score = 0;
-    lives = GAME_SETTINGS.INITIAL_LIVES;
+    
+    // Apply settings based on current difficulty
+    const difficultySettings = DIFFICULTY_SETTINGS[currentDifficulty];
+    lives = difficultySettings.lives;
     level = 1;
     
-    // Create player
-    player = new Player();
+    // Create player with appropriate difficulty settings
+    player = new Player(currentDifficulty);
     
     // Create initial asteroids
-    createAsteroids(GAME_SETTINGS.INITIAL_ASTEROIDS);
+    createAsteroids(difficultySettings.initialAsteroids);
     
     // Clear bullets
     bullets = [];
@@ -199,8 +223,8 @@ function createAsteroids(count) {
             distanceFromPlayer = Math.sqrt(dx * dx + dy * dy);
         } while (distanceFromPlayer < ASTEROID_SETTINGS.SPAWN_DISTANCE_MIN);
         
-        // Create a random asteroid
-        const asteroid = new Asteroid(null, 1, x, y);
+        // Create a random asteroid with the current difficulty
+        const asteroid = new Asteroid(null, 1, x, y, currentDifficulty);
         asteroids.push(asteroid);
     }
 }
@@ -323,7 +347,7 @@ function gameLoop(timestamp) {
     }
     
     // Draw game status
-    drawGameStatus(ctx, score, lives, level);
+    drawGameStatus(ctx, score, lives, level, currentDifficulty);
     
     // Continue the game loop
     animationFrameId = requestAnimationFrame(gameLoop);
@@ -403,7 +427,7 @@ function toggleHelpScreen() {
     if (isHelpScreenVisible) {
         drawHelpScreen();
     } else {
-        drawStartScreen();
+        renderStartScreen();
     }
 }
 
@@ -424,7 +448,7 @@ export function initGame() {
             if (isHelpScreenVisible) {
                 drawHelpScreen();
             } else {
-                drawStartScreen();
+                renderStartScreen();
             }
         } else if (isGameOver) {
             const { ctx } = getCanvas();
@@ -436,23 +460,7 @@ export function initGame() {
     initInput();
     
     // Set up input callbacks
-    onStart(() => {
-        if (!isGameStarted && !isHelpScreenVisible) {
-            startGame();
-        }
-    });
-    
-    onHelp(() => {
-        toggleHelpScreen();
-    });
-    
-    // Register escape key to end the game
-    onEscape(() => {
-        // Only end the game if we're actually playing
-        if (isGameStarted && !isGameOver) {
-            endGame();
-        }
-    });
+    setupInputHandlers();
     
     // Preload images before starting game
     preloadImages(() => {
@@ -479,7 +487,7 @@ export function initGame() {
             })()
         ]).then(() => {
             console.log("Game data loaded, showing start screen");
-            drawStartScreen();
+            renderStartScreen();
         });
     });
 }
@@ -500,4 +508,112 @@ export function getGameState() {
         gamesPlayedCount,
         leaderboardData
     };
+}
+
+/**
+ * Update the game settings based on the current difficulty
+ */
+function updateDifficultySettings() {
+    const settings = DIFFICULTY_SETTINGS[currentDifficulty];
+    playerAcceleration = settings.playerAcceleration;
+    shootCooldown = settings.shootCooldown;
+    asteroidSpeed = settings.asteroidSpeed;
+    initialAsteroids = settings.initialAsteroids;
+    playerLives = settings.lives;
+}
+
+/**
+ * Change the difficulty level
+ * @param {string} difficulty - The difficulty level to set ('easy', 'medium', 'difficult')
+ */
+function changeDifficulty(difficulty) {
+    if (!isGameStarted || isGameOver) {
+        currentDifficulty = difficulty;
+        updateDifficultySettings();
+        // Force redraw of the start screen to show updated difficulty
+        if (!isHelpScreenVisible) {
+            renderStartScreen();
+        }
+    }
+}
+
+/**
+ * Draw the heads-up display (HUD)
+ */
+function drawHUD() {
+    // Draw score
+    const { ctx } = getCanvas();
+    ctx.fillStyle = 'white';
+    ctx.font = '24px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Score: ${score}`, 20, 30);
+    
+    // Draw time
+    const formattedTime = formatTime(currentTime);
+    ctx.fillText(`Time: ${formattedTime}`, 20, 60);
+    
+    // Draw lives
+    ctx.font = '24px Arial';
+    ctx.fillText(`Lives: ${lives}`, 20, 90);
+    
+    // Draw current difficulty
+    ctx.font = '24px Arial';
+    ctx.fillText(`Difficulty: ${currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}`, 20, 120);
+}
+
+/**
+ * Draw the game over screen
+ */
+function drawGameOverScreen() {
+    const { ctx } = getCanvas();
+    
+    // Draw title
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', ctx.canvas.width / 2, 80);
+    
+    // Draw score and time
+    ctx.font = '24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Score: ${score}`, ctx.canvas.width / 2, 150);
+    ctx.fillText(`Time: ${formatTime(currentTime)}`, ctx.canvas.width / 2, 190);
+    ctx.fillText(`Difficulty: ${currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}`, ctx.canvas.width / 2, 230);
+    
+    // Draw instructions to restart
+    ctx.font = '24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Press SPACE to play again', ctx.canvas.width / 2, ctx.canvas.height - 100);
+    
+    // Draw leaderboard
+    drawLeaderboard(ctx.canvas.width / 2, ctx.canvas.height - 80);
+}
+
+/**
+ * Clean up game resources
+ */
+export function cleanupGame() {
+    if (gameLoopId) {
+        cancelAnimationFrame(gameLoopId);
+    }
+}
+
+/**
+ * Custom asteroid speed based on current difficulty
+ * @param {string} size - The asteroid size ('large', 'medium', 'small')
+ * @returns {number} - The random speed for this asteroid
+ */
+function getAsteroidSpeed(size) {
+    const speedRange = DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed[size];
+    return speedRange.min + Math.random() * (speedRange.max - speedRange.min);
+}
+
+/**
+ * Update the game HUD with difficulty information
+ */
+function updateHUD() {
+    const { ctx } = getCanvas();
+    
+    // Draw game status with current settings
+    drawGameStatus(ctx, score, lives, level, currentDifficulty);
 } 

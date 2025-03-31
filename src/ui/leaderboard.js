@@ -8,99 +8,94 @@ import { getDimensions } from '../canvas.js';
 
 /**
  * Draw the leaderboard
+ * @param {number} x - X position for the leaderboard center
+ * @param {number} y - Y position for the leaderboard top
+ * @param {Array} leaderboardData - The leaderboard data
  * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
- * @param {Array} leaderboardData - Leaderboard entries
- * @param {number} x - X position to draw the leaderboard
- * @param {number} y - Y position to draw the leaderboard
  */
-export function drawLeaderboard(ctx, leaderboardData, x, y) {
-    if (!leaderboardData || leaderboardData.length === 0) return;
-    
-    const { height } = getDimensions();
-    
-    // Sort the leaderboard by score (highest to lowest)
-    const sortedData = [...leaderboardData].sort((a, b) => b.score - a.score);
-    
-    // Get top 20 scores or all available scores if less than 20
-    const top20Scores = sortedData.slice(0, 20);
-    
-    // Set up styling
-    ctx.font = '16px Arial';
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'left';
-    
-    // Draw title
-    ctx.font = 'bold 18px Arial';
-    ctx.fillText('HIGH SCORES', x, y);
+export function drawLeaderboard(x, y, leaderboardData, ctx) {
+    // Sort data by score and take top 20
+    const top20Scores = [...leaderboardData]
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 20); // Show up to 20 scores
     
     // Calculate how many scores can fit on screen
-    const lineHeight = 22;
     const maxVisibleScores = Math.min(
-        // Calculate how many scores can fit vertically
-        Math.floor((height - y - 30) / lineHeight),
-        // Cap at 20 scores
-        20,
-        // Don't try to show more scores than we have
-        top20Scores.length
+        top20Scores.length, 
+        20, // Never show more than 20
+        Math.floor((ctx.canvas.height - y - 50) / 25) // Based on available space
     );
     
-    // Draw a semi-transparent background for better readability
-    const padding = 10;
-    const bgWidth = 180;
-    const bgHeight = lineHeight * maxVisibleScores + 35;
-    
+    // Draw semi-transparent background
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(x - padding, y - 20, bgWidth, bgHeight);
+    ctx.fillRect(
+        x - 200, 
+        y, 
+        400, 
+        maxVisibleScores * 25 + 50
+    );
+    
+    // Draw title
     ctx.fillStyle = 'white';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('High Scores', x, y + 30);
+    
+    // Draw column headers
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('Rank', x - 180, y + 60);
+    ctx.fillText('Score', x - 130, y + 60);
+    ctx.fillText('Difficulty', x - 10, y + 60);
+    ctx.textAlign = 'right';
+    ctx.fillText('Date', x + 180, y + 60);
     
     // Draw scores
+    ctx.font = '16px Arial';
     for (let i = 0; i < maxVisibleScores; i++) {
-        const entry = top20Scores[i];
-        const entryY = y + 25 + (i * lineHeight);
+        const score = top20Scores[i];
+        const yPos = y + 85 + (i * 25);
         
-        // Format date - if available
-        let dateStr = '';
-        if (entry.createdAt) {
-            try {
-                const date = new Date(entry.createdAt);
-                dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-            } catch (e) {
-                // Ignore date parsing errors
-            }
+        // Highlight current score
+        if (score.isCurrent) {
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+            ctx.fillRect(x - 190, yPos - 15, 380, 20);
+            ctx.fillStyle = 'white';
         }
         
-        // Draw rank and initials
+        // Rank number
         ctx.textAlign = 'left';
-        ctx.fillText(`${i + 1}. ${entry.initials || '???'}`, x, entryY);
+        ctx.fillText(`${i + 1}.`, x - 180, yPos);
         
-        // Draw score (right-aligned)
+        // Score
+        ctx.fillText(`${score.score}`, x - 130, yPos);
+        
+        // Difficulty (capitalize first letter)
+        const difficulty = score.difficulty || 'medium';
+        const displayDifficulty = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+        ctx.fillText(displayDifficulty, x - 10, yPos);
+        
+        // Date (if available)
         ctx.textAlign = 'right';
-        ctx.fillText(`${entry.score}`, x + 120, entryY);
-        
-        // Draw date if available
-        if (dateStr) {
-            ctx.font = '12px Arial';
-            ctx.fillText(dateStr, x + 160, entryY);
-            ctx.font = '16px Arial';
+        if (score.date) {
+            const date = new Date(score.date);
+            const dateStr = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().substr(2)}`;
+            ctx.fillText(dateStr, x + 180, yPos);
+        } else {
+            ctx.fillText('--/--/--', x + 180, yPos);
         }
     }
     
-    // If there are more scores than we can display, show an indicator
-    if (top20Scores.length > maxVisibleScores) {
+    // Show total count if there are more scores than visible
+    if (leaderboardData.length > maxVisibleScores) {
         ctx.textAlign = 'center';
         ctx.font = '14px Arial';
-        ctx.fillText('...', x + 80, y + 25 + (maxVisibleScores * lineHeight));
+        ctx.fillText(
+            `Showing ${maxVisibleScores} of ${leaderboardData.length} scores`, 
+            x, 
+            y + maxVisibleScores * 25 + 40
+        );
     }
-    
-    // Show total count of scores if there are more than visible
-    if (leaderboardData.length > maxVisibleScores) {
-        ctx.textAlign = 'right';
-        ctx.font = '12px Arial';
-        ctx.fillText(`Showing ${maxVisibleScores} of ${leaderboardData.length} scores`, x + bgWidth - padding, y - 5);
-    }
-    
-    // Reset text alignment
-    ctx.textAlign = 'left';
 }
 
 /**

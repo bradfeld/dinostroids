@@ -5,11 +5,15 @@
  */
 
 import { getDimensions } from '../canvas.js';
-import { PLAYER_SETTINGS, GAME_SETTINGS } from '../constants.js';
+import { PLAYER_SETTINGS, GAME_SETTINGS, DIFFICULTY_SETTINGS } from '../constants.js';
 import { isKeyPressed } from '../controllers/input.js';
 
 class Player {
-  constructor() {
+  /**
+   * Create a new player ship
+   * @param {string} difficulty - Optional difficulty setting ('easy', 'medium', 'difficult')
+   */
+  constructor(difficulty = 'medium') {
     const { width, height } = getDimensions();
     
     // Position in the center of the screen
@@ -19,18 +23,21 @@ class Player {
     // Size and collision radius
     this.radius = PLAYER_SETTINGS.RADIUS;
     
+    // Apply difficulty-specific settings
+    const difficultySettings = DIFFICULTY_SETTINGS[difficulty];
+    
     // Movement properties
     this.rotation = 0; // Rotation in radians
     this.thrustPower = 0; // Current thrust
     this.velocityX = 0;
     this.velocityY = 0;
     this.rotationSpeed = PLAYER_SETTINGS.ROTATION_SPEED;
-    this.acceleration = PLAYER_SETTINGS.ACCELERATION;
+    this.acceleration = difficultySettings.playerAcceleration;
     this.friction = PLAYER_SETTINGS.FRICTION;
     
     // Weapon properties
     this.canShoot = true;
-    this.shootCooldown = PLAYER_SETTINGS.SHOOT_COOLDOWN;
+    this.shootCooldown = difficultySettings.shootCooldown;
     this.lastShot = 0;
     
     // State
@@ -112,6 +119,22 @@ class Player {
     }
     
     return newBullet;
+  }
+  
+  /**
+   * Set the player's shoot cooldown
+   * @param {number} cooldown - New cooldown time in milliseconds
+   */
+  setShootCooldown(cooldown) {
+    this.shootCooldown = cooldown;
+  }
+  
+  /**
+   * Set the player's acceleration
+   * @param {number} acceleration - New acceleration value
+   */
+  setAcceleration(acceleration) {
+    this.acceleration = acceleration;
   }
   
   /**

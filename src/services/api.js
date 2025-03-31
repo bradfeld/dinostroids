@@ -132,19 +132,26 @@ export async function fetchLeaderboard() {
 
 /**
  * Submit a score to the leaderboard
- * @param {string} initials - Player initials (1-3 characters)
- * @param {number} score - The score to submit
+ * @param {number} score - The player's score
+ * @param {number} time - Time in milliseconds the game lasted
+ * @param {string} difficulty - Difficulty level ('easy', 'medium', 'difficult')
+ * @param {string} initials - Player initials (optional, 1-3 characters)
  * @returns {Promise<boolean>} True if submission was successful
  */
-export async function submitScore(initials, score) {
-    console.log(`Submitting score: ${initials} - ${score}`);
+export async function submitScore(score, time, difficulty = 'medium', initials = '') {
+    console.log(`Submitting score: ${score} points, ${time}ms, ${difficulty} difficulty`);
     try {
         const response = await fetch('/api/leaderboard', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ initials, score }),
+            body: JSON.stringify({ 
+                initials, 
+                score, 
+                time,
+                difficulty 
+            }),
         });
 
         if (!response.ok) {
@@ -157,6 +164,6 @@ export async function submitScore(initials, score) {
         return true; // Indicate success
     } catch (error) {
         console.error("Error submitting score:", error);
-        throw error; // Re-throw to be caught by caller
+        return false; // Return false on error instead of re-throwing
     }
 } 

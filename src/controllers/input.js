@@ -11,6 +11,7 @@ const keys = {};
 let onStartCallback = null;
 let onHelpCallback = null;
 let onEscapeCallback = null;
+let onDifficultyCallback = null;
 
 /**
  * Initialize keyboard input handlers
@@ -43,6 +44,17 @@ function handleKeyDown(event) {
     // Handle Escape key to end game and return to start screen
     if (event.code === 'Escape' && onEscapeCallback) {
         onEscapeCallback();
+    }
+    
+    // Handle difficulty selection keys (E, M, D)
+    if (onDifficultyCallback) {
+        if (event.code === 'KeyE') {
+            onDifficultyCallback('easy');
+        } else if (event.code === 'KeyM') {
+            onDifficultyCallback('medium');
+        } else if (event.code === 'KeyD') {
+            onDifficultyCallback('difficult');
+        }
     }
 }
 
@@ -85,6 +97,14 @@ export function onHelp(callback) {
  */
 export function onEscape(callback) {
     onEscapeCallback = callback;
+}
+
+/**
+ * Register a callback for when a difficulty key is pressed
+ * @param {Function} callback - The function to call with the selected difficulty
+ */
+export function onDifficulty(callback) {
+    onDifficultyCallback = callback;
 }
 
 /**

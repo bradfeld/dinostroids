@@ -73,4 +73,26 @@ export function verticesToPathData(vertices) {
   path += " Z"; // Close the path
   
   return path;
+}
+
+/**
+ * Format milliseconds into a MM:SS.SSS format
+ * @param {number} milliseconds - Time in milliseconds
+ * @returns {string} - Formatted time string (MM:SS.SSS)
+ */
+export function formatTime(milliseconds) {
+    // Convert to total seconds
+    const totalSeconds = milliseconds / 1000;
+    
+    // Extract minutes and seconds
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const ms = Math.floor((totalSeconds - Math.floor(totalSeconds)) * 1000);
+    
+    // Format with leading zeros
+    const formattedMinutes = String(minutes).padStart(2, '0');
+    const formattedSeconds = String(seconds).padStart(2, '0');
+    const formattedMs = String(ms).padStart(3, '0');
+    
+    return `${formattedMinutes}:${formattedSeconds}.${formattedMs}`;
 } 

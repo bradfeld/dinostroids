@@ -155,27 +155,36 @@ export const LEADERBOARD_MAX_ENTRIES = 10;
 // Difficulty settings
 export const DIFFICULTY_SETTINGS = {
     easy: {
-        playerAcceleration: PLAYER_ACCELERATION,
-        shootCooldown: SHOOT_COOLDOWN,
-        asteroidMinSpeed: ASTEROID_MIN_SPEED,
-        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION,
-        initialAsteroidCountBase: 2,
+        playerAcceleration: 0.54,  // Based on PLAYER_ACCELERATION
+        shootCooldown: 120,        // Based on SHOOT_COOLDOWN
+        asteroidSpeed: {
+            large: { min: 1.5, max: 3.0 },
+            medium: { min: 2.4, max: 4.5 },
+            small: { min: 3.6, max: 6.0 }
+        },
+        initialAsteroids: 2,
         lives: 5
     },
     medium: {
-        playerAcceleration: PLAYER_ACCELERATION * 1.5,
-        shootCooldown: Math.floor(SHOOT_COOLDOWN * 0.7),
-        asteroidMinSpeed: ASTEROID_MIN_SPEED * 1.5,
-        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 1.2,
-        initialAsteroidCountBase: 3,
+        playerAcceleration: 0.81,  // 1.5x base acceleration
+        shootCooldown: 84,         // 70% of base cooldown
+        asteroidSpeed: {
+            large: { min: 2.4, max: 4.5 },
+            medium: { min: 3.6, max: 6.0 },
+            small: { min: 5.4, max: 7.5 }
+        },
+        initialAsteroids: 3,
         lives: 3
     },
     difficult: {
-        playerAcceleration: PLAYER_ACCELERATION * 2.0,
-        shootCooldown: Math.floor(SHOOT_COOLDOWN * 0.5),
-        asteroidMinSpeed: ASTEROID_MIN_SPEED * 2.0,
-        asteroidSpeedVariation: ASTEROID_SPEED_VARIATION * 1.5,
-        initialAsteroidCountBase: 4,
+        playerAcceleration: 1.08,  // 2.0x base acceleration
+        shootCooldown: 60,         // 50% of base cooldown
+        asteroidSpeed: {
+            large: { min: 3.6, max: 6.0 },
+            medium: { min: 5.4, max: 7.5 },
+            small: { min: 7.5, max: 10.5 }
+        },
+        initialAsteroids: 4,
         lives: 2
     }
 };
