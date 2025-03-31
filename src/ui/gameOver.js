@@ -92,11 +92,9 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, time = 0) 
             ctx.fillText(displayText, boxX + boxWidth / 2, boxY + 30);
         }
         
-        // Draw submit info if all initials fields have content
-        if (initials[0] && initials[1] && initials[2]) {
-            ctx.font = '24px Arial';
-            ctx.fillText('Press ENTER to submit', width / 2, boxY + 80);
-        }
+        // Information about auto-return after third initial
+        ctx.font = '18px Arial';
+        ctx.fillText('Will return to start screen after third initial', width / 2, height / 2 + 50);
     } else {
         // Draw restart prompt
         ctx.font = '24px Arial';
@@ -136,8 +134,21 @@ export function handleGameOverKeyInput(event) {
         if (event.key.length === 1 && /[A-Za-z]/.test(event.key)) {
             // Set current letter and move to next field
             initials[currentInitialIndex] = event.key.toUpperCase();
+            
+            // Move to next field or submit if this was the last field
             if (currentInitialIndex < 2) {
                 currentInitialIndex++;
+            } else if (currentInitialIndex === 2) {
+                // All three initials are now entered, submit automatically
+                if (submitCallback) {
+                    submitCallback(initials.join(''));
+                }
+                resetInput();
+                
+                // Return to start screen
+                if (restartCallback) {
+                    restartCallback();
+                }
             }
         } else if (event.key === 'Backspace') {
             // Handle backspace - clear current field and move back
@@ -145,19 +156,13 @@ export function handleGameOverKeyInput(event) {
             if (currentInitialIndex > 0 && !initials[currentInitialIndex]) {
                 currentInitialIndex--;
             }
-        } else if (event.key === 'Enter' && initials[0] && initials[1] && initials[2]) {
-            // Submit score when all fields have content
-            if (submitCallback) {
-                submitCallback(initials.join(''));
-            }
-            resetInput();
         } else if (event.key === 'ArrowLeft') {
             // Move to previous field
             if (currentInitialIndex > 0) {
                 currentInitialIndex--;
             }
         } else if (event.key === 'ArrowRight') {
-            // Move to next field
+            // Move to next field if it's not the last one
             if (currentInitialIndex < 2) {
                 currentInitialIndex++;
             }
