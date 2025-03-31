@@ -411,6 +411,9 @@ function handleGameOver() {
     const { ctx } = getCanvas();
     drawGameOver(ctx, score, leaderboardData, level, gameTime);
     
+    // Clean up any existing input handlers first
+    document.removeEventListener('keydown', handleGameOverKeyInput);
+    
     // Check if this is a high score
     const isHighScore = isNewHighScore();
     if (isHighScore) {
@@ -425,10 +428,23 @@ function handleGameOver() {
                 // Refresh leaderboard after submitting
                 leaderboardData = await fetchLeaderboard();
                 
-                // Redraw game over screen
-                drawGameOver(ctx, score, leaderboardData, level, gameTime);
+                // Clean up game over input handlers
+                document.removeEventListener('keydown', handleGameOverKeyInput);
+                
+                // Reset game state completely
+                isGameOver = false;
+                isGameStarted = false;
+                gameRunning = false;
+                
+                // Show the start screen after submitting score
+                showStartScreen();
             } catch (error) {
                 console.error("Failed to submit score:", error);
+                
+                // Even if submission fails, go back to start screen
+                document.removeEventListener('keydown', handleGameOverKeyInput);
+                isGameOver = false;
+                showStartScreen();
             }
         });
     }
@@ -443,8 +459,12 @@ function handleGameOver() {
         
         // Reset game over state
         isGameOver = false;
+        isGameStarted = false;
         
-        // Don't start new game, just go to start screen
+        // Clear all key states
+        cleanupInputHandlers();
+        
+        // Show the start screen
         showStartScreen();
     });
 }
