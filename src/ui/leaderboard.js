@@ -14,6 +14,12 @@ import { getDimensions } from '../canvas.js';
  * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
  */
 export function drawLeaderboard(x, y, leaderboardData, ctx) {
+    // Log leaderboard data keys for debugging
+    if (leaderboardData && leaderboardData.length > 0) {
+        console.log("Leaderboard data keys:", Object.keys(leaderboardData[0]));
+        console.log("Sample entry:", leaderboardData[0]);
+    }
+    
     // Sort data by score and take top 20
     const top20Scores = [...leaderboardData]
         .sort((a, b) => b.score - a.score)
@@ -81,14 +87,30 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
         ctx.fillText(score.level || '1', x - bgWidth/2 + 230, yPos);
         
         // Date (if available)
-        if (score.date) {
-            const date = new Date(score.date);
-            const dateStr = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().substr(2)}`;
-            ctx.fillText(dateStr, x - bgWidth/2 + 300, yPos);
-            
-            // Time
-            const timeStr = `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
-            ctx.fillText(timeStr, x - bgWidth/2 + 380, yPos);
+        const dateField = score.date || score.createdAt || score.created_at;
+        if (dateField) {
+            try {
+                const date = new Date(dateField);
+                if (!isNaN(date.getTime())) { // Check if date is valid
+                    // Date
+                    const dateStr = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().substr(2)}`;
+                    ctx.fillText(dateStr, x - bgWidth/2 + 300, yPos);
+                    
+                    // Time
+                    const hours = date.getHours();
+                    const minutes = date.getMinutes();
+                    const timeStr = `${hours}:${minutes.toString().padStart(2, '0')}`;
+                    ctx.fillText(timeStr, x - bgWidth/2 + 380, yPos);
+                } else {
+                    // Invalid date
+                    ctx.fillText('--/--/--', x - bgWidth/2 + 300, yPos);
+                    ctx.fillText('--:--', x - bgWidth/2 + 380, yPos);
+                }
+            } catch (e) {
+                console.error("Error parsing date:", e, "for score:", score);
+                ctx.fillText('--/--/--', x - bgWidth/2 + 300, yPos);
+                ctx.fillText('--:--', x - bgWidth/2 + 380, yPos);
+            }
         } else {
             ctx.fillText('--/--/--', x - bgWidth/2 + 300, yPos);
             ctx.fillText('--:--', x - bgWidth/2 + 380, yPos);
