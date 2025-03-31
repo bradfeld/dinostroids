@@ -210,8 +210,12 @@ function startGame() {
     lives = difficultySettings.lives;
     level = 1;
     
-    // Create player with appropriate difficulty settings
-    player = new Player(currentDifficulty);
+    // Create player
+    player = new Player();
+    
+    // Apply difficulty settings to player
+    player.acceleration = difficultySettings.playerAcceleration;
+    player.shootCooldown = difficultySettings.shootCooldown;
     
     // Create initial asteroids
     createAsteroids(difficultySettings.initialAsteroids);

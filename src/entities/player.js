@@ -51,9 +51,10 @@ class Player {
     
     // Handle invincibility timer
     if (this.invincible) {
-      this.invincibilityTime -= deltaTime;
+      this.invincibilityTime -= deltaTime * 1000; // Convert seconds to milliseconds
       if (this.invincibilityTime <= 0) {
         this.invincible = false;
+        this.invincibilityTime = 0; // Reset to prevent negative values
       }
     }
     
@@ -80,12 +81,12 @@ class Player {
     }
     
     // Apply friction to slow down when not thrusting
-    this.velocityX *= (1 - this.friction * deltaTime);
-    this.velocityY *= (1 - this.friction * deltaTime);
+    this.velocityX *= this.friction;
+    this.velocityY *= this.friction;
     
     // Update position
-    this.x += this.velocityX;
-    this.y += this.velocityY;
+    this.x += this.velocityX * deltaTime;
+    this.y += this.velocityY * deltaTime;
     
     // Screen wrapping
     const { width, height } = getDimensions();
