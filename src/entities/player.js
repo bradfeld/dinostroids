@@ -49,18 +49,22 @@ class Player {
   
   /**
    * Update the player's state
-   * @param {number} deltaTime - Time since last update in milliseconds
+   * @param {number} deltaTime - Time since last update in seconds
    * @returns {Object|null} - New bullet or null
    */
   update(deltaTime) {
     // Skip if destroyed
     if (this.isDestroyed) return null;
     
-    // Handle invincibility timer
+    // Handle invincibility timer (convert deltaTime to ms)
     if (this.invincible) {
-      this.invincibilityTime -= deltaTime;
+      // deltaTime is in seconds, but invincibilityTime is in milliseconds
+      this.invincibilityTime -= deltaTime * 1000;
+      
       if (this.invincibilityTime <= 0) {
+        console.log('Invincibility ended');
         this.invincible = false;
+        this.invincibilityTime = 0;
       }
     }
     

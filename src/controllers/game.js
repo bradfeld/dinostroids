@@ -326,16 +326,21 @@ function gameLoop(timestamp) {
             
             if (player.isCollidingWith(asteroid)) {
                 // Player is hit
+                console.log('Player collision detected! Lives before:', lives);
                 player.destroy();
                 lives -= ASTEROID_SETTINGS.COLLISION_DAMAGE;
+                console.log('Lives after collision:', lives);
                 
                 if (lives <= 0) {
                     // Game over
+                    console.log('Game over due to no lives left');
                     handleGameOver();
                 } else {
                     // Respawn player after a delay
+                    console.log('Player will respawn in 1 second, current lives:', lives);
                     setTimeout(() => {
                         player.reset();
+                        console.log('Player respawned, destroyed status:', player.isDestroyed, 'invincible:', player.invincible);
                     }, 1000);
                 }
                 
