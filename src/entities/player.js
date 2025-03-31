@@ -72,21 +72,21 @@ class Player {
     // Apply thrust if key is pressed
     if (this.isThrusting) {
       // Calculate thrust vector based on rotation
-      const thrustX = Math.cos(this.rotation) * this.acceleration * deltaTime;
-      const thrustY = Math.sin(this.rotation) * this.acceleration * deltaTime;
+      const thrustX = Math.cos(this.rotation) * this.acceleration;
+      const thrustY = Math.sin(this.rotation) * this.acceleration;
       
-      // Apply thrust to velocity
-      this.velocityX += thrustX;
-      this.velocityY += thrustY;
+      // Apply thrust to velocity - multiply by deltaTime here
+      this.velocityX += thrustX * deltaTime;
+      this.velocityY += thrustY * deltaTime;
     }
     
-    // Apply friction to slow down when not thrusting
-    this.velocityX *= this.friction;
-    this.velocityY *= this.friction;
+    // Apply friction to slow down - correct application of friction
+    this.velocityX *= (1 - (1 - this.friction) * deltaTime);
+    this.velocityY *= (1 - (1 - this.friction) * deltaTime);
     
     // Update position
-    this.x += this.velocityX * deltaTime;
-    this.y += this.velocityY * deltaTime;
+    this.x += this.velocityX;
+    this.y += this.velocityY;
     
     // Screen wrapping
     const { width, height } = getDimensions();

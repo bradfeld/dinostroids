@@ -213,9 +213,19 @@ function startGame() {
     // Create player
     player = new Player();
     
-    // Apply difficulty settings to player
-    player.acceleration = difficultySettings.playerAcceleration;
+    // Apply difficulty settings to player - use the full acceleration value from PLAYER_SETTINGS
+    // The difficulty settings are too small (they're in the 0.54-1.08 range)
+    player.acceleration = PLAYER_SETTINGS.ACCELERATION;
+    if (currentDifficulty === 'medium') {
+        player.acceleration *= 1.5;  // 1.5x base for medium
+    } else if (currentDifficulty === 'difficult') {
+        player.acceleration *= 2.0;  // 2.0x base for difficult
+    }
+    
     player.shootCooldown = difficultySettings.shootCooldown;
+    
+    // Log the actual acceleration value to verify
+    console.log(`Player acceleration set to: ${player.acceleration}`);
     
     // Create initial asteroids
     createAsteroids(difficultySettings.initialAsteroids);
