@@ -8,7 +8,7 @@ import { clear, getDimensions } from '../canvas.js';
 import { submitScore } from '../services/api.js';
 
 // Track the player's initials input
-let initials = ['_', '_', '_'];
+let initials = ['', '', ''];
 let currentInitialIndex = 0;
 let inputActive = false;
 let submitCallback = null;
@@ -69,15 +69,25 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, time = 0) 
             ctx.lineWidth = currentInitialIndex === i && inputActive ? 3 : 2;
             ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
             
-            // Draw initial letter
+            // Draw initial letter or cursor
             ctx.fillStyle = 'white';
             ctx.font = '32px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(initials[i], boxX + boxWidth / 2, boxY + 30);
+            
+            let displayChar = initials[i];
+            
+            // If this is the current field and it's empty, show a cursor
+            if (currentInitialIndex === i && inputActive && !displayChar) {
+                displayChar = '_';
+            } else if (!displayChar) {
+                displayChar = ' ';  // Empty space for unfilled fields
+            }
+            
+            ctx.fillText(displayChar, boxX + boxWidth / 2, boxY + 30);
         }
         
         // Draw submit info if all initials are filled
-        if (!initials.includes('_')) {
+        if (initials[0] && initials[1] && initials[2]) {
             ctx.font = '24px Arial';
             ctx.fillText('Press ENTER to submit', width / 2, boxY + 80);
         }
@@ -120,11 +130,11 @@ export function handleGameOverKeyInput(event) {
             }
         } else if (event.key === 'Backspace') {
             // Handle backspace - clear current field and move back
-            initials[currentInitialIndex] = '_';
-            if (currentInitialIndex > 0) {
+            initials[currentInitialIndex] = '';
+            if (currentInitialIndex > 0 && !initials[currentInitialIndex]) {
                 currentInitialIndex--;
             }
-        } else if (event.key === 'Enter' && !initials.includes('_')) {
+        } else if (event.key === 'Enter' && initials[0] && initials[1] && initials[2]) {
             // Submit score when all fields are filled
             if (submitCallback) {
                 submitCallback(initials.join(''));
@@ -153,7 +163,7 @@ export function handleGameOverKeyInput(event) {
  * Reset the initials input state
  */
 function resetInput() {
-    initials = ['_', '_', '_'];
+    initials = ['', '', ''];
     currentInitialIndex = 0;
     inputActive = false;
 }
@@ -162,7 +172,7 @@ function resetInput() {
  * Activate the initials input
  */
 export function activateInput() {
-    initials = ['_', '_', '_'];
+    initials = ['', '', ''];
     currentInitialIndex = 0;
     inputActive = true;
 }
