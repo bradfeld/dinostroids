@@ -126,12 +126,12 @@ function drawLeaderboard(ctx, leaderboard, width, height) {
 function isNewHighScore(score, leaderboard) {
     if (!leaderboard || leaderboard.length === 0) return true;
     
-    // If leaderboard has fewer than 5 entries, any score qualifies
-    if (leaderboard.length < 5) return true;
+    // If leaderboard has fewer than 20 entries, any score qualifies
+    if (leaderboard.length < 20) return true;
     
-    // Check if score is higher than the lowest score on the leaderboard
+    // Check if score is higher than the lowest score in the top 20
     const sortedScores = [...leaderboard].sort((a, b) => b.score - a.score);
-    return score > sortedScores[4].score;
+    return score > sortedScores[19].score;
 }
 
 /**

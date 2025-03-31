@@ -65,12 +65,13 @@ function showStartScreen() {
 }
 
 /**
- * End the current game and go back to the start screen
+ * End the current game and go to the game over screen
  */
 function endGame() {
     console.log("Game ended by user (ESC key)");
     
-    // Reset game state
+    // Set game over state but don't reset everything yet
+    // We need to preserve the score, level, and other data for the game over screen
     isGameStarted = false;
     isGameOver = true;
     gameRunning = false;
@@ -81,13 +82,9 @@ function endGame() {
         animationFrameId = null;
     }
     
-    // Clear entities
-    player = null;
-    asteroids = [];
-    bullets = [];
-    
-    // Show the start screen
-    showStartScreen();
+    // Instead of going to start screen, call handleGameOver to properly show score
+    // and check for high score entry
+    handleGameOver();
 }
 
 /**
@@ -190,6 +187,7 @@ function startGame() {
     
     // Reset game state
     score = 0;
+    currentTime = 0; // Reset game time
     
     // Apply settings based on current difficulty
     const difficultySettings = DIFFICULTY_SETTINGS[currentDifficulty];
@@ -255,6 +253,9 @@ function gameLoop(timestamp) {
         animationFrameId = requestAnimationFrame(gameLoop);
         return;
     }
+    
+    // Update total game time
+    currentTime += deltaTime * 1000; // Convert to milliseconds
     
     // Clear the canvas
     clear('black');
@@ -382,6 +383,13 @@ function handleGameOver() {
         animationFrameId = null;
     }
     
+    // Clean up entities (important when ESC is pressed)
+    if (player) {
+        player = null;
+    }
+    asteroids = [];
+    bullets = [];
+    
     // Draw game over screen with level and time information
     const { ctx } = getCanvas();
     drawGameOver(ctx, score, leaderboardData, level, gameTime);
@@ -424,12 +432,12 @@ function handleGameOver() {
 function isNewHighScore() {
     if (!leaderboardData || leaderboardData.length === 0) return true;
     
-    // If leaderboard has fewer than 10 entries, any score qualifies
-    if (leaderboardData.length < 10) return true;
+    // If leaderboard has fewer than 20 entries, any score qualifies
+    if (leaderboardData.length < 20) return true;
     
-    // Check if score is higher than the lowest score
+    // Check if score is higher than the lowest score in the top 20
     const sortedLeaderboard = [...leaderboardData].sort((a, b) => b.score - a.score);
-    return score > sortedLeaderboard[Math.min(9, sortedLeaderboard.length - 1)].score;
+    return score > sortedLeaderboard[19].score;
 }
 
 /**
