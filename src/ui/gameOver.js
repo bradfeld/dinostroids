@@ -67,7 +67,7 @@ export function drawGameOver(ctx, score, leaderboard = []) {
     } else {
         // Draw restart prompt
         ctx.font = '24px Arial';
-        ctx.fillText('Press SPACE to play again', width / 2, height / 4 + 120);
+        ctx.fillText('Press RETURN to play again', width / 2, height / 4 + 120);
     }
     
     // Display leaderboard if available
@@ -149,7 +149,7 @@ export function handleGameOverKeyInput(event) {
         }
     } else {
         // Handle restart
-        if (event.code === 'Space' && restartCallback) {
+        if (event.code === 'Enter' && restartCallback) {
             restartCallback();
         }
     }

@@ -82,7 +82,7 @@ export const CONTROLS = {
   RIGHT: 'ArrowRight',
   UP: 'ArrowUp',
   SHOOT: 'Space',
-  START: 'Space',
+  START: 'Enter',
   HELP: 'KeyH',
   PAUSE: 'KeyP',
   MUTE: 'KeyM'

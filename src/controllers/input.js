@@ -29,8 +29,8 @@ export function initInput() {
 function handleKeyDown(event) {
     keys[event.code] = true;
     
-    // Handle space bar for starting game
-    if (event.code === 'Space' && onStartCallback) {
+    // Handle Enter key for starting game
+    if ((event.code === 'Enter' || event.code === 'NumpadEnter') && onStartCallback) {
         onStartCallback();
     }
     
@@ -76,7 +76,7 @@ export function isKeyPressed(code) {
 }
 
 /**
- * Register a callback for when the start button (space) is pressed
+ * Register a callback for when the start button (Enter) is pressed
  * @param {Function} callback - The function to call when start is pressed
  */
 export function onStart(callback) {

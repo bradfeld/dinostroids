@@ -55,7 +55,7 @@ export function drawStartScreen(ctx, currentDifficulty, leaderboardData = [], ga
     
     // Draw instructions
     ctx.font = '24px Arial';
-    ctx.fillText('Press SPACE to start', width / 2, height * 2/3 + 20);
+    ctx.fillText('Press RETURN to start', width / 2, height * 2/3 + 20);
     ctx.fillText('Press ? for help', width / 2, height * 2/3 + 60);
     
     // Games played info

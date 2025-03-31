@@ -17,12 +17,11 @@ Inspiration and emotional support from Quinn McIntyre.
 
 ## Controls
 
-*   **Rotate Left:** `ArrowLeft`
-*   **Rotate Right:** `ArrowRight`
-*   **Thrust:** `ArrowUp`
+*   **Movement:** Arrow Keys
 *   **Shoot:** `Spacebar`
-*   **Start Game:** `Enter` (on the start screen)
-*   **Toggle Help:** `?` (shows/hides control screen)
+*   **Start Game:** `Enter/Return`
+*   **Help Screen:** `?`
+*   **End Game:** `Esc`
 
 ## How to Play
 

@@ -94,21 +94,21 @@ function endGame() {
  * Draw the help screen
  */
 function drawHelpScreen() {
-    const { canvas, ctx } = getCanvas();
+    const { ctx, width, height } = getCanvas();
     
-    // Clear the canvas
-    clear('black');
+    // Draw semi-transparent background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, width, height);
     
-    // Title
+    // Draw title
     ctx.fillStyle = 'white';
     ctx.font = 'bold 36px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('HOW TO PLAY', canvas.width / 2, 100);
+    ctx.fillText('HOW TO PLAY', width / 2, 80);
     
-    // Instructions
-    ctx.font = '20px Arial';
-    ctx.textAlign = 'left';
+    // Draw instructions
     const instructions = [
+        '',
         'CONTROLS:',
         '• Arrow Keys: Move ship',
         '• Space: Fire',
@@ -118,20 +118,32 @@ function drawHelpScreen() {
         'OBJECTIVE:',
         '• Destroy all dinosaur asteroids',
         '• Avoid collisions',
-        '• Score as many points as possible'
+        '• Score as many points as possible',
+        '',
+        'DIFFICULTY:',
+        '• Press E: Easy mode',
+        '• Press M: Medium mode',
+        '• Press D: Difficult mode',
+        '',
+        'START GAME:',
+        '• Press RETURN to begin'
     ];
     
-    const startY = 150;
-    const lineHeight = 30;
+    // Draw each instruction line
+    ctx.font = '18px Arial';
+    ctx.textAlign = 'left';
+    
+    const startY = 130;
+    const lineHeight = 24;
     
     instructions.forEach((line, index) => {
-        ctx.fillText(line, canvas.width / 4, startY + (index * lineHeight));
+        ctx.fillText(line, width / 2 - 180, startY + index * lineHeight);
     });
     
-    // Back button
-    ctx.font = '24px Arial';
+    // Draw back button
     ctx.textAlign = 'center';
-    ctx.fillText('Press ? to return', canvas.width / 2, canvas.height - 50);
+    ctx.font = '20px Arial';
+    ctx.fillText('Press ? to return', width / 2, height - 50);
 }
 
 /**
@@ -581,7 +593,7 @@ function drawGameOverScreen() {
     // Draw instructions to restart
     ctx.font = '24px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('Press SPACE to play again', ctx.canvas.width / 2, ctx.canvas.height - 100);
+    ctx.fillText('Press RETURN to play again', ctx.canvas.width / 2, ctx.canvas.height - 100);
     
     // Draw leaderboard
     drawLeaderboard(ctx.canvas.width / 2, ctx.canvas.height - 80);
