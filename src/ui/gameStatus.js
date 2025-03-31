@@ -1,18 +1,18 @@
 /**
  * Game Status UI Component
  * 
- * Displays the player's score, lives, level, and difficulty during gameplay.
+ * Displays the player's score, lives, and level during gameplay.
  */
 
 import { getDimensions } from '../canvas.js';
 
 /**
- * Draw the game status (score, lives, level, difficulty)
+ * Draw the game status (score, lives, level)
  * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
  * @param {number} score - Current score
  * @param {number} lives - Remaining lives
  * @param {number} level - Current level
- * @param {string} difficulty - Current difficulty level
+ * @param {string} difficulty - Current difficulty level (not displayed during gameplay)
  */
 export function drawGameStatus(ctx, score, lives, level, difficulty) {
     const { width, height } = getDimensions();
@@ -32,9 +32,7 @@ export function drawGameStatus(ctx, score, lives, level, difficulty) {
     // Draw lives (top right)
     drawLives(ctx, lives, width - 20, 30);
     
-    // Draw difficulty (below score)
-    ctx.textAlign = 'left';
-    ctx.fillText(`Difficulty: ${formatDifficulty(difficulty)}`, 20, 60);
+    // Note: Difficulty is no longer displayed during active gameplay
 }
 
 /**

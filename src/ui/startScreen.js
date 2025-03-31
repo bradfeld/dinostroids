@@ -58,10 +58,6 @@ export function drawStartScreen(ctx, currentDifficulty, leaderboardData = [], ga
     ctx.fillText('Press SPACE to start', width / 2, height * 2/3 + 20);
     ctx.fillText('Press ? for help', width / 2, height * 2/3 + 60);
     
-    // Draw key hints
-    ctx.font = '16px Arial';
-    ctx.fillText('Press E, M, or D to change difficulty', width / 2, height - 50);
-    
     // Games played info
     if (gamesPlayedCount > 0) {
         ctx.font = '16px Arial';

@@ -556,9 +556,7 @@ function drawHUD() {
     ctx.font = '24px Arial';
     ctx.fillText(`Lives: ${lives}`, 20, 90);
     
-    // Draw current difficulty
-    ctx.font = '24px Arial';
-    ctx.fillText(`Difficulty: ${currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}`, 20, 120);
+    // Difficulty is no longer displayed during active gameplay
 }
 
 /**
@@ -609,11 +607,11 @@ function getAsteroidSpeed(size) {
 }
 
 /**
- * Update the game HUD with difficulty information
+ * Update the game HUD with current information
  */
 function updateHUD() {
     const { ctx } = getCanvas();
     
-    // Draw game status with current settings
+    // Draw game status with current settings (difficulty is passed but not displayed)
     drawGameStatus(ctx, score, lives, level, currentDifficulty);
 } 
