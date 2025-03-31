@@ -1,15 +1,15 @@
 /**
  * Game Over Screen
  * 
- * Displays game over information including score and highscores.
+ * Displays game over information including score.
  */
 
 import { clear, getDimensions } from '../canvas.js';
 import { submitScore } from '../services/api.js';
 
 // Track the player's initials input
-let playerInitials = '';
-const MAX_INITIALS_LENGTH = 3;
+let initials = ['_', '_', '_'];
+let currentInitialIndex = 0;
 let inputActive = false;
 let submitCallback = null;
 let restartCallback = null;
@@ -18,7 +18,7 @@ let restartCallback = null;
  * Draw the game over screen
  * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
  * @param {number} score - The player's final score
- * @param {Array} leaderboard - The current leaderboard data
+ * @param {Array} leaderboard - The current leaderboard data (used only to check high score)
  * @param {number} level - The level reached
  * @param {number} time - Time played in milliseconds
  */
@@ -55,66 +55,37 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, time = 0) 
         ctx.fillText('New High Score!', width / 2, height / 4 + 130);
         ctx.fillText('Enter your initials:', width / 2, height / 4 + 165);
         
-        // Draw initials input box
-        const boxWidth = 120;
+        // Draw three separate initial boxes
+        const boxWidth = 40;
         const boxHeight = 40;
-        const boxX = width / 2 - boxWidth / 2;
         const boxY = height / 4 + 180;
+        const spacing = 10;
         
-        // Draw box
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+        for (let i = 0; i < 3; i++) {
+            const boxX = width / 2 - (boxWidth * 1.5) - spacing + i * (boxWidth + spacing);
+            
+            // Draw box with highlight if current
+            ctx.strokeStyle = currentInitialIndex === i && inputActive ? '#ffff00' : 'white';
+            ctx.lineWidth = currentInitialIndex === i && inputActive ? 3 : 2;
+            ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+            
+            // Draw initial letter
+            ctx.fillStyle = 'white';
+            ctx.font = '32px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(initials[i], boxX + boxWidth / 2, boxY + 30);
+        }
         
-        // Draw current initials
-        ctx.font = '32px Arial';
-        ctx.fillText(playerInitials + (inputActive ? '_' : ''), width / 2, boxY + 30);
-        
-        // Draw submit button if initials are complete
-        if (playerInitials.length === MAX_INITIALS_LENGTH) {
+        // Draw submit info if all initials are filled
+        if (!initials.includes('_')) {
             ctx.font = '24px Arial';
             ctx.fillText('Press ENTER to submit', width / 2, boxY + 80);
         }
     } else {
         // Draw restart prompt
         ctx.font = '24px Arial';
-        ctx.fillText('Press RETURN to play again', width / 2, height / 4 + 140);
+        ctx.fillText('Press RETURN to return to start screen', width / 2, height / 2 + 50);
     }
-    
-    // Display leaderboard if available
-    if (leaderboard && leaderboard.length > 0) {
-        drawLeaderboard(ctx, leaderboard, width, height);
-    }
-}
-
-/**
- * Draw the leaderboard section
- * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
- * @param {Array} leaderboard - The leaderboard data
- * @param {number} width - Canvas width
- * @param {number} height - Canvas height
- */
-function drawLeaderboard(ctx, leaderboard, width, height) {
-    // Leaderboard title
-    ctx.font = 'bold 32px Arial';
-    ctx.fillText('TOP SCORES', width / 2, height / 2);
-    
-    // Sort leaderboard by score
-    const sortedLeaderboard = [...leaderboard].sort((a, b) => b.score - a.score).slice(0, 5);
-    
-    // Leaderboard entries
-    ctx.font = '20px Arial';
-    ctx.textAlign = 'left';
-    const startX = width / 2 - 100;
-    
-    sortedLeaderboard.forEach((entry, index) => {
-        const y = height / 2 + 40 + (index * 30);
-        ctx.fillText(`${index + 1}. ${entry.initials}`, startX, y);
-        
-        ctx.textAlign = 'right';
-        ctx.fillText(`${entry.score}`, startX + 200, y);
-        ctx.textAlign = 'left';
-    });
 }
 
 /**
@@ -139,28 +110,40 @@ function isNewHighScore(score, leaderboard) {
  * @param {KeyboardEvent} event - The keyboard event
  */
 export function handleGameOverKeyInput(event) {
-    const isHighScore = inputActive;
-    
-    if (isHighScore) {
+    if (inputActive) {
         // Handle initials input
         if (event.key.length === 1 && /[A-Za-z]/.test(event.key)) {
-            // Only allow letters
-            if (playerInitials.length < MAX_INITIALS_LENGTH) {
-                playerInitials += event.key.toUpperCase();
+            // Set current letter and move to next field
+            initials[currentInitialIndex] = event.key.toUpperCase();
+            if (currentInitialIndex < 2) {
+                currentInitialIndex++;
             }
         } else if (event.key === 'Backspace') {
-            // Handle backspace
-            playerInitials = playerInitials.slice(0, -1);
-        } else if (event.key === 'Enter' && playerInitials.length === MAX_INITIALS_LENGTH) {
-            // Submit score
+            // Handle backspace - clear current field and move back
+            initials[currentInitialIndex] = '_';
+            if (currentInitialIndex > 0) {
+                currentInitialIndex--;
+            }
+        } else if (event.key === 'Enter' && !initials.includes('_')) {
+            // Submit score when all fields are filled
             if (submitCallback) {
-                submitCallback(playerInitials);
+                submitCallback(initials.join(''));
             }
             resetInput();
+        } else if (event.key === 'ArrowLeft') {
+            // Move to previous field
+            if (currentInitialIndex > 0) {
+                currentInitialIndex--;
+            }
+        } else if (event.key === 'ArrowRight') {
+            // Move to next field
+            if (currentInitialIndex < 2) {
+                currentInitialIndex++;
+            }
         }
     } else {
-        // Handle restart
-        if (event.code === 'Enter' && restartCallback) {
+        // Handle return to start screen
+        if ((event.code === 'Enter' || event.code === 'NumpadEnter') && restartCallback) {
             restartCallback();
         }
     }
@@ -170,7 +153,8 @@ export function handleGameOverKeyInput(event) {
  * Reset the initials input state
  */
 function resetInput() {
-    playerInitials = '';
+    initials = ['_', '_', '_'];
+    currentInitialIndex = 0;
     inputActive = false;
 }
 
@@ -178,6 +162,8 @@ function resetInput() {
  * Activate the initials input
  */
 export function activateInput() {
+    initials = ['_', '_', '_'];
+    currentInitialIndex = 0;
     inputActive = true;
 }
 

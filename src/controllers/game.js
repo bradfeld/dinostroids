@@ -408,7 +408,7 @@ function handleGameOver() {
                 // Refresh leaderboard after submitting
                 leaderboardData = await fetchLeaderboard();
                 
-                // Draw updated game over screen with level and time
+                // Redraw game over screen
                 drawGameOver(ctx, score, leaderboardData, level, gameTime);
             } catch (error) {
                 console.error("Failed to submit score:", error);
@@ -416,9 +416,10 @@ function handleGameOver() {
         });
     }
     
-    // Set up the restart handler
+    // Set up the restart handler to return to start screen
     onRestart(() => {
-        startGame();
+        // Don't start new game, just go to start screen
+        showStartScreen();
     });
     
     // Add keyboard handler for game over screen
@@ -606,13 +607,10 @@ function drawGameOverScreen() {
     ctx.fillText(`Time: ${formattedTime}`, ctx.canvas.width / 2, 230);
     ctx.fillText(`Difficulty: ${currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}`, ctx.canvas.width / 2, 270);
     
-    // Draw instructions to restart
+    // Draw instructions to return to start screen
     ctx.font = '24px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('Press RETURN to play again', ctx.canvas.width / 2, ctx.canvas.height - 100);
-    
-    // Draw leaderboard
-    drawLeaderboard(ctx.canvas.width / 2, ctx.canvas.height - 80);
+    ctx.fillText('Press RETURN to return to start screen', ctx.canvas.width / 2, ctx.canvas.height - 100);
 }
 
 /**
