@@ -96,10 +96,12 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
                     const dateStr = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().substr(2)}`;
                     ctx.fillText(dateStr, x - bgWidth/2 + 300, yPos);
                     
-                    // Time
+                    // Time in AM/PM format
                     const hours = date.getHours();
                     const minutes = date.getMinutes();
-                    const timeStr = `${hours}:${minutes.toString().padStart(2, '0')}`;
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    const displayHours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+                    const timeStr = `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
                     ctx.fillText(timeStr, x - bgWidth/2 + 380, yPos);
                 } else {
                     // Invalid date
