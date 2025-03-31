@@ -71,7 +71,7 @@ export function drawStartScreen(ctx, currentDifficulty, leaderboardData = [], ga
     // Draw leaderboard if data is available
     if (leaderboardData && leaderboardData.length > 0) {
         // Position the leaderboard on the right side with enough margin to show all columns
-        // 220px from right edge to ensure the leaderboard is fully visible
-        drawLeaderboard(width - 220, 50, leaderboardData, ctx);
+        // 300px from right edge to ensure the leaderboard is fully visible with all columns
+        drawLeaderboard(width - 300, 50, leaderboardData, ctx);
     }
 } 

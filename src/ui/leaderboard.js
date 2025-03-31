@@ -26,12 +26,15 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
         Math.floor((ctx.canvas.height - y - 50) / 25) // Based on available space
     );
     
+    // Calculate wider background for more columns
+    const bgWidth = 500;
+    
     // Draw semi-transparent background
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(
-        x - 200, 
+        x - bgWidth/2, 
         y, 
-        400, 
+        bgWidth, 
         maxVisibleScores * 25 + 50
     );
     
@@ -44,11 +47,12 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
     // Draw column headers
     ctx.font = '16px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText('Rank', x - 180, y + 60);
-    ctx.fillText('Score', x - 130, y + 60);
-    ctx.fillText('Difficulty', x - 10, y + 60);
-    ctx.textAlign = 'right';
-    ctx.fillText('Date', x + 180, y + 60);
+    ctx.fillText('Rank', x - bgWidth/2 + 20, y + 60);
+    ctx.fillText('Score', x - bgWidth/2 + 80, y + 60);
+    ctx.fillText('Initials', x - bgWidth/2 + 160, y + 60);
+    ctx.fillText('Level', x - bgWidth/2 + 230, y + 60);
+    ctx.fillText('Date', x - bgWidth/2 + 300, y + 60);
+    ctx.fillText('Time', x - bgWidth/2 + 380, y + 60);
     
     // Draw scores
     ctx.font = '16px Arial';
@@ -59,30 +63,35 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
         // Highlight current score
         if (score.isCurrent) {
             ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
-            ctx.fillRect(x - 190, yPos - 15, 380, 20);
+            ctx.fillRect(x - bgWidth/2 + 10, yPos - 15, bgWidth - 20, 20);
             ctx.fillStyle = 'white';
         }
         
         // Rank number
         ctx.textAlign = 'left';
-        ctx.fillText(`${i + 1}.`, x - 180, yPos);
+        ctx.fillText(`${i + 1}.`, x - bgWidth/2 + 20, yPos);
         
         // Score
-        ctx.fillText(`${score.score}`, x - 130, yPos);
+        ctx.fillText(`${score.score}`, x - bgWidth/2 + 80, yPos);
         
-        // Difficulty (capitalize first letter)
-        const difficulty = score.difficulty || 'medium';
-        const displayDifficulty = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
-        ctx.fillText(displayDifficulty, x - 10, yPos);
+        // Initials
+        ctx.fillText(score.initials || '---', x - bgWidth/2 + 160, yPos);
+        
+        // Level
+        ctx.fillText(score.level || '1', x - bgWidth/2 + 230, yPos);
         
         // Date (if available)
-        ctx.textAlign = 'right';
         if (score.date) {
             const date = new Date(score.date);
             const dateStr = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().substr(2)}`;
-            ctx.fillText(dateStr, x + 180, yPos);
+            ctx.fillText(dateStr, x - bgWidth/2 + 300, yPos);
+            
+            // Time
+            const timeStr = `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+            ctx.fillText(timeStr, x - bgWidth/2 + 380, yPos);
         } else {
-            ctx.fillText('--/--/--', x + 180, yPos);
+            ctx.fillText('--/--/--', x - bgWidth/2 + 300, yPos);
+            ctx.fillText('--:--', x - bgWidth/2 + 380, yPos);
         }
     }
     
