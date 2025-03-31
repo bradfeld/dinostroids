@@ -56,13 +56,19 @@ class Player {
     // Skip if destroyed
     if (this.isDestroyed) return null;
     
-    // Handle invincibility timer (convert deltaTime to ms)
+    // Handle invincibility timer
     if (this.invincible) {
+      // Log invincibility time every second for debugging
+      if (Math.floor(this.invincibilityTime / 1000) !== Math.floor((this.invincibilityTime - deltaTime * 1000) / 1000)) {
+        console.log(`Invincibility remaining: ${(this.invincibilityTime / 1000).toFixed(1)}s, deltaTime: ${deltaTime.toFixed(3)}s`);
+      }
+      
       // deltaTime is in seconds, but invincibilityTime is in milliseconds
       this.invincibilityTime -= deltaTime * 1000;
       
+      // Make sure invincibility turns off when timer expires
       if (this.invincibilityTime <= 0) {
-        console.log('Invincibility ended');
+        console.log('Invincibility ended, setting invincible to false');
         this.invincible = false;
         this.invincibilityTime = 0;
       }
@@ -209,7 +215,10 @@ class Player {
     
     // Make player temporarily invincible
     this.invincible = true;
+    
+    // Ensure we're using the correct invincibility time value
     this.invincibilityTime = PLAYER_SETTINGS.INVINCIBILITY_TIME;
+    console.log(`Player reset with ${this.invincibilityTime}ms invincibility time`);
   }
   
   /**
@@ -218,13 +227,24 @@ class Player {
    * @returns {boolean} Whether a collision occurred
    */
   isCollidingWith(entity) {
-    if (this.isDestroyed || this.invincible) return false;
+    // Skip collision check if destroyed or invincible
+    if (this.isDestroyed) {
+      return false;
+    }
     
+    // Check actual collision
     const dx = this.x - entity.x;
     const dy = this.y - entity.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
+    const isColliding = distance < this.radius + entity.radius;
     
-    return distance < this.radius + entity.radius;
+    // If we are colliding but invincible, log it
+    if (isColliding && this.invincible) {
+      console.log('Collision ignored due to invincibility');
+      return false;
+    }
+    
+    return isColliding;
   }
 }
 
