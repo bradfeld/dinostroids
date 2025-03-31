@@ -60,14 +60,16 @@ function showStartScreen() {
     // Clear the canvas
     clear('black');
     
-    // Draw start screen with current difficulty
-    drawStartScreen(ctx, currentDifficulty);
+    // Draw start screen with current difficulty and game data
+    drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
 }
 
 /**
  * End the current game and go back to the start screen
  */
 function endGame() {
+    console.log("Game ended by user (ESC key)");
+    
     // Reset game state
     isGameStarted = false;
     isGameOver = true;
@@ -157,13 +159,7 @@ function setupInputHandlers() {
     
     onDifficulty((difficulty) => {
         if (!isGameStarted || isGameOver) {
-            // Reset game state to ensure we can start a new game
-            isGameOver = false;
-            
-            // Update difficulty settings
             currentDifficulty = difficulty;
-            
-            // Update the UI
             showStartScreen();
         }
     });
@@ -173,10 +169,9 @@ function setupInputHandlers() {
  * Start a new game with current difficulty settings
  */
 function startGame() {
-    if (isHelpScreenVisible || isGameStarted || isGameOver) {
-        return;
-    }
+    if (isHelpScreenVisible || isGameStarted || isGameOver) return;
     
+    console.log(`Starting game with ${currentDifficulty} difficulty...`);
     isGameStarted = true;
     isGameOver = false;
     gameRunning = true;
@@ -362,6 +357,7 @@ function gameLoop(timestamp) {
  * Handle game over state
  */
 function handleGameOver() {
+    console.log("Game over!");
     isGameOver = true;
     gameRunning = false;
     
@@ -439,6 +435,8 @@ function toggleHelpScreen() {
  * Initialize the game
  */
 export function initGame() {
+    console.log("Initializing game...");
+    
     // Initialize canvas
     const { canvas } = initCanvas();
     
@@ -466,6 +464,8 @@ export function initGame() {
     
     // Preload images before starting game
     preloadImages(() => {
+        console.log("Images loaded, proceeding with game initialization...");
+        
         // Load game data in parallel
         Promise.allSettled([
             // Fetch games played count
@@ -486,6 +486,7 @@ export function initGame() {
                 }
             })()
         ]).then(() => {
+            console.log("Game data loaded, showing start screen");
             showStartScreen();
         });
     });
@@ -585,7 +586,7 @@ function drawGameOverScreen() {
     ctx.fillText('Press SPACE to play again', ctx.canvas.width / 2, ctx.canvas.height - 100);
     
     // Draw leaderboard
-    drawLeaderboard(ctx.canvas.width / 2, ctx.canvas.height - 80, leaderboardData, ctx);
+    drawLeaderboard(ctx.canvas.width / 2, ctx.canvas.height - 80);
 }
 
 /**

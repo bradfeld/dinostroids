@@ -5,13 +5,16 @@
  */
 
 import { getDimensions } from '../canvas.js';
+import { drawLeaderboard } from './leaderboard.js';
 
 /**
  * Draw the start screen with difficulty selection
  * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
  * @param {string} currentDifficulty - Current selected difficulty ('easy', 'medium', 'difficult')
+ * @param {Array} leaderboardData - Optional leaderboard data
+ * @param {number} gamesPlayedCount - Optional count of games played
  */
-export function drawStartScreen(ctx, currentDifficulty) {
+export function drawStartScreen(ctx, currentDifficulty, leaderboardData = [], gamesPlayedCount = 0) {
     const { width, height } = getDimensions();
     
     // Draw title
@@ -58,17 +61,19 @@ export function drawStartScreen(ctx, currentDifficulty) {
     // Draw key hints
     ctx.font = '16px Arial';
     ctx.fillText('Press E, M, or D to change difficulty', width / 2, height - 50);
-}
-
-/**
- * Handle key input for difficulty selection
- * @param {KeyboardEvent} event - The keyboard event
- * @param {string} currentDifficulty - Current selected difficulty
- * @returns {string|null} - New difficulty if changed, null otherwise
- */
-export function handleDifficultySelection(event, currentDifficulty) {
-    if (event.code === 'KeyE') return 'easy';
-    if (event.code === 'KeyM') return 'medium'; 
-    if (event.code === 'KeyD') return 'difficult';
-    return null;
+    
+    // Games played info
+    if (gamesPlayedCount > 0) {
+        ctx.font = '16px Arial';
+        ctx.fillText(`Games Played: ${gamesPlayedCount}`, width / 2, height - 80);
+    }
+    
+    // Copyright text
+    ctx.font = '14px Arial';
+    ctx.fillText('© Intensity Ventures, 2025', width / 2, height - 20);
+    
+    // Draw leaderboard if data is available
+    if (leaderboardData && leaderboardData.length > 0) {
+        drawLeaderboard(width - 200, 50, leaderboardData, ctx);
+    }
 } 
