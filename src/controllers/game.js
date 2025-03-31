@@ -56,7 +56,7 @@ function drawStartScreen() {
     // Instructions
     ctx.font = '24px Arial';
     ctx.fillText('Press SPACE to start', canvas.width / 2, canvas.height / 2);
-    ctx.fillText('Press H for help', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.fillText('Press ? for help', canvas.width / 2, canvas.height / 2 + 40);
     
     // Games played info
     if (gamesPlayedCount > 0) {
@@ -122,7 +122,7 @@ function drawHelpScreen() {
         'CONTROLS:',
         '• Arrow Keys: Move ship',
         '• Space: Fire',
-        '• H: Toggle help screen',
+        '• ?: Toggle help screen',
         '• ESC: End game and return to menu',
         '',
         'OBJECTIVE:',
@@ -141,7 +141,7 @@ function drawHelpScreen() {
     // Back button
     ctx.font = '24px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('Press H to return', canvas.width / 2, canvas.height - 50);
+    ctx.fillText('Press ? to return', canvas.width / 2, canvas.height - 50);
 }
 
 /**

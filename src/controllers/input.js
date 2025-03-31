@@ -33,9 +33,11 @@ function handleKeyDown(event) {
         onStartCallback();
     }
     
-    // Handle H key for help screen
-    if ((event.code === 'KeyH' || event.key === 'h') && onHelpCallback) {
+    // Handle ? key for help screen (Slash key with Shift)
+    if ((event.key === '?' || (event.code === 'Slash' && event.shiftKey)) && onHelpCallback) {
         onHelpCallback();
+        // Prevent browser from showing its own search dialog with ?
+        event.preventDefault();
     }
     
     // Handle Escape key to end game and return to start screen
@@ -70,7 +72,7 @@ export function onStart(callback) {
 }
 
 /**
- * Register a callback for when the help button (H) is pressed
+ * Register a callback for when the help button (?) is pressed
  * @param {Function} callback - The function to call when help is pressed
  */
 export function onHelp(callback) {

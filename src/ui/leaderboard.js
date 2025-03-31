@@ -18,10 +18,11 @@ export function drawLeaderboard(ctx, leaderboardData, x, y) {
     
     const { height } = getDimensions();
     
-    // Sort the leaderboard by score
-    const sortedData = [...leaderboardData]
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 20); // Show up to 20 scores
+    // Sort the leaderboard by score (highest to lowest)
+    const sortedData = [...leaderboardData].sort((a, b) => b.score - a.score);
+    
+    // Get top 20 scores or all available scores if less than 20
+    const top20Scores = sortedData.slice(0, 20);
     
     // Set up styling
     ctx.font = '16px Arial';
@@ -32,15 +33,15 @@ export function drawLeaderboard(ctx, leaderboardData, x, y) {
     ctx.font = 'bold 18px Arial';
     ctx.fillText('HIGH SCORES', x, y);
     
-    // Draw entries
+    // Calculate how many scores can fit on screen
     const lineHeight = 22;
     const maxVisibleScores = Math.min(
-        // Calculate how many scores can fit on screen
+        // Calculate how many scores can fit vertically
         Math.floor((height - y - 30) / lineHeight),
         // Cap at 20 scores
         20,
         // Don't try to show more scores than we have
-        sortedData.length
+        top20Scores.length
     );
     
     // Draw a semi-transparent background for better readability
@@ -54,7 +55,7 @@ export function drawLeaderboard(ctx, leaderboardData, x, y) {
     
     // Draw scores
     for (let i = 0; i < maxVisibleScores; i++) {
-        const entry = sortedData[i];
+        const entry = top20Scores[i];
         const entryY = y + 25 + (i * lineHeight);
         
         // Format date - if available
@@ -85,10 +86,17 @@ export function drawLeaderboard(ctx, leaderboardData, x, y) {
     }
     
     // If there are more scores than we can display, show an indicator
-    if (sortedData.length > maxVisibleScores) {
+    if (top20Scores.length > maxVisibleScores) {
         ctx.textAlign = 'center';
         ctx.font = '14px Arial';
         ctx.fillText('...', x + 80, y + 25 + (maxVisibleScores * lineHeight));
+    }
+    
+    // Show total count of scores if there are more than visible
+    if (leaderboardData.length > maxVisibleScores) {
+        ctx.textAlign = 'right';
+        ctx.font = '12px Arial';
+        ctx.fillText(`Showing ${maxVisibleScores} of ${leaderboardData.length} scores`, x + bgWidth - padding, y - 5);
     }
     
     // Reset text alignment
