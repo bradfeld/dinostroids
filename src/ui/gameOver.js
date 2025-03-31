@@ -44,25 +44,35 @@ export function drawGameOver(ctx, score, leaderboard = []) {
         ctx.fillText('New High Score!', width / 2, height / 4 + 100);
         ctx.fillText('Enter your initials:', width / 2, height / 4 + 140);
         
-        // Draw initials input box
-        const boxWidth = 120;
+        // Draw initials input boxes
+        const boxWidth = 40;
         const boxHeight = 40;
-        const boxX = width / 2 - boxWidth / 2;
+        const spacing = 10;
+        const totalWidth = (boxWidth * 3) + (spacing * 2);
+        const startX = width / 2 - totalWidth / 2;
         const boxY = height / 4 + 160;
         
-        // Draw box
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
-        
-        // Draw current initials
-        ctx.font = '32px Arial';
-        ctx.fillText(playerInitials + (inputActive ? '_' : ''), width / 2, boxY + 30);
-        
-        // Draw submit button if initials are complete
-        if (playerInitials.length === MAX_INITIALS_LENGTH) {
-            ctx.font = '24px Arial';
-            ctx.fillText('Press ENTER to submit', width / 2, boxY + 80);
+        // Draw three separate boxes for initials
+        for (let i = 0; i < 3; i++) {
+            const boxX = startX + (i * (boxWidth + spacing));
+            
+            // Draw box
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+            
+            // Draw current initial or underscore
+            ctx.font = '32px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            
+            if (i < playerInitials.length) {
+                // Display entered initial
+                ctx.fillText(playerInitials[i], boxX + boxWidth / 2, boxY + 30);
+            } else {
+                // Display underscore
+                ctx.fillText('_', boxX + boxWidth / 2, boxY + 30);
+            }
         }
     } else {
         // Draw restart prompt
@@ -136,16 +146,18 @@ export function handleGameOverKeyInput(event) {
             // Only allow letters
             if (playerInitials.length < MAX_INITIALS_LENGTH) {
                 playerInitials += event.key.toUpperCase();
+                
+                // Auto-submit when all initials are entered
+                if (playerInitials.length === MAX_INITIALS_LENGTH && submitCallback) {
+                    setTimeout(() => {
+                        submitCallback(playerInitials);
+                        resetInput();
+                    }, 500); // Small delay for visual feedback
+                }
             }
         } else if (event.key === 'Backspace') {
             // Handle backspace
             playerInitials = playerInitials.slice(0, -1);
-        } else if (event.key === 'Enter' && playerInitials.length === MAX_INITIALS_LENGTH) {
-            // Submit score
-            if (submitCallback) {
-                submitCallback(playerInitials);
-            }
-            resetInput();
         }
     } else {
         // Handle restart
@@ -168,6 +180,7 @@ function resetInput() {
  */
 export function activateInput() {
     inputActive = true;
+    playerInitials = '';
 }
 
 /**
