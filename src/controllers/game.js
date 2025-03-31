@@ -63,11 +63,19 @@ function showStartScreen() {
     isGameStarted = false;
     isHelpScreenVisible = false;
     gameRunning = false;
+    isGameOver = false;
+    
+    // Clean up any frame animation
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
     
     // Clean up event handlers that might be left over
     document.removeEventListener('keydown', handleGameOverKeyInput);
     
-    // Reset input state for the start screen
+    // Reset all input handlers
+    cleanupInputHandlers();
     setupInputHandlers();
     
     // Clear the canvas
@@ -213,13 +221,13 @@ function startGame() {
     // Create player
     player = new Player();
     
-    // Apply difficulty settings to player - use the full acceleration value from PLAYER_SETTINGS
-    // The difficulty settings are too small (they're in the 0.54-1.08 range)
-    player.acceleration = PLAYER_SETTINGS.ACCELERATION;
+    // Apply difficulty settings to player - with more reasonable acceleration values
+    // Use a base value that's more manageable (50 instead of 200)
+    player.acceleration = 50; // Base acceleration value
     if (currentDifficulty === 'medium') {
-        player.acceleration *= 1.5;  // 1.5x base for medium
+        player.acceleration = 75;  // 1.5x base for medium
     } else if (currentDifficulty === 'difficult') {
-        player.acceleration *= 2.0;  // 2.0x base for difficult
+        player.acceleration = 100;  // 2.0x base for difficult
     }
     
     player.shootCooldown = difficultySettings.shootCooldown;
@@ -232,6 +240,10 @@ function startGame() {
     
     // Clear bullets
     bullets = [];
+    
+    // Set start time for game duration tracking
+    startTime = Date.now();
+    currentTime = 0;
     
     // Track games played on the server
     incrementGamesPlayed().catch(err => console.error('Failed to increment games played:', err));
@@ -278,11 +290,17 @@ function gameLoop(timestamp) {
     const deltaTime = (timestamp - lastFrameTime) / 1000;
     lastFrameTime = timestamp;
     
+    // Cap deltaTime to prevent large jumps after pausing/lag
+    const cappedDeltaTime = Math.min(deltaTime, 0.1);
+    
     // Skip if game is paused or not running
     if (isPaused || !gameRunning) {
         animationFrameId = requestAnimationFrame(gameLoop);
         return;
     }
+    
+    // Update game time
+    currentTime = Date.now() - startTime;
     
     // Clear the canvas
     clear('black');
@@ -291,7 +309,7 @@ function gameLoop(timestamp) {
     
     // Update player
     if (player) {
-        const newBullet = player.update(deltaTime);
+        const newBullet = player.update(cappedDeltaTime);
         
         // Add new bullet if player fired
         if (newBullet) {
@@ -307,7 +325,7 @@ function gameLoop(timestamp) {
         const bullet = bullets[i];
         
         // Remove bullets that are no longer active
-        if (!bullet.update(deltaTime)) {
+        if (!bullet.update(cappedDeltaTime)) {
             bullets.splice(i, 1);
             continue;
         }
@@ -342,7 +360,7 @@ function gameLoop(timestamp) {
     
     // Update and draw asteroids
     asteroids.forEach(asteroid => {
-        asteroid.update(deltaTime);
+        asteroid.update(cappedDeltaTime);
         asteroid.draw(ctx);
     });
     
@@ -401,16 +419,16 @@ function handleGameOver() {
     isGameOver = true;
     gameRunning = false;
     
-    // Calculate game time (in milliseconds)
-    const gameTime = currentTime;
-    
-    // Cancel the animation frame
+    // Cancel the animation frame first to stop any ongoing game loop
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
     }
     
-    // Clean up entities (important when ESC is pressed)
+    // Calculate final game time (in milliseconds)
+    const gameTime = currentTime;
+    
+    // Clean up entities
     if (player) {
         player = null;
     }
@@ -452,6 +470,12 @@ function handleGameOver() {
                 isGameStarted = false;
                 gameRunning = false;
                 
+                // Clear any animation frames to prevent hanging
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                
                 // Show the start screen after submitting score
                 showStartScreen();
             } catch (error) {
@@ -460,6 +484,13 @@ function handleGameOver() {
                 // Even if submission fails, go back to start screen
                 document.removeEventListener('keydown', handleGameOverKeyInput);
                 isGameOver = false;
+                
+                // Clear any animation frames to prevent hanging
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                
                 showStartScreen();
             }
         });
@@ -476,6 +507,12 @@ function handleGameOver() {
             
             // Clear all key states
             cleanupInputHandlers();
+            
+            // Clear any animation frames to prevent hanging
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
             
             // Show the start screen
             showStartScreen();

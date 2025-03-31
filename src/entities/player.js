@@ -75,18 +75,28 @@ class Player {
       const thrustX = Math.cos(this.rotation) * this.acceleration;
       const thrustY = Math.sin(this.rotation) * this.acceleration;
       
-      // Apply thrust to velocity - multiply by deltaTime here
+      // Apply thrust to velocity
       this.velocityX += thrustX * deltaTime;
       this.velocityY += thrustY * deltaTime;
     }
     
-    // Apply friction to slow down - correct application of friction
-    this.velocityX *= (1 - (1 - this.friction) * deltaTime);
-    this.velocityY *= (1 - (1 - this.friction) * deltaTime);
+    // Apply more friction to make the ship easier to control
+    const frictionFactor = 1 - (1 - this.friction) * Math.min(1, deltaTime * 5);
+    this.velocityX *= frictionFactor;
+    this.velocityY *= frictionFactor;
+    
+    // Cap maximum velocity to prevent excessive speed
+    const maxSpeed = 300;
+    const currentSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
+    if (currentSpeed > maxSpeed) {
+      const scaleFactor = maxSpeed / currentSpeed;
+      this.velocityX *= scaleFactor;
+      this.velocityY *= scaleFactor;
+    }
     
     // Update position
-    this.x += this.velocityX;
-    this.y += this.velocityY;
+    this.x += this.velocityX * deltaTime;
+    this.y += this.velocityY * deltaTime;
     
     // Screen wrapping
     const { width, height } = getDimensions();
