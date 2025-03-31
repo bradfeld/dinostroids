@@ -90,14 +90,16 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
  * @returns {boolean} Whether it's a new high score
  */
 function isNewHighScore(score, leaderboard) {
+    // Always treat a score as high score if there's no leaderboard data
     if (!leaderboard || leaderboard.length === 0) return true;
     
-    // If leaderboard has fewer than 5 entries, any score qualifies
-    if (leaderboard.length < 5) return true;
+    // If leaderboard has fewer than 10 entries, any score qualifies
+    if (leaderboard.length < 10) return true;
     
     // Check if score is higher than the lowest score on the leaderboard
     const sortedScores = [...leaderboard].sort((a, b) => b.score - a.score);
-    return score > sortedScores[4].score;
+    const lowestHighScore = sortedScores[sortedScores.length - 1].score;
+    return score > lowestHighScore;
 }
 
 /**
@@ -105,17 +107,19 @@ function isNewHighScore(score, leaderboard) {
  * @param {KeyboardEvent} event - The keyboard event
  */
 export function handleGameOverKeyInput(event) {
-    const isHighScore = inputActive;
-    
-    if (isHighScore) {
+    // Check if this is for high score input
+    if (inputActive) {
+        console.log(`Key pressed for initials: ${event.key}`);
         // Handle initials input
         if (event.key.length === 1 && /[A-Za-z]/.test(event.key)) {
             // Only allow letters
             if (playerInitials.length < MAX_INITIALS_LENGTH) {
                 playerInitials += event.key.toUpperCase();
+                console.log(`Current initials: ${playerInitials}`);
                 
                 // Auto-submit when all initials are entered
                 if (playerInitials.length === MAX_INITIALS_LENGTH && submitCallback) {
+                    console.log("All initials entered, submitting...");
                     setTimeout(() => {
                         submitCallback(playerInitials);
                         resetInput();
@@ -125,12 +129,12 @@ export function handleGameOverKeyInput(event) {
         } else if (event.key === 'Backspace') {
             // Handle backspace
             playerInitials = playerInitials.slice(0, -1);
+            console.log(`Backspace pressed, initials now: ${playerInitials}`);
         }
-    } else {
-        // Handle restart
-        if (event.code === 'Space' && restartCallback) {
-            restartCallback();
-        }
+    } else if (event.code === 'Space' && restartCallback) {
+        // Handle restart with Space key
+        console.log("Space pressed for restart");
+        restartCallback();
     }
 }
 

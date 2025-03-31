@@ -407,21 +407,27 @@ function handleGameOver() {
     asteroids = [];
     bullets = [];
     
+    // First, clean up any existing input handlers
+    document.removeEventListener('keydown', handleGameOverKeyInput);
+    
+    // Check if this is a high score before drawing the screen
+    const isHighScore = isNewHighScore();
+    
     // Draw game over screen with level and time information
     const { ctx } = getCanvas();
     drawGameOver(ctx, score, leaderboardData, level, gameTime);
     
-    // Clean up any existing input handlers first
-    document.removeEventListener('keydown', handleGameOverKeyInput);
+    // Add keyboard handler for game over screen
+    document.addEventListener('keydown', handleGameOverKeyInput);
     
-    // Check if this is a high score
-    const isHighScore = isNewHighScore();
     if (isHighScore) {
+        console.log("New high score detected!");
         activateInput();
         
         // Set up the score submission handler
         onSubmitScore(async (initials) => {
             try {
+                console.log(`Submitting high score with initials: ${initials}`);
                 // Submit score with level and time information
                 await submitScore(initials, score, gameTime, level, currentDifficulty);
                 
@@ -447,26 +453,24 @@ function handleGameOver() {
                 showStartScreen();
             }
         });
+    } else {
+        // Set up the restart handler to return to start screen (for non-high scores)
+        onRestart(() => {
+            console.log("Restarting game...");
+            // Remove the game over keyboard handler to prevent duplicates
+            document.removeEventListener('keydown', handleGameOverKeyInput);
+            
+            // Reset game over state
+            isGameOver = false;
+            isGameStarted = false;
+            
+            // Clear all key states
+            cleanupInputHandlers();
+            
+            // Show the start screen
+            showStartScreen();
+        });
     }
-    
-    // Add keyboard handler for game over screen
-    document.addEventListener('keydown', handleGameOverKeyInput);
-    
-    // Set up the restart handler to return to start screen
-    onRestart(() => {
-        // Remove the game over keyboard handler to prevent duplicates
-        document.removeEventListener('keydown', handleGameOverKeyInput);
-        
-        // Reset game over state
-        isGameOver = false;
-        isGameStarted = false;
-        
-        // Clear all key states
-        cleanupInputHandlers();
-        
-        // Show the start screen
-        showStartScreen();
-    });
 }
 
 /**
