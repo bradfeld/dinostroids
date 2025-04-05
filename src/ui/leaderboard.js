@@ -50,15 +50,23 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
     ctx.textAlign = 'center';
     ctx.fillText('High Scores', x, y + 30);
     
+    // Define column positions and widths
+    const rankCol = x - bgWidth/2 + 50;
+    const scoreCol = x - bgWidth/2 + 120;
+    const initialsCol = x - bgWidth/2 + 190;
+    const levelCol = x - bgWidth/2 + 250;
+    const dateCol = x - bgWidth/2 + 340;
+    const timeCol = x - bgWidth/2 + 430;
+    
     // Draw column headers
     ctx.font = '16px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText('Rank', x - bgWidth/2 + 20, y + 60);
-    ctx.fillText('Score', x - bgWidth/2 + 80, y + 60);
-    ctx.fillText('Initials', x - bgWidth/2 + 160, y + 60);
-    ctx.fillText('Level', x - bgWidth/2 + 230, y + 60);
-    ctx.fillText('Date', x - bgWidth/2 + 300, y + 60);
-    ctx.fillText('Time', x - bgWidth/2 + 380, y + 60);
+    ctx.textAlign = 'right';
+    ctx.fillText('Rank', rankCol, y + 60);
+    ctx.fillText('Score', scoreCol, y + 60);
+    ctx.fillText('Initials', initialsCol, y + 60);
+    ctx.fillText('Level', levelCol, y + 60);
+    ctx.fillText('Date', dateCol, y + 60);
+    ctx.fillText('Time', timeCol, y + 60);
     
     // Draw scores
     ctx.font = '16px Arial';
@@ -73,49 +81,49 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
             ctx.fillStyle = 'white';
         }
         
-        // Rank number
-        ctx.textAlign = 'left';
-        ctx.fillText(`${i + 1}.`, x - bgWidth/2 + 20, yPos);
+        // Rank number - right justified without period after
+        ctx.textAlign = 'right';
+        ctx.fillText(`${i + 1}`, rankCol, yPos);
         
-        // Score
-        ctx.fillText(`${score.score}`, x - bgWidth/2 + 80, yPos);
+        // Score - right justified
+        ctx.fillText(`${score.score}`, scoreCol, yPos);
         
-        // Initials
-        ctx.fillText(score.initials || '---', x - bgWidth/2 + 160, yPos);
+        // Initials - right justified
+        ctx.fillText(score.initials || '---', initialsCol, yPos);
         
-        // Level
-        ctx.fillText(score.level || '1', x - bgWidth/2 + 230, yPos);
+        // Level - right justified with NO period after
+        ctx.fillText(`${score.level || '1'}`, levelCol, yPos);
         
-        // Date (if available)
+        // Date (if available) - right justified
         const dateField = score.date || score.createdAt || score.created_at;
         if (dateField) {
             try {
                 const date = new Date(dateField);
                 if (!isNaN(date.getTime())) { // Check if date is valid
-                    // Date
+                    // Date - right justified
                     const dateStr = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().substr(2)}`;
-                    ctx.fillText(dateStr, x - bgWidth/2 + 300, yPos);
+                    ctx.fillText(dateStr, dateCol, yPos);
                     
-                    // Time in AM/PM format
+                    // Time in AM/PM format - right justified
                     const hours = date.getHours();
                     const minutes = date.getMinutes();
                     const ampm = hours >= 12 ? 'PM' : 'AM';
                     const displayHours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
                     const timeStr = `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-                    ctx.fillText(timeStr, x - bgWidth/2 + 380, yPos);
+                    ctx.fillText(timeStr, timeCol, yPos);
                 } else {
-                    // Invalid date
-                    ctx.fillText('--/--/--', x - bgWidth/2 + 300, yPos);
-                    ctx.fillText('--:--', x - bgWidth/2 + 380, yPos);
+                    // Invalid date - right justified
+                    ctx.fillText('--/--/--', dateCol, yPos);
+                    ctx.fillText('--:--', timeCol, yPos);
                 }
             } catch (e) {
                 console.error("Error parsing date:", e, "for score:", score);
-                ctx.fillText('--/--/--', x - bgWidth/2 + 300, yPos);
-                ctx.fillText('--:--', x - bgWidth/2 + 380, yPos);
+                ctx.fillText('--/--/--', dateCol, yPos);
+                ctx.fillText('--:--', timeCol, yPos);
             }
         } else {
-            ctx.fillText('--/--/--', x - bgWidth/2 + 300, yPos);
-            ctx.fillText('--:--', x - bgWidth/2 + 380, yPos);
+            ctx.fillText('--/--/--', dateCol, yPos);
+            ctx.fillText('--:--', timeCol, yPos);
         }
     }
     
