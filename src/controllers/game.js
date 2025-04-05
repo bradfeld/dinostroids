@@ -133,7 +133,7 @@ function drawHelpScreen() {
         'CONTROLS:',
         '• Arrow Keys: Move ship',
         '• Space: Fire',
-        '• Shift: Hyperspace jump (random teleport)',
+        '• H: Hyperspace jump (random teleport)',
         '• ?: Toggle help screen',
         '• ESC: End game and return to menu',
         '',

@@ -113,7 +113,7 @@ class Player {
     const now = Date.now();
     const canHyperspace = now - this.lastHyperspace > this.hyperspaceCooldown;
     
-    if ((isKeyPressed('ShiftLeft') || isKeyPressed('ShiftRight')) && canHyperspace && !this.isInHyperspace) {
+    if (isKeyPressed('KeyH') && canHyperspace && !this.isInHyperspace) {
       this.hyperspace();
       return null;
     }
