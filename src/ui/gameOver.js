@@ -44,38 +44,20 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
     if (isHighScore) {
         ctx.font = '24px Arial';
         ctx.fillText('New High Score!', width / 2, height / 4 + 100);
-        ctx.fillText('Enter your initials:', width / 2, height / 4 + 140);
+        ctx.fillText('Enter your initials (up to 3 letters):', width / 2, height / 4 + 140);
         
-        // Draw initials input boxes
-        const boxWidth = 40;
-        const boxHeight = 40;
-        const spacing = 10;
-        const totalWidth = (boxWidth * 3) + (spacing * 2);
-        const startX = width / 2 - totalWidth / 2;
-        const boxY = height / 4 + 160;
+        // Display the initials being typed in real time
+        ctx.font = '48px Arial';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
         
-        // Draw three separate boxes for initials
-        for (let i = 0; i < 3; i++) {
-            const boxX = startX + (i * (boxWidth + spacing));
-            
-            // Draw box
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
-            
-            // Draw current initial or underscore
-            ctx.font = '32px Arial';
-            ctx.fillStyle = 'white';
-            ctx.textAlign = 'center';
-            
-            if (i < playerInitials.length) {
-                // Display entered initial
-                ctx.fillText(playerInitials[i], boxX + boxWidth / 2, boxY + 30);
-            } else {
-                // Display underscore
-                ctx.fillText('_', boxX + boxWidth / 2, boxY + 30);
-            }
-        }
+        // Display current initials with a cursor
+        const displayText = playerInitials + (playerInitials.length < MAX_INITIALS_LENGTH ? "_" : "");
+        ctx.fillText(displayText, width / 2, height / 4 + 200);
+        
+        // Add instructions for submission
+        ctx.font = '16px Arial';
+        ctx.fillText('Press ENTER when done or type up to 3 letters', width / 2, height / 4 + 240);
     } else {
         // Draw restart prompt
         ctx.font = '24px Arial';
@@ -110,6 +92,17 @@ export function handleGameOverKeyInput(event) {
     // Check if this is for high score input
     if (inputActive) {
         console.log(`Key pressed for initials: ${event.key}`);
+        
+        // Handle Enter key to submit initials
+        if (event.key === 'Enter') {
+            if (playerInitials.length > 0 && submitCallback) {
+                console.log(`Submitting initials: ${playerInitials}`);
+                submitCallback(playerInitials);
+                resetInput();
+            }
+            return;
+        }
+        
         // Handle initials input
         if (event.key.length === 1 && /[A-Za-z]/.test(event.key)) {
             // Only allow letters
@@ -119,11 +112,11 @@ export function handleGameOverKeyInput(event) {
                 
                 // Auto-submit when all initials are entered
                 if (playerInitials.length === MAX_INITIALS_LENGTH && submitCallback) {
-                    console.log("All initials entered, submitting...");
+                    console.log("All initials entered, submitting in 1 second...");
                     setTimeout(() => {
                         submitCallback(playerInitials);
                         resetInput();
-                    }, 500); // Small delay for visual feedback
+                    }, 1000); // Longer delay for visual feedback
                 }
             }
         } else if (event.key === 'Backspace') {
