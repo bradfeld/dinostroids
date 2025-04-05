@@ -270,21 +270,18 @@ function createAsteroids(count) {
     
     console.log(`Creating ${count} asteroids with speed multiplier: ${levelSpeedMultiplier}`);
     
-    // First, calculate base speeds for each size that will be used for ALL asteroids
-    // This ensures consistency within the level
-    const baseSpeedLarge = DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.large.min + 
-                          (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.large.max - 
-                           DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.large.min) * 0.5;
+    // Calculate base speeds for each size that will be used for ALL asteroids
+    // Use the exact midpoint of the speed range for complete consistency
+    const baseSpeedLarge = (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.large.min + 
+                           DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.large.max) / 2;
     
-    const baseSpeedMedium = DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.min + 
-                           (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.max - 
-                            DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.min) * 0.5;
+    const baseSpeedMedium = (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.min + 
+                            DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.max) / 2;
     
-    const baseSpeedSmall = DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.small.min + 
-                          (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.small.max - 
-                           DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.small.min) * 0.5;
+    const baseSpeedSmall = (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.small.min + 
+                           DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.small.max) / 2;
     
-    console.log(`Base speeds for this level - Large: ${baseSpeedLarge.toFixed(2)}, Medium: ${baseSpeedMedium.toFixed(2)}, Small: ${baseSpeedSmall.toFixed(2)}`);
+    console.log(`Fixed base speeds for this level - Large: ${baseSpeedLarge.toFixed(2)}, Medium: ${baseSpeedMedium.toFixed(2)}, Small: ${baseSpeedSmall.toFixed(2)}`);
     
     for (let i = 0; i < count; i++) {
         // Create asteroid at a safe distance from the player

@@ -44,12 +44,14 @@ class Asteroid {
     const sizeCategory = this.getSizeCategory();
     console.log(`Size category: ${sizeCategory}, Difficulty settings: ${JSON.stringify(DIFFICULTY_SETTINGS[difficulty])}`);
     
+    // Use the MIDPOINT of the speed range instead of a random value
+    // This ensures all asteroids of the same size have the same base speed
     const speedRange = DIFFICULTY_SETTINGS[difficulty].asteroidSpeed[sizeCategory];
-    const baseSpeed = randomFloatBetween(speedRange.min, speedRange.max);
+    const baseSpeed = (speedRange.min + speedRange.max) / 2;
     
     // Apply the level speed multiplier 
     const speed = baseSpeed * speedMultiplier;
-    console.log(`Base speed: ${baseSpeed.toFixed(2)}, Final speed with multiplier: ${speed.toFixed(2)}`);
+    console.log(`Base speed (fixed): ${baseSpeed.toFixed(2)}, Final speed with multiplier: ${speed.toFixed(2)}`);
     
     // Set velocity based on a random angle to ensure all directions are covered
     const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
