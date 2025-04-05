@@ -54,7 +54,7 @@ export default async function handler(request, response) {
     if (request.method === 'POST') {
         try {
             // Parse body
-            const { initials, score, time, difficulty = 'medium' } = request.body;
+            const { initials, score, time, difficulty = 'medium', level = 1 } = request.body;
             console.log(`[Leaderboard API] POST request received with score: ${score}, difficulty: ${difficulty}`);
             
             // Validate input
@@ -84,6 +84,7 @@ export default async function handler(request, response) {
                 initials: sanitizedInitials,
                 score: score,
                 time: time || 0,
+                level: level || 1,
                 difficulty: validatedDifficulty,
                 date: new Date().toISOString()
             };
