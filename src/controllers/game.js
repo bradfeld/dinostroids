@@ -378,10 +378,10 @@ function gameLoop(timestamp) {
                     // Game over
                     handleGameOver();
                 } else {
-                    // Respawn player after a delay
+                    // Respawn player after a delay - wait for explosion animation (2 seconds)
                     setTimeout(() => {
                         player.reset();
-                    }, 1000);
+                    }, 2000); // Changed from 1000 to 2000 to match explosion duration
                 }
                 
                 break;

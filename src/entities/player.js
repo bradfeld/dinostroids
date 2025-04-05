@@ -38,6 +38,12 @@ class Player {
     this.isDestroyed = false;
     this.invincible = false;
     this.invincibilityTime = 0;
+    
+    // Explosion animation properties
+    this.explosionParticles = [];
+    this.explosionDuration = 2000; // 2 seconds in milliseconds
+    this.explosionElapsed = 0; 
+    this.exploding = false;
   }
   
   /**
@@ -46,6 +52,43 @@ class Player {
    * @returns {Object|null} - New bullet or null
    */
   update(deltaTime) {
+    // Update explosion animation if exploding
+    if (this.exploding) {
+      this.explosionElapsed += deltaTime * 1000; // Convert seconds to milliseconds
+      
+      // Get screen dimensions for wrapping
+      const { width, height } = getDimensions();
+      
+      // Update explosion particles
+      for (let i = 0; i < this.explosionParticles.length; i++) {
+        const particle = this.explosionParticles[i];
+        particle.x += particle.vx * deltaTime;
+        particle.y += particle.vy * deltaTime;
+        
+        // Screen wrapping for particles
+        if (particle.x < 0) particle.x = width;
+        if (particle.x > width) particle.x = 0;
+        if (particle.y < 0) particle.y = height;
+        if (particle.y > height) particle.y = 0;
+        
+        // Update rotation for debris particles
+        if (particle.isDebris) {
+          particle.rotation += particle.rotationSpeed * deltaTime;
+        }
+        
+        // Fade out over time
+        particle.alpha = 1 - (this.explosionElapsed / this.explosionDuration);
+      }
+      
+      // End explosion when duration is complete
+      if (this.explosionElapsed >= this.explosionDuration) {
+        this.exploding = false;
+        this.explosionParticles = [];
+      }
+      
+      return null;
+    }
+    
     // Skip if destroyed
     if (this.isDestroyed) return null;
     
@@ -130,6 +173,43 @@ class Player {
    * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
    */
   draw(ctx) {
+    // Draw explosion if exploding
+    if (this.exploding && this.explosionParticles.length > 0) {
+      // Draw each explosion particle
+      for (let i = 0; i < this.explosionParticles.length; i++) {
+        const particle = this.explosionParticles[i];
+        
+        ctx.save();
+        ctx.globalAlpha = particle.alpha;
+        
+        if (particle.isDebris) {
+          // Draw ship debris (small lines)
+          ctx.translate(particle.x, particle.y);
+          ctx.rotate(particle.rotation);
+          
+          ctx.strokeStyle = 'white';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          
+          // Draw a random shape for debris
+          const debrisSize = particle.size * 2;
+          ctx.moveTo(-debrisSize, -debrisSize);
+          ctx.lineTo(debrisSize, debrisSize);
+          
+          ctx.stroke();
+        } else {
+          // Draw regular particle (circle)
+          ctx.fillStyle = particle.color;
+          ctx.beginPath();
+          ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        ctx.restore();
+      }
+      return;
+    }
+    
     if (this.isDestroyed) return;
     
     // Skip drawing every other frame when invincible for blinking effect
@@ -176,6 +256,47 @@ class Player {
    */
   destroy() {
     this.isDestroyed = true;
+    
+    // Create explosion effect
+    this.createExplosion();
+  }
+  
+  /**
+   * Create explosion particles when ship is destroyed
+   */
+  createExplosion() {
+    this.exploding = true;
+    this.explosionElapsed = 0;
+    this.explosionParticles = [];
+    
+    // Number of particles for explosion
+    const particleCount = 40;
+    
+    // Colors for explosion (white, yellow, orange, red)
+    const colors = ['#ffffff', '#ffff00', '#ffa500', '#ff4500', '#ff0000'];
+    
+    for (let i = 0; i < particleCount; i++) {
+      // Random velocity in all directions
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 20 + Math.random() * 80; // pixels per second
+      
+      // Decide if this is a particle or ship debris
+      const isDebris = Math.random() > 0.7; // 30% chance to be debris
+      
+      this.explosionParticles.push({
+        x: this.x,
+        y: this.y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: 1 + Math.random() * 3,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        alpha: 1.0,
+        isDebris: isDebris,
+        // Add rotation for debris
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 5
+      });
+    }
   }
   
   /**
@@ -190,6 +311,8 @@ class Player {
     this.velocityY = 0;
     this.rotation = 0;
     this.isDestroyed = false;
+    this.exploding = false;
+    this.explosionParticles = [];
     
     // Make player temporarily invincible
     this.invincible = true;
