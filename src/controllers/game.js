@@ -270,6 +270,22 @@ function createAsteroids(count) {
     
     console.log(`Creating ${count} asteroids with speed multiplier: ${levelSpeedMultiplier}`);
     
+    // First, calculate base speeds for each size that will be used for ALL asteroids
+    // This ensures consistency within the level
+    const baseSpeedLarge = DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.large.min + 
+                          (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.large.max - 
+                           DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.large.min) * 0.5;
+    
+    const baseSpeedMedium = DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.min + 
+                           (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.max - 
+                            DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.min) * 0.5;
+    
+    const baseSpeedSmall = DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.small.min + 
+                          (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.small.max - 
+                           DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.small.min) * 0.5;
+    
+    console.log(`Base speeds for this level - Large: ${baseSpeedLarge.toFixed(2)}, Medium: ${baseSpeedMedium.toFixed(2)}, Small: ${baseSpeedSmall.toFixed(2)}`);
+    
     for (let i = 0; i < count; i++) {
         // Create asteroid at a safe distance from the player
         let x, y, distanceFromPlayer;
@@ -307,6 +323,29 @@ function createAsteroids(count) {
             currentDifficulty,
             levelSpeedMultiplier // Pass the level speed multiplier
         );
+        
+        // Override the velocity with our consistent base speed for this level
+        // This approach ensures ALL asteroids at this level have the same base speed
+        const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
+        let baseSpeed;
+        
+        // Use the pre-calculated base speed for this size
+        if (randomSize === 1) {
+            baseSpeed = baseSpeedLarge;
+        } else if (randomSize === 2) {
+            baseSpeed = baseSpeedMedium;
+        } else {
+            baseSpeed = baseSpeedSmall;
+        }
+        
+        // Apply the level multiplier to the base speed
+        const speed = baseSpeed * levelSpeedMultiplier;
+        
+        // Set velocity based on the random angle
+        asteroid.velocityX = Math.cos(angle) * speed;
+        asteroid.velocityY = Math.sin(angle) * speed;
+        
+        console.log(`Setting asteroid velocity to (${asteroid.velocityX.toFixed(2)}, ${asteroid.velocityY.toFixed(2)}) with speed: ${speed.toFixed(2)}`);
         
         asteroids.push(asteroid);
     }

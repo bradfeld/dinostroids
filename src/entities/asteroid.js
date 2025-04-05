@@ -236,6 +236,10 @@ class Asteroid {
       const offsetX = randomFloatBetween(-10, 10);
       const offsetY = randomFloatBetween(-10, 10);
       
+      // Calculate parent's current speed
+      const parentSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
+      console.log(`Parent asteroid speed: ${parentSpeed.toFixed(2)}`);
+      
       const asteroid = new Asteroid(
         this.type,
         size,
@@ -248,13 +252,10 @@ class Asteroid {
       // Generate a random angle for velocity direction
       const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
       
-      // Use the standard speed range for this size but apply the level speed multiplier
-      const sizeCategory = asteroid.getSizeCategory();
-      const speedRange = DIFFICULTY_SETTINGS[this.difficulty].asteroidSpeed[sizeCategory];
-      const baseSpeed = randomFloatBetween(speedRange.min, speedRange.max);
-      
-      // Apply the level speed multiplier 
-      const speed = baseSpeed * this.speedMultiplier;
+      // Use the PARENT'S exact speed instead of recalculating from the speed range
+      // This ensures consistent speed within a level
+      const speed = parentSpeed;
+      console.log(`Child asteroid using parent's speed: ${speed.toFixed(2)}`);
       
       // Set velocity based on the random angle
       asteroid.velocityX = Math.cos(angle) * speed;
