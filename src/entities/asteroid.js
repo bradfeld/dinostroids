@@ -242,12 +242,16 @@ class Asteroid {
    * @param {Array} targetArray - Array to add the new asteroids to
    */
   createChildAsteroids(count, size, targetArray) {
+    // Calculate parent's direction angle
+    const parentAngle = Math.atan2(this.velocityY, this.velocityX);
+    console.log(`Parent asteroid direction angle: ${(parentAngle * 180 / Math.PI).toFixed(2)} degrees`);
+    
     for (let i = 0; i < count; i++) {
       // Add some variation to position and velocity
       const offsetX = randomFloatBetween(-10, 10);
       const offsetY = randomFloatBetween(-10, 10);
       
-      // Calculate parent's current speed (for debugging only)
+      // Calculate parent's current speed
       const parentSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
       console.log(`Parent asteroid speed: ${parentSpeed.toFixed(2)}`);
       
@@ -261,15 +265,22 @@ class Asteroid {
         this.fixedBaseSpeed // Pass the fixed base speed to child asteroids
       );
       
-      // Generate a random angle for velocity direction
-      const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
+      // Generate a random angle within 180 degrees of parent's direction
+      // First, calculate an angle between -90 and +90 degrees (in radians)
+      const angleOffset = randomFloatBetween(-Math.PI/2, Math.PI/2);
+      
+      // Then add this offset to the parent's direction angle
+      const angle = parentAngle + angleOffset;
+      
+      console.log(`Child asteroid angle offset: ${(angleOffset * 180 / Math.PI).toFixed(2)} degrees`);
+      console.log(`Child asteroid final direction: ${(angle * 180 / Math.PI).toFixed(2)} degrees`);
       
       // All asteroids use the same base speed regardless of size
       // This ensures consistent speed within a level
       const speed = this.fixedBaseSpeed * this.speedMultiplier;
       console.log(`Child asteroid using fixed speed: ${speed.toFixed(2)}`);
       
-      // Set velocity based on the random angle
+      // Set velocity based on the calculated angle
       asteroid.velocityX = Math.cos(angle) * speed;
       asteroid.velocityY = Math.sin(angle) * speed;
       
