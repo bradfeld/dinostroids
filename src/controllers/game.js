@@ -271,23 +271,37 @@ function createAsteroids(count) {
     console.log(`Creating ${count} asteroids with speed multiplier: ${levelSpeedMultiplier}`);
     
     for (let i = 0; i < count; i++) {
-        // Random position along the edge of the screen
-        let x, y;
-        if (Math.random() < 0.5) {
-            x = Math.random() < 0.5 ? 0 : width;
-            y = Math.random() * height;
-        } else {
-            x = Math.random() * width;
-            y = Math.random() < 0.5 ? 0 : height;
-        }
+        // Create asteroid at a safe distance from the player
+        let x, y, distanceFromPlayer;
         
-        // Random asteroid type and size
-        const type = Math.random() < 0.5 ? "detailed" : "simple";
-        const size = Math.random() < 0.3 ? "small" : (Math.random() < 0.7 ? "medium" : "large");
+        do {
+            // Random position along the edge of the screen to ensure they come from outside
+            if (Math.random() < 0.5) {
+                x = Math.random() < 0.5 ? 0 : width;
+                y = Math.random() * height;
+            } else {
+                x = Math.random() * width;
+                y = Math.random() < 0.5 ? 0 : height;
+            }
+            
+            // Calculate distance from player
+            const dx = player ? player.x - x : width / 2 - x;
+            const dy = player ? player.y - y : height / 2 - y;
+            distanceFromPlayer = Math.sqrt(dx * dx + dy * dy);
+        } while (player && distanceFromPlayer < ASTEROID_SETTINGS.SPAWN_DISTANCE_MIN);
         
+        // Select a random type from ASTEROID_SETTINGS.TYPES
+        const randomType = ASTEROID_SETTINGS.TYPES[Math.floor(Math.random() * ASTEROID_SETTINGS.TYPES.length)];
+        
+        // Random size (mostly large for initial asteroids)
+        const randomSize = Math.random() < 0.7 ? 1 : (Math.random() < 0.7 ? 2 : 3);
+        
+        console.log(`Creating asteroid type: ${randomType}, size: ${randomSize}, at (${x}, ${y})`);
+        
+        // Create the asteroid with the current level speed multiplier
         const asteroid = new Asteroid(
-            type,
-            size,
+            randomType,
+            randomSize,
             x,
             y,
             currentDifficulty,

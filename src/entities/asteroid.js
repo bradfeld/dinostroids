@@ -21,6 +21,10 @@ class Asteroid {
    */
   constructor(type, size, x, y, difficulty = 'medium', speedMultiplier = 1.0) {
     const { width, height } = getDimensions();
+    
+    // Debug inputs
+    console.log(`Asteroid constructor called with type=${type}, size=${size}, difficulty=${difficulty}, speedMultiplier=${speedMultiplier}`);
+    
     this.type = type || this.getRandomType();
     this.size = size || 1; // Default is large (1)
     this.difficulty = difficulty;
@@ -33,18 +37,25 @@ class Asteroid {
     this.x = x !== undefined ? x : randomFloatBetween(0, width);
     this.y = y !== undefined ? y : randomFloatBetween(0, height);
     
+    // Debug the asteroid creation
+    console.log(`Creating asteroid: type=${this.type}, size=${this.size}, at (${this.x.toFixed(1)}, ${this.y.toFixed(1)})`);
+    
     // Get the appropriate speed based on difficulty and size
     const sizeCategory = this.getSizeCategory();
+    console.log(`Size category: ${sizeCategory}, Difficulty settings: ${JSON.stringify(DIFFICULTY_SETTINGS[difficulty])}`);
+    
     const speedRange = DIFFICULTY_SETTINGS[difficulty].asteroidSpeed[sizeCategory];
     const baseSpeed = randomFloatBetween(speedRange.min, speedRange.max);
     
     // Apply the level speed multiplier 
     const speed = baseSpeed * speedMultiplier;
+    console.log(`Base speed: ${baseSpeed.toFixed(2)}, Final speed with multiplier: ${speed.toFixed(2)}`);
     
     // Set velocity based on a random angle to ensure all directions are covered
     const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
     this.velocityX = Math.cos(angle) * speed;
     this.velocityY = Math.sin(angle) * speed;
+    console.log(`Velocity: (${this.velocityX.toFixed(2)}, ${this.velocityY.toFixed(2)})`);
     
     // Rotation properties
     this.rotation = 0;
@@ -52,7 +63,12 @@ class Asteroid {
     
     // Load the image for this asteroid type
     const imageKey = this.getImageKey();
+    console.log(`Loading asteroid image: ${imageKey}`);
     this.image = getImageByKey(imageKey);
+    
+    if (!this.image) {
+      console.error(`Failed to load image for asteroid type: ${imageKey}`);
+    }
     
     // Calculate points based on size
     this.points = ASTEROID_SETTINGS.POINTS_BASE * this.size;
@@ -76,8 +92,15 @@ class Asteroid {
    * @returns {string} Random asteroid type
    */
   getRandomType() {
-    const types = ['bront', 'steg', 'trex'];
-    return types[randomInt(0, types.length - 1)];
+    console.log('Getting random asteroid type from:', ASTEROID_SETTINGS.TYPES);
+    if (!ASTEROID_SETTINGS.TYPES || ASTEROID_SETTINGS.TYPES.length === 0) {
+      console.warn('No asteroid types defined, defaulting to "bront"');
+      return 'bront';
+    }
+    const index = randomInt(0, ASTEROID_SETTINGS.TYPES.length - 1);
+    const type = ASTEROID_SETTINGS.TYPES[index];
+    console.log(`Selected random asteroid type: ${type} at index ${index}`);
+    return type;
   }
   
   /**
@@ -85,6 +108,15 @@ class Asteroid {
    * @returns {string} Image key
    */
   getImageKey() {
+    // Debug the asteroid type
+    console.log(`Getting image key for type: ${this.type}`);
+    
+    // Make sure we have a valid type, defaulting to a known one if not
+    if (!this.type || !ASTEROID_SETTINGS.TYPES.includes(this.type)) {
+      console.warn(`Invalid asteroid type: ${this.type}, defaulting to 'bront'`);
+      this.type = 'bront';
+    }
+    
     return this.type;
   }
   
