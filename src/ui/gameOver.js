@@ -27,9 +27,6 @@ let redrawIntervalId = null; // Interval ID for forced redraw
 export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime = 0) {
     const { width, height } = getDimensions();
     
-    // Debug output to help track the state
-    console.log(`Drawing game over screen. Input active: ${inputActive}, Initials: "${playerInitials}"`);
-    
     // Clear canvas with dark background
     clear('black');
     
@@ -45,7 +42,6 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
     
     // Enter initials prompt if high score
     const isHighScore = isNewHighScore(score, leaderboard);
-    console.log(`Is high score: ${isHighScore}, Score: ${score}, Leaderboard length: ${leaderboard?.length || 0}`);
     
     if (isHighScore) {
         ctx.font = '24px Arial';
@@ -59,7 +55,6 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
         
         // Make sure the initials are clearly displayed
         const displayText = playerInitials ? playerInitials + (playerInitials.length < MAX_INITIALS_LENGTH ? "_" : "") : "_";
-        console.log(`Display text on screen: "${displayText}", Current initials: "${playerInitials}"`);
         
         // Try to force an update of the canvas
         ctx.clearRect(width / 2 - 100, height / 4 + 170, 200, 60);
@@ -68,9 +63,6 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
         // Add instructions for submission
         ctx.font = '16px Arial';
         ctx.fillText('Press ENTER when done or type up to 3 letters', width / 2, height / 4 + 240);
-        
-        // Also display a visual indicator of the current keyboard state
-        ctx.fillText(`Input active: ${inputActive ? 'YES' : 'NO'}, Current initial length: ${playerInitials.length}`, width / 2, height / 4 + 280);
     } else {
         // Draw restart prompt
         ctx.font = '24px Arial';
@@ -110,16 +102,11 @@ export function setRedrawCallback(callback) {
  * @param {KeyboardEvent} event - The keyboard event
  */
 export function handleGameOverKeyInput(event) {
-    console.log(`Input event received: ${event.key}, Input active: ${inputActive}`);
-    
     // Check if this is for high score input
     if (inputActive) {
-        console.log(`Key pressed for initials: ${event.key}`);
-        
         // Handle Enter key to submit initials
         if (event.key === 'Enter') {
             if (playerInitials.length > 0 && submitCallback) {
-                console.log(`Submitting initials: ${playerInitials}`);
                 submitCallback(playerInitials);
                 resetInput();
             }
@@ -131,7 +118,6 @@ export function handleGameOverKeyInput(event) {
             // Only allow letters
             if (playerInitials.length < MAX_INITIALS_LENGTH) {
                 playerInitials += event.key.toUpperCase();
-                console.log(`Current initials: ${playerInitials}`);
                 
                 // Redraw the screen to show the updated initials
                 if (redrawCallback) {
@@ -140,7 +126,6 @@ export function handleGameOverKeyInput(event) {
                 
                 // Auto-submit when all initials are entered
                 if (playerInitials.length === MAX_INITIALS_LENGTH && submitCallback) {
-                    console.log("All initials entered, submitting in 1 second...");
                     setTimeout(() => {
                         submitCallback(playerInitials);
                         resetInput();
@@ -150,7 +135,6 @@ export function handleGameOverKeyInput(event) {
         } else if (event.key === 'Backspace') {
             // Handle backspace
             playerInitials = playerInitials.slice(0, -1);
-            console.log(`Backspace pressed, initials now: ${playerInitials}`);
             
             // Redraw the screen to show the updated initials
             if (redrawCallback) {
@@ -159,7 +143,6 @@ export function handleGameOverKeyInput(event) {
         }
     } else if (event.code === 'Space' && restartCallback) {
         // Handle restart with Space key
-        console.log("Space pressed for restart");
         restartCallback();
     }
 }
@@ -182,14 +165,12 @@ function resetInput() {
  * Activate the initials input
  */
 export function activateInput() {
-    console.log('Activating high score input');
     inputActive = true;
     playerInitials = '';
     
     // Set up a forced redraw every 100ms to ensure display updates
     if (redrawCallback && !redrawIntervalId) {
         redrawIntervalId = setInterval(() => {
-            console.log('Forced redraw while input is active');
             redrawCallback();
         }, 100);
     }
