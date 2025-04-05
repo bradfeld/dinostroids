@@ -148,19 +148,59 @@ class Asteroid {
       return [];
     }
     
-    // Create 2 smaller asteroids of the same type
-    const newSize = this.size + 1;
     const newAsteroids = [];
     
-    // Create two new asteroids at the current position
-    for (let i = 0; i < 2; i++) {
+    // Different breaking patterns based on asteroid size
+    if (this.size === 1) {
+      // Large asteroid - multiple possible outcomes
+      const breakPattern = Math.random();
+      
+      if (breakPattern < 0.25) {
+        // Two medium asteroids (25% chance)
+        this.createChildAsteroids(2, 2, newAsteroids);
+      } else if (breakPattern < 0.45) {
+        // Two small asteroids (20% chance)
+        this.createChildAsteroids(2, 3, newAsteroids);
+      } else if (breakPattern < 0.75) {
+        // One medium and one small asteroid (30% chance)
+        this.createChildAsteroids(1, 2, newAsteroids);
+        this.createChildAsteroids(1, 3, newAsteroids);
+      } else if (breakPattern < 0.90) {
+        // One medium asteroid (15% chance)
+        this.createChildAsteroids(1, 2, newAsteroids);
+      } else {
+        // One small asteroid (10% chance)
+        this.createChildAsteroids(1, 3, newAsteroids);
+      }
+    } else if (this.size === 2) {
+      // Medium asteroid - can become two smalls or one small
+      if (Math.random() < 0.7) {
+        // Two small asteroids (70% chance)
+        this.createChildAsteroids(2, 3, newAsteroids);
+      } else {
+        // One small asteroid (30% chance)
+        this.createChildAsteroids(1, 3, newAsteroids);
+      }
+    }
+    
+    return newAsteroids;
+  }
+  
+  /**
+   * Create a specified number of child asteroids of a specific size
+   * @param {number} count - Number of asteroids to create
+   * @param {number} size - Size of the asteroids (2=medium, 3=small)
+   * @param {Array} targetArray - Array to add the new asteroids to
+   */
+  createChildAsteroids(count, size, targetArray) {
+    for (let i = 0; i < count; i++) {
       // Add some variation to position and velocity
       const offsetX = randomFloatBetween(-10, 10);
       const offsetY = randomFloatBetween(-10, 10);
       
       const asteroid = new Asteroid(
         this.type,
-        newSize,
+        size,
         this.x + offsetX,
         this.y + offsetY,
         this.difficulty // Pass the same difficulty to child asteroids
@@ -174,15 +214,13 @@ class Asteroid {
       // Normalize and apply new speed
       const vx = this.velocityX + randomFloatBetween(-1, 1);
       const vy = this.velocityY + randomFloatBetween(-1, 1);
-      const mag = Math.sqrt(vx * vx + vy * vy);
+      const mag = Math.sqrt(vx * vx + vy * vy) || 1; // Avoid division by zero
       
       asteroid.velocityX = (vx / mag) * speed;
       asteroid.velocityY = (vy / mag) * speed;
       
-      newAsteroids.push(asteroid);
+      targetArray.push(asteroid);
     }
-    
-    return newAsteroids;
   }
   
   /**
