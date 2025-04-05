@@ -270,10 +270,17 @@ function createAsteroids(count) {
     
     console.log(`Creating ${count} asteroids with speed multiplier: ${levelSpeedMultiplier}`);
     
-    // Calculate a SINGLE base speed for ALL asteroid sizes
-    // Use medium asteroid speed as the reference point
-    const baseSpeed = (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.min + 
-                      DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.max) / 2;
+    // Use fixed base speeds for each difficulty level
+    let baseSpeed;
+    
+    // Set base speed according to difficulty (1 for easy, 2.5 for medium, 5 for difficult)
+    if (currentDifficulty === 'easy') {
+        baseSpeed = 1.0;
+    } else if (currentDifficulty === 'medium') {
+        baseSpeed = 2.5;
+    } else { // difficult
+        baseSpeed = 5.0;
+    }
     
     // Apply the level multiplier
     const effectiveSpeed = baseSpeed * levelSpeedMultiplier;
