@@ -434,6 +434,19 @@ function gameLoop(timestamp) {
                 player.destroy();
                 lives -= ASTEROID_SETTINGS.COLLISION_DAMAGE;
                 
+                // Award points for the asteroid that hit the player
+                score += ASTEROID_SETTINGS.SCORE_VALUES[asteroid.size] || 100;
+                console.log(`Scored ${ASTEROID_SETTINGS.SCORE_VALUES[asteroid.size] || 100} points for asteroid collision`);
+                
+                // Create child asteroids when larger asteroid hits player
+                const newAsteroids = asteroid.break();
+                
+                // Add any child asteroids to the game
+                asteroids.push(...newAsteroids);
+                
+                // Remove the asteroid that hit the player
+                asteroids.splice(i, 1);
+                
                 if (lives <= 0) {
                     // Game over - wait for explosion animation to finish first
                     setTimeout(() => {
