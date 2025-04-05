@@ -309,6 +309,11 @@ function gameLoop(timestamp) {
     
     // Update player
     if (player) {
+        // Debug player state
+        if (player.isDestroyed || player.exploding) {
+            console.log(`Player state: destroyed=${player.isDestroyed}, exploding=${player.exploding}, particles=${player.explosionParticles.length}`);
+        }
+        
         const newBullet = player.update(cappedDeltaTime);
         
         // Add new bullet if player fired
@@ -316,7 +321,7 @@ function gameLoop(timestamp) {
             bullets.push(new Bullet(newBullet.x, newBullet.y, newBullet.rotation));
         }
         
-        // Draw player
+        // Draw player (including explosion if active)
         player.draw(ctx);
     }
     
@@ -365,18 +370,21 @@ function gameLoop(timestamp) {
     });
     
     // Check for collisions between player and asteroids
-    if (player && !player.isDestroyed) {
+    if (player && !player.isDestroyed && !player.exploding) {
         for (let i = asteroids.length - 1; i >= 0; i--) {
             const asteroid = asteroids[i];
             
             if (player.isCollidingWith(asteroid)) {
                 // Player is hit
+                console.log("Player hit by asteroid!");
                 player.destroy();
                 lives -= ASTEROID_SETTINGS.COLLISION_DAMAGE;
                 
                 if (lives <= 0) {
-                    // Game over
-                    handleGameOver();
+                    // Game over - wait for explosion animation to finish first
+                    setTimeout(() => {
+                        handleGameOver();
+                    }, 2000);
                 } else {
                     // Respawn player after a delay - wait for explosion animation (2 seconds)
                     setTimeout(() => {

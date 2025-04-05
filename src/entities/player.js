@@ -84,12 +84,14 @@ class Player {
       if (this.explosionElapsed >= this.explosionDuration) {
         this.exploding = false;
         this.explosionParticles = [];
+        console.log("Explosion animation complete");
       }
       
+      // Return null since we don't want to create new bullets during explosion
       return null;
     }
     
-    // Skip if destroyed
+    // Skip if destroyed but not exploding
     if (this.isDestroyed) return null;
     
     // Handle invincibility timer
@@ -210,6 +212,7 @@ class Player {
       return;
     }
     
+    // Skip drawing ship if destroyed and not exploding
     if (this.isDestroyed) return;
     
     // Skip drawing every other frame when invincible for blinking effect
@@ -255,16 +258,19 @@ class Player {
    * Destroy the player's ship
    */
   destroy() {
+    console.log("Player destroy method called!");
     this.isDestroyed = true;
     
     // Create explosion effect
     this.createExplosion();
+    console.log("After createExplosion, exploding flag:", this.exploding);
   }
   
   /**
    * Create explosion particles when ship is destroyed
    */
   createExplosion() {
+    console.log("Creating ship explosion animation!");
     this.exploding = true;
     this.explosionElapsed = 0;
     this.explosionParticles = [];
