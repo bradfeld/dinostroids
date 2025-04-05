@@ -303,15 +303,15 @@ function createAsteroids(count) {
         // Select a random type from ASTEROID_SETTINGS.TYPES
         const randomType = ASTEROID_SETTINGS.TYPES[Math.floor(Math.random() * ASTEROID_SETTINGS.TYPES.length)];
         
-        // Random size (mostly large for initial asteroids)
-        const randomSize = Math.random() < 0.7 ? 1 : (Math.random() < 0.7 ? 2 : 3);
+        // Always create large asteroids (size 1) at the beginning of a level
+        const size = 1; // Large asteroid
         
-        console.log(`Creating asteroid type: ${randomType}, size: ${randomSize}, at (${x}, ${y})`);
+        console.log(`Creating large asteroid type: ${randomType}, at (${x}, ${y})`);
         
         // Create the asteroid with the current level speed multiplier
         const asteroid = new Asteroid(
             randomType,
-            randomSize,
+            size,
             x,
             y,
             currentDifficulty,
