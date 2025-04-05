@@ -36,9 +36,10 @@ class Asteroid {
     const speedRange = DIFFICULTY_SETTINGS[difficulty].asteroidSpeed[sizeCategory];
     const speed = randomFloatBetween(speedRange.min, speedRange.max);
     
-    // Set velocity based on difficulty-adjusted speed
-    this.velocityX = randomFloatBetween(-1, 1) * speed;
-    this.velocityY = randomFloatBetween(-1, 1) * speed;
+    // Set velocity based on a random angle to ensure all directions are covered
+    const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
+    this.velocityX = Math.cos(angle) * speed;
+    this.velocityY = Math.sin(angle) * speed;
     
     // Rotation properties
     this.rotation = 0;
@@ -206,18 +207,17 @@ class Asteroid {
         this.difficulty // Pass the same difficulty to child asteroids
       );
       
-      // Make the velocity direction differ from the parent
+      // Generate a random angle for velocity direction
+      const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
+      
+      // Calculate velocity based on the random angle
       const sizeCategory = asteroid.getSizeCategory();
       const speedRange = DIFFICULTY_SETTINGS[this.difficulty].asteroidSpeed[sizeCategory];
       const speed = randomFloatBetween(speedRange.min, speedRange.max);
       
-      // Normalize and apply new speed
-      const vx = this.velocityX + randomFloatBetween(-1, 1);
-      const vy = this.velocityY + randomFloatBetween(-1, 1);
-      const mag = Math.sqrt(vx * vx + vy * vy) || 1; // Avoid division by zero
-      
-      asteroid.velocityX = (vx / mag) * speed;
-      asteroid.velocityY = (vy / mag) * speed;
+      // Set velocity based on the random angle
+      asteroid.velocityX = Math.cos(angle) * speed;
+      asteroid.velocityY = Math.sin(angle) * speed;
       
       targetArray.push(asteroid);
     }
