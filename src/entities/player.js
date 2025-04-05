@@ -77,10 +77,8 @@ class Player {
         if (particle.y < 0) particle.y = height;
         if (particle.y > height) particle.y = 0;
         
-        // Update rotation for debris particles
-        if (particle.isDebris) {
-          particle.rotation += particle.rotationSpeed * deltaTime;
-        }
+        // Update rotation to make lines spin
+        particle.angle += particle.rotationSpeed * deltaTime;
         
         // Fade out over time
         particle.alpha = 1 - (this.explosionElapsed / this.explosionDuration);
@@ -192,36 +190,25 @@ class Player {
   draw(ctx) {
     // Draw explosion if exploding
     if (this.exploding && this.explosionParticles.length > 0) {
-      // Draw each explosion particle
+      // Draw each explosion particle as a line
       for (let i = 0; i < this.explosionParticles.length; i++) {
         const particle = this.explosionParticles[i];
         
         ctx.save();
         ctx.globalAlpha = particle.alpha;
+        ctx.strokeStyle = particle.color;
+        ctx.lineWidth = 1; // Uniform line width for all particles
         
-        if (particle.isDebris) {
-          // Draw ship debris (small lines)
-          ctx.translate(particle.x, particle.y);
-          ctx.rotate(particle.rotation);
-          
-          ctx.strokeStyle = 'white';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          
-          // Draw a random shape for debris
-          const debrisSize = particle.size * 2;
-          ctx.moveTo(-debrisSize, -debrisSize);
-          ctx.lineTo(debrisSize, debrisSize);
-          
-          ctx.stroke();
-        } else {
-          // Draw regular particle (circle)
-          ctx.fillStyle = particle.color;
-          ctx.beginPath();
-          ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-          ctx.fill();
-        }
+        // Draw line starting at particle position
+        ctx.beginPath();
+        ctx.moveTo(particle.x, particle.y);
         
+        // Calculate line end point based on angle and length
+        const endX = particle.x + Math.cos(particle.angle) * particle.length;
+        const endY = particle.y + Math.sin(particle.angle) * particle.length;
+        ctx.lineTo(endX, endY);
+        
+        ctx.stroke();
         ctx.restore();
       }
       return;
@@ -290,10 +277,10 @@ class Player {
     this.explosionElapsed = 0;
     this.explosionParticles = [];
     
-    // Number of particles for explosion
-    const particleCount = 40;
+    // Number of line particles for explosion
+    const particleCount = 15;
     
-    // Use only white color for all particles
+    // All particles are white lines
     const color = '#ffffff';
     
     for (let i = 0; i < particleCount; i++) {
@@ -301,20 +288,18 @@ class Player {
       const angle = Math.random() * Math.PI * 2;
       const speed = 20 + Math.random() * 80; // pixels per second
       
-      // Decide if this is a particle or ship debris
-      const isDebris = Math.random() > 0.7; // 30% chance to be debris
+      // Line length varies slightly
+      const lineLength = 5 + Math.random() * 10;
       
       this.explosionParticles.push({
         x: this.x,
         y: this.y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        size: 1 + Math.random() * 3,
+        angle: angle, // Direction of the line
+        length: lineLength,
         color: color,
         alpha: 1.0,
-        isDebris: isDebris,
-        // Add rotation for debris
-        rotation: Math.random() * Math.PI * 2,
         rotationSpeed: (Math.random() - 0.5) * 5
       });
     }
