@@ -14,6 +14,7 @@ let inputActive = false;
 let submitCallback = null;
 let restartCallback = null;
 let redrawCallback = null; // Function to redraw the screen after input changes
+let redrawIntervalId = null; // Interval ID for forced redraw
 
 /**
  * Draw the game over screen
@@ -56,14 +57,20 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         
-        // Display current initials with a cursor
-        const displayText = playerInitials + (playerInitials.length < MAX_INITIALS_LENGTH ? "_" : "");
-        console.log(`Display text: "${displayText}"`);
+        // Make sure the initials are clearly displayed
+        const displayText = playerInitials ? playerInitials + (playerInitials.length < MAX_INITIALS_LENGTH ? "_" : "") : "_";
+        console.log(`Display text on screen: "${displayText}", Current initials: "${playerInitials}"`);
+        
+        // Try to force an update of the canvas
+        ctx.clearRect(width / 2 - 100, height / 4 + 170, 200, 60);
         ctx.fillText(displayText, width / 2, height / 4 + 200);
         
         // Add instructions for submission
         ctx.font = '16px Arial';
         ctx.fillText('Press ENTER when done or type up to 3 letters', width / 2, height / 4 + 240);
+        
+        // Also display a visual indicator of the current keyboard state
+        ctx.fillText(`Input active: ${inputActive ? 'YES' : 'NO'}, Current initial length: ${playerInitials.length}`, width / 2, height / 4 + 280);
     } else {
         // Draw restart prompt
         ctx.font = '24px Arial';
@@ -163,6 +170,12 @@ export function handleGameOverKeyInput(event) {
 function resetInput() {
     playerInitials = '';
     inputActive = false;
+    
+    // Clear the forced redraw interval
+    if (redrawIntervalId) {
+        clearInterval(redrawIntervalId);
+        redrawIntervalId = null;
+    }
 }
 
 /**
@@ -172,6 +185,14 @@ export function activateInput() {
     console.log('Activating high score input');
     inputActive = true;
     playerInitials = '';
+    
+    // Set up a forced redraw every 100ms to ensure display updates
+    if (redrawCallback && !redrawIntervalId) {
+        redrawIntervalId = setInterval(() => {
+            console.log('Forced redraw while input is active');
+            redrawCallback();
+        }, 100);
+    }
 }
 
 /**
