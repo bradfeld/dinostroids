@@ -293,8 +293,8 @@ class Player {
     // Number of particles for explosion
     const particleCount = 40;
     
-    // Colors for explosion (white, yellow, orange, red)
-    const colors = ['#ffffff', '#ffff00', '#ffa500', '#ff4500', '#ff0000'];
+    // Use only white color for all particles
+    const color = '#ffffff';
     
     for (let i = 0; i < particleCount; i++) {
       // Random velocity in all directions
@@ -310,7 +310,7 @@ class Player {
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         size: 1 + Math.random() * 3,
-        color: colors[Math.floor(Math.random() * colors.length)],
+        color: color,
         alpha: 1.0,
         isDebris: isDebris,
         // Add rotation for debris
