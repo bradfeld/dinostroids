@@ -14,7 +14,7 @@ import Player from '../entities/player.js';
 import Asteroid from '../entities/asteroid.js';
 import Bullet from '../entities/bullet.js';
 import { drawGameStatus } from '../ui/gameStatus.js';
-import { drawGameOver, handleGameOverKeyInput, activateInput, onSubmitScore, onRestart } from '../ui/gameOver.js';
+import { drawGameOver, handleGameOverKeyInput, activateInput, onSubmitScore, onRestart, setRedrawCallback } from '../ui/gameOver.js';
 import { drawLeaderboard } from '../ui/leaderboard.js';
 import { formatTime, randomInt } from '../utils.js';
 import { drawStartScreen } from '../ui/startScreen.js';
@@ -526,17 +526,32 @@ function handleGameOver() {
     
     // Check if this is a high score before drawing the screen
     const isHighScore = isNewHighScore();
+    console.log(`Game over check - Is high score: ${isHighScore}, Score: ${score}`);
     
-    // Draw game over screen with level and time information
+    // Get canvas for drawing
     const { ctx } = getCanvas();
-    drawGameOver(ctx, score, leaderboardData, level, gameTime);
+    
+    // Create a function to redraw the game over screen
+    const redrawGameOver = () => {
+        drawGameOver(ctx, score, leaderboardData, level, gameTime);
+    };
+    
+    // Set up the redraw callback for initials input
+    setRedrawCallback(redrawGameOver);
+    
+    // Draw game over screen initially
+    redrawGameOver();
     
     // Add keyboard handler for game over screen
     document.addEventListener('keydown', handleGameOverKeyInput);
+    console.log("Added keydown event listener for game over screen");
     
     if (isHighScore) {
         console.log("New high score detected!");
         activateInput();
+        
+        // Re-render the game over screen after activating input
+        setTimeout(redrawGameOver, 100);
         
         // Set up the score submission handler
         onSubmitScore(async (initials) => {

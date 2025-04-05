@@ -13,6 +13,7 @@ const MAX_INITIALS_LENGTH = 3;
 let inputActive = false;
 let submitCallback = null;
 let restartCallback = null;
+let redrawCallback = null; // Function to redraw the screen after input changes
 
 /**
  * Draw the game over screen
@@ -24,6 +25,9 @@ let restartCallback = null;
  */
 export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime = 0) {
     const { width, height } = getDimensions();
+    
+    // Debug output to help track the state
+    console.log(`Drawing game over screen. Input active: ${inputActive}, Initials: "${playerInitials}"`);
     
     // Clear canvas with dark background
     clear('black');
@@ -40,6 +44,7 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
     
     // Enter initials prompt if high score
     const isHighScore = isNewHighScore(score, leaderboard);
+    console.log(`Is high score: ${isHighScore}, Score: ${score}, Leaderboard length: ${leaderboard?.length || 0}`);
     
     if (isHighScore) {
         ctx.font = '24px Arial';
@@ -53,6 +58,7 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
         
         // Display current initials with a cursor
         const displayText = playerInitials + (playerInitials.length < MAX_INITIALS_LENGTH ? "_" : "");
+        console.log(`Display text: "${displayText}"`);
         ctx.fillText(displayText, width / 2, height / 4 + 200);
         
         // Add instructions for submission
@@ -85,10 +91,20 @@ function isNewHighScore(score, leaderboard) {
 }
 
 /**
+ * Set a callback for redrawing the screen
+ * @param {Function} callback - Function to call to redraw the screen
+ */
+export function setRedrawCallback(callback) {
+    redrawCallback = callback;
+}
+
+/**
  * Handle keyboard input for the game over screen
  * @param {KeyboardEvent} event - The keyboard event
  */
 export function handleGameOverKeyInput(event) {
+    console.log(`Input event received: ${event.key}, Input active: ${inputActive}`);
+    
     // Check if this is for high score input
     if (inputActive) {
         console.log(`Key pressed for initials: ${event.key}`);
@@ -110,6 +126,11 @@ export function handleGameOverKeyInput(event) {
                 playerInitials += event.key.toUpperCase();
                 console.log(`Current initials: ${playerInitials}`);
                 
+                // Redraw the screen to show the updated initials
+                if (redrawCallback) {
+                    redrawCallback();
+                }
+                
                 // Auto-submit when all initials are entered
                 if (playerInitials.length === MAX_INITIALS_LENGTH && submitCallback) {
                     console.log("All initials entered, submitting in 1 second...");
@@ -123,6 +144,11 @@ export function handleGameOverKeyInput(event) {
             // Handle backspace
             playerInitials = playerInitials.slice(0, -1);
             console.log(`Backspace pressed, initials now: ${playerInitials}`);
+            
+            // Redraw the screen to show the updated initials
+            if (redrawCallback) {
+                redrawCallback();
+            }
         }
     } else if (event.code === 'Space' && restartCallback) {
         // Handle restart with Space key
@@ -143,6 +169,7 @@ function resetInput() {
  * Activate the initials input
  */
 export function activateInput() {
+    console.log('Activating high score input');
     inputActive = true;
     playerInitials = '';
 }
