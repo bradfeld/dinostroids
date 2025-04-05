@@ -44,6 +44,12 @@ class Player {
     this.explosionDuration = 2000; // 2 seconds in milliseconds
     this.explosionElapsed = 0; 
     this.exploding = false;
+    
+    // Hyperspace properties
+    this.isInHyperspace = false;
+    this.hyperspaceTime = 0;
+    this.hyperspaceCooldown = 3000; // 3 seconds cooldown
+    this.lastHyperspace = 0;
   }
   
   /**
@@ -101,6 +107,15 @@ class Player {
         this.invincible = false;
         this.invincibilityTime = 0; // Reset to prevent negative values
       }
+    }
+    
+    // Check for hyperspace jump
+    const now = Date.now();
+    const canHyperspace = now - this.lastHyperspace > this.hyperspaceCooldown;
+    
+    if (isKeyPressed('Tab') && canHyperspace && !this.isInHyperspace) {
+      this.hyperspace();
+      return null;
     }
     
     // Check input for rotation
@@ -338,6 +353,42 @@ class Player {
     const distance = Math.sqrt(dx * dx + dy * dy);
     
     return distance < this.radius + entity.radius;
+  }
+  
+  /**
+   * Hyperspace jump to a random location
+   */
+  hyperspace() {
+    console.log("Hyperspace jump initiated!");
+    
+    // Record hyperspace use time
+    this.lastHyperspace = Date.now();
+    this.isInHyperspace = true;
+    
+    // Get screen dimensions
+    const { width, height } = getDimensions();
+    
+    // Calculate a random position ensuring we're not too close to the edges
+    const margin = 50;
+    const newX = margin + Math.random() * (width - margin * 2);
+    const newY = margin + Math.random() * (height - margin * 2);
+    
+    // Transport to new location
+    this.x = newX;
+    this.y = newY;
+    
+    // Reduce velocity to prevent immediate collisions
+    this.velocityX *= 0.5;
+    this.velocityY *= 0.5;
+    
+    // Apply invincibility
+    this.invincible = true;
+    this.invincibilityTime = PLAYER_SETTINGS.INVINCIBILITY_TIME;
+    
+    // Reset hyperspace state after a short delay
+    setTimeout(() => {
+      this.isInHyperspace = false;
+    }, 100);
   }
 }
 

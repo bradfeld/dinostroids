@@ -133,13 +133,18 @@ function drawHelpScreen() {
         'CONTROLS:',
         '• Arrow Keys: Move ship',
         '• Space: Fire',
+        '• Tab: Hyperspace jump (random teleport)',
         '• ?: Toggle help screen',
         '• ESC: End game and return to menu',
         '',
         'OBJECTIVE:',
         '• Destroy all dinosaur asteroids',
         '• Avoid collisions',
-        '• Score as many points as possible'
+        '• Score as many points as possible',
+        '',
+        'TIPS:',
+        '• Use hyperspace to escape danger',
+        '• You\'re invincible for 3 seconds after hyperspace'
     ];
     
     const startY = 150;
@@ -310,8 +315,8 @@ function gameLoop(timestamp) {
     // Update player
     if (player) {
         // Debug player state
-        if (player.isDestroyed || player.exploding) {
-            console.log(`Player state: destroyed=${player.isDestroyed}, exploding=${player.exploding}, particles=${player.explosionParticles.length}`);
+        if (player.isDestroyed || player.exploding || player.isInHyperspace) {
+            console.log(`Player state: destroyed=${player.isDestroyed}, exploding=${player.exploding}, hyperspace=${player.isInHyperspace}`);
         }
         
         const newBullet = player.update(cappedDeltaTime);
@@ -370,7 +375,7 @@ function gameLoop(timestamp) {
     });
     
     // Check for collisions between player and asteroids
-    if (player && !player.isDestroyed && !player.exploding) {
+    if (player && !player.isDestroyed && !player.exploding && !player.isInHyperspace && !player.invincible) {
         for (let i = asteroids.length - 1; i >= 0; i--) {
             const asteroid = asteroids[i];
             
