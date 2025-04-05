@@ -18,17 +18,19 @@ class Asteroid {
    * @param {number} y - Initial y position (optional) 
    * @param {string} difficulty - Difficulty level ('easy', 'medium', 'difficult')
    * @param {number} speedMultiplier - Speed multiplier from current level (optional)
+   * @param {number} fixedBaseSpeed - Fixed base speed to use for all asteroids (optional)
    */
-  constructor(type, size, x, y, difficulty = 'medium', speedMultiplier = 1.0) {
+  constructor(type, size, x, y, difficulty = 'medium', speedMultiplier = 1.0, fixedBaseSpeed = null) {
     const { width, height } = getDimensions();
     
     // Debug inputs
-    console.log(`Asteroid constructor called with type=${type}, size=${size}, difficulty=${difficulty}, speedMultiplier=${speedMultiplier}`);
+    console.log(`Asteroid constructor called with type=${type}, size=${size}, difficulty=${difficulty}, speedMultiplier=${speedMultiplier}, fixedBaseSpeed=${fixedBaseSpeed}`);
     
     this.type = type || this.getRandomType();
     this.size = size || 1; // Default is large (1)
     this.difficulty = difficulty;
     this.speedMultiplier = speedMultiplier; // Store for child asteroids
+    this.fixedBaseSpeed = fixedBaseSpeed; // Store the fixed base speed for child asteroids
     
     // Set radius based on size
     this.radius = ASTEROID_SETTINGS.BASE_RADIUS / this.size;
@@ -40,18 +42,25 @@ class Asteroid {
     // Debug the asteroid creation
     console.log(`Creating asteroid: type=${this.type}, size=${this.size}, at (${this.x.toFixed(1)}, ${this.y.toFixed(1)})`);
     
-    // Get the appropriate speed based on difficulty and size
-    const sizeCategory = this.getSizeCategory();
-    console.log(`Size category: ${sizeCategory}, Difficulty settings: ${JSON.stringify(DIFFICULTY_SETTINGS[difficulty])}`);
+    // Determine the speed to use
+    let baseSpeed;
     
-    // Use the MIDPOINT of the speed range instead of a random value
-    // This ensures all asteroids of the same size have the same base speed
-    const speedRange = DIFFICULTY_SETTINGS[difficulty].asteroidSpeed[sizeCategory];
-    const baseSpeed = (speedRange.min + speedRange.max) / 2;
+    if (fixedBaseSpeed !== null) {
+      // Use the provided fixed base speed for consistency
+      baseSpeed = fixedBaseSpeed;
+      console.log(`Using fixed base speed: ${baseSpeed.toFixed(2)}`);
+    } else {
+      // If no fixed speed provided, fall back to the difficulty settings
+      const sizeCategory = this.getSizeCategory();
+      console.log(`No fixed speed, using size category: ${sizeCategory}`);
+      
+      const speedRange = DIFFICULTY_SETTINGS[difficulty].asteroidSpeed.medium; // Always use medium speed
+      baseSpeed = (speedRange.min + speedRange.max) / 2;
+    }
     
     // Apply the level speed multiplier 
     const speed = baseSpeed * speedMultiplier;
-    console.log(`Base speed (fixed): ${baseSpeed.toFixed(2)}, Final speed with multiplier: ${speed.toFixed(2)}`);
+    console.log(`Final speed with multiplier: ${speed.toFixed(2)}`);
     
     // Set velocity based on a random angle to ensure all directions are covered
     const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
@@ -238,7 +247,7 @@ class Asteroid {
       const offsetX = randomFloatBetween(-10, 10);
       const offsetY = randomFloatBetween(-10, 10);
       
-      // Calculate parent's current speed
+      // Calculate parent's current speed (for debugging only)
       const parentSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
       console.log(`Parent asteroid speed: ${parentSpeed.toFixed(2)}`);
       
@@ -248,16 +257,17 @@ class Asteroid {
         this.x + offsetX,
         this.y + offsetY,
         this.difficulty, // Pass the same difficulty to child asteroids
-        this.speedMultiplier // Pass the same speed multiplier to child asteroids
+        this.speedMultiplier, // Pass the same speed multiplier to child asteroids
+        this.fixedBaseSpeed // Pass the fixed base speed to child asteroids
       );
       
       // Generate a random angle for velocity direction
       const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
       
-      // Use the PARENT'S exact speed instead of recalculating from the speed range
+      // All asteroids use the same base speed regardless of size
       // This ensures consistent speed within a level
-      const speed = parentSpeed;
-      console.log(`Child asteroid using parent's speed: ${speed.toFixed(2)}`);
+      const speed = this.fixedBaseSpeed * this.speedMultiplier;
+      console.log(`Child asteroid using fixed speed: ${speed.toFixed(2)}`);
       
       // Set velocity based on the random angle
       asteroid.velocityX = Math.cos(angle) * speed;

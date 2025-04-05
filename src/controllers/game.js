@@ -270,18 +270,15 @@ function createAsteroids(count) {
     
     console.log(`Creating ${count} asteroids with speed multiplier: ${levelSpeedMultiplier}`);
     
-    // Calculate base speeds for each size that will be used for ALL asteroids
-    // Use the exact midpoint of the speed range for complete consistency
-    const baseSpeedLarge = (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.large.min + 
-                           DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.large.max) / 2;
+    // Calculate a SINGLE base speed for ALL asteroid sizes
+    // Use medium asteroid speed as the reference point
+    const baseSpeed = (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.min + 
+                      DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.max) / 2;
     
-    const baseSpeedMedium = (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.min + 
-                            DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.medium.max) / 2;
+    // Apply the level multiplier
+    const effectiveSpeed = baseSpeed * levelSpeedMultiplier;
     
-    const baseSpeedSmall = (DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.small.min + 
-                           DIFFICULTY_SETTINGS[currentDifficulty].asteroidSpeed.small.max) / 2;
-    
-    console.log(`Fixed base speeds for this level - Large: ${baseSpeedLarge.toFixed(2)}, Medium: ${baseSpeedMedium.toFixed(2)}, Small: ${baseSpeedSmall.toFixed(2)}`);
+    console.log(`Base speed for ALL asteroids: ${baseSpeed.toFixed(2)}, With level multiplier: ${effectiveSpeed.toFixed(2)}`);
     
     for (let i = 0; i < count; i++) {
         // Create asteroid at a safe distance from the player
@@ -318,25 +315,15 @@ function createAsteroids(count) {
             x,
             y,
             currentDifficulty,
-            levelSpeedMultiplier // Pass the level speed multiplier
+            levelSpeedMultiplier, // Pass the level speed multiplier
+            baseSpeed // Pass the fixed base speed
         );
         
-        // Override the velocity with our consistent base speed for this level
-        // This approach ensures ALL asteroids at this level have the same base speed
+        // Override the velocity with our single consistent speed
         const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
-        let baseSpeed;
         
-        // Use the pre-calculated base speed for this size
-        if (randomSize === 1) {
-            baseSpeed = baseSpeedLarge;
-        } else if (randomSize === 2) {
-            baseSpeed = baseSpeedMedium;
-        } else {
-            baseSpeed = baseSpeedSmall;
-        }
-        
-        // Apply the level multiplier to the base speed
-        const speed = baseSpeed * levelSpeedMultiplier;
+        // All asteroids use the same speed regardless of size
+        const speed = effectiveSpeed;
         
         // Set velocity based on the random angle
         asteroid.velocityX = Math.cos(angle) * speed;
