@@ -29,11 +29,6 @@ export function initInput() {
 function handleKeyDown(event) {
     keys[event.code] = true;
     
-    // Prevent Tab key from tabbing between browser elements
-    if (event.code === 'Tab') {
-        event.preventDefault();
-    }
-    
     // Handle Enter key for starting game
     if ((event.code === 'Enter' || event.code === 'NumpadEnter') && onStartCallback) {
         onStartCallback();
