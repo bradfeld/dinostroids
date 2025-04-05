@@ -17,12 +17,14 @@ class Asteroid {
    * @param {number} x - Initial x position (optional)
    * @param {number} y - Initial y position (optional) 
    * @param {string} difficulty - Difficulty level ('easy', 'medium', 'difficult')
+   * @param {number} speedMultiplier - Speed multiplier from current level (optional)
    */
-  constructor(type, size, x, y, difficulty = 'medium') {
+  constructor(type, size, x, y, difficulty = 'medium', speedMultiplier = 1.0) {
     const { width, height } = getDimensions();
     this.type = type || this.getRandomType();
     this.size = size || 1; // Default is large (1)
     this.difficulty = difficulty;
+    this.speedMultiplier = speedMultiplier; // Store for child asteroids
     
     // Set radius based on size
     this.radius = ASTEROID_SETTINGS.BASE_RADIUS / this.size;
@@ -34,7 +36,10 @@ class Asteroid {
     // Get the appropriate speed based on difficulty and size
     const sizeCategory = this.getSizeCategory();
     const speedRange = DIFFICULTY_SETTINGS[difficulty].asteroidSpeed[sizeCategory];
-    const speed = randomFloatBetween(speedRange.min, speedRange.max);
+    const baseSpeed = randomFloatBetween(speedRange.min, speedRange.max);
+    
+    // Apply the level speed multiplier 
+    const speed = baseSpeed * speedMultiplier;
     
     // Set velocity based on a random angle to ensure all directions are covered
     const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
@@ -204,16 +209,20 @@ class Asteroid {
         size,
         this.x + offsetX,
         this.y + offsetY,
-        this.difficulty // Pass the same difficulty to child asteroids
+        this.difficulty, // Pass the same difficulty to child asteroids
+        this.speedMultiplier // Pass the same speed multiplier to child asteroids
       );
       
       // Generate a random angle for velocity direction
       const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
       
-      // Calculate velocity based on the random angle
+      // Use the standard speed range for this size but apply the level speed multiplier
       const sizeCategory = asteroid.getSizeCategory();
       const speedRange = DIFFICULTY_SETTINGS[this.difficulty].asteroidSpeed[sizeCategory];
-      const speed = randomFloatBetween(speedRange.min, speedRange.max);
+      const baseSpeed = randomFloatBetween(speedRange.min, speedRange.max);
+      
+      // Apply the level speed multiplier 
+      const speed = baseSpeed * this.speedMultiplier;
       
       // Set velocity based on the random angle
       asteroid.velocityX = Math.cos(angle) * speed;

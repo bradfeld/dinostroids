@@ -50,6 +50,7 @@ let shootCooldown;
 let asteroidSpeed;
 let initialAsteroids;
 let playerLives;
+let levelSpeedMultiplier = 1.0; // Base speed multiplier that increases per level
 
 /**
  * Draw the start screen
@@ -222,6 +223,7 @@ function startGame() {
     const difficultySettings = DIFFICULTY_SETTINGS[currentDifficulty];
     lives = difficultySettings.lives;
     level = 1;
+    levelSpeedMultiplier = 1.0; // Reset speed multiplier for new game
     
     // Create player
     player = new Player();
@@ -266,22 +268,32 @@ function createAsteroids(count) {
     const { width, height } = getDimensions();
     asteroids = [];
     
+    console.log(`Creating ${count} asteroids with speed multiplier: ${levelSpeedMultiplier}`);
+    
     for (let i = 0; i < count; i++) {
-        // Create asteroid at a safe distance from the player
-        let x, y, distanceFromPlayer;
-        
-        do {
-            x = Math.random() * width;
+        // Random position along the edge of the screen
+        let x, y;
+        if (Math.random() < 0.5) {
+            x = Math.random() < 0.5 ? 0 : width;
             y = Math.random() * height;
-            
-            // Calculate distance from player
-            const dx = player ? player.x - x : width / 2 - x;
-            const dy = player ? player.y - y : height / 2 - y;
-            distanceFromPlayer = Math.sqrt(dx * dx + dy * dy);
-        } while (distanceFromPlayer < ASTEROID_SETTINGS.SPAWN_DISTANCE_MIN);
+        } else {
+            x = Math.random() * width;
+            y = Math.random() < 0.5 ? 0 : height;
+        }
         
-        // Create a random asteroid with the current difficulty
-        const asteroid = new Asteroid(null, 1, x, y, currentDifficulty);
+        // Random asteroid type and size
+        const type = Math.random() < 0.5 ? "detailed" : "simple";
+        const size = Math.random() < 0.3 ? "small" : (Math.random() < 0.7 ? "medium" : "large");
+        
+        const asteroid = new Asteroid(
+            type,
+            size,
+            x,
+            y,
+            currentDifficulty,
+            levelSpeedMultiplier // Pass the level speed multiplier
+        );
+        
         asteroids.push(asteroid);
     }
 }
@@ -406,6 +418,10 @@ function gameLoop(timestamp) {
     if (asteroids.length === 0 && isGameStarted && !isGameOver) {
         // Move to next level
         level++;
+        
+        // Increase asteroid speed by 5% for the new level
+        levelSpeedMultiplier *= 1.05;
+        console.log(`Level ${level}: Speed multiplier increased to ${levelSpeedMultiplier.toFixed(2)}`);
         
         // Calculate new asteroid count based on level
         const newAsteroidCount = Math.min(
