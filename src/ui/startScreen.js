@@ -43,14 +43,19 @@ export function drawStartScreen(ctx, currentDifficulty, leaderboardData = [], ga
         if (isSelected) {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.fillRect(x - 65, diffY - 30, 130, 40);
+            // Use bold font for selected option
+            ctx.font = 'bold 24px Arial';
+        } else {
+            ctx.font = '24px Arial';
         }
         
         // Draw option text
-        ctx.fillStyle = isSelected ? '#ffff00' : 'white';
+        ctx.fillStyle = isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.8)';
         ctx.fillText(`${option.key}: ${option.label}`, x, diffY);
     });
     
-    // Reset fill style to white
+    // Reset font and fill style
+    ctx.font = '24px Arial';
     ctx.fillStyle = 'white';
     
     // Draw instructions
