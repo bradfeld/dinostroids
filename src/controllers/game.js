@@ -526,7 +526,7 @@ function gameLoop(timestamp) {
             
             // Draw the text
             ctx.save();
-            ctx.fillStyle = 'rgba(0, 255, 0, ' + extraLifeAnimation.alpha + ')';
+            ctx.fillStyle = 'rgba(255, 255, 255, ' + extraLifeAnimation.alpha + ')';
             ctx.font = 'bold 24px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(extraLifeAnimation.text, extraLifeAnimation.x, extraLifeAnimation.y);
