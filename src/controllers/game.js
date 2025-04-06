@@ -735,7 +735,6 @@ export function getGameState() {
  */
 function updateDifficultySettings() {
     const settings = DIFFICULTY_SETTINGS[currentDifficulty];
-    playerAcceleration = settings.playerAcceleration;
     shootCooldown = settings.shootCooldown;
     asteroidSpeed = settings.asteroidSpeed;
     initialAsteroids = settings.initialAsteroids;

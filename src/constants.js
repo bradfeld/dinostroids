@@ -155,7 +155,6 @@ export const LEADERBOARD_MAX_ENTRIES = 10;
 // Difficulty settings
 export const DIFFICULTY_SETTINGS = {
     easy: {
-        playerAcceleration: 0.54,  // Based on PLAYER_ACCELERATION
         shootCooldown: 120,        // Based on SHOOT_COOLDOWN
         asteroidSpeed: {
             large: { min: 1.5, max: 3.0 },
@@ -166,7 +165,6 @@ export const DIFFICULTY_SETTINGS = {
         lives: 5
     },
     medium: {
-        playerAcceleration: 0.81,  // 1.5x base acceleration
         shootCooldown: 84,         // 70% of base cooldown
         asteroidSpeed: {
             large: { min: 2.4, max: 4.5 },
@@ -177,7 +175,6 @@ export const DIFFICULTY_SETTINGS = {
         lives: 3
     },
     difficult: {
-        playerAcceleration: 1.08,  // 2.0x base acceleration
         shootCooldown: 60,         // 50% of base cooldown
         asteroidSpeed: {
             large: { min: 3.6, max: 6.0 },
