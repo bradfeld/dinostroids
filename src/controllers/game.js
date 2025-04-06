@@ -242,7 +242,7 @@ function startGame() {
     player = new Player();
     
     // Apply difficulty settings to player - with more reasonable acceleration values
-    player.acceleration = 100; // Base acceleration value for Easy
+    player.acceleration = 101; // Base acceleration value for Easy
     if (currentDifficulty === 'medium') {
         player.acceleration = 150;  // 1.5x base for medium
     } else if (currentDifficulty === 'difficult') {
