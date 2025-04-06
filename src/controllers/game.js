@@ -35,6 +35,18 @@ let currentTime = 0;
 let startTime = 0;
 let gameLoopId = null;
 let currentDifficulty = 'medium'; // Default difficulty
+let lastExtraLifeScore = 0; // Track when the last extra life was awarded
+
+// Visual effect for extra life
+let extraLifeAnimation = {
+    active: false,
+    text: "+1 SHIP",
+    x: 0,
+    y: 0,
+    alpha: 0,
+    duration: 2000, // 2 seconds
+    startTime: 0
+};
 
 // Game entities
 let player = null;
@@ -218,6 +230,7 @@ function startGame() {
     
     // Reset game state
     score = 0;
+    lastExtraLifeScore = 0; // Reset the extra life tracker
     
     // Apply settings based on current difficulty
     const difficultySettings = DIFFICULTY_SETTINGS[currentDifficulty];
@@ -411,6 +424,9 @@ function gameLoop(timestamp) {
                 const newAsteroids = asteroid.break();
                 score += ASTEROID_SETTINGS.SCORE_VALUES[asteroid.size] || 100;
                 
+                // Check if player earned an extra life
+                checkExtraLife(score);
+                
                 // Add new smaller asteroids
                 asteroids.push(...newAsteroids);
                 
@@ -443,6 +459,9 @@ function gameLoop(timestamp) {
                 // Award points for the asteroid that hit the player
                 score += ASTEROID_SETTINGS.SCORE_VALUES[asteroid.size] || 100;
                 console.log(`Scored ${ASTEROID_SETTINGS.SCORE_VALUES[asteroid.size] || 100} points for asteroid collision`);
+                
+                // Check if player earned an extra life
+                checkExtraLife(score);
                 
                 // Create child asteroids when larger asteroid hits player
                 const newAsteroids = asteroid.break();
@@ -491,6 +510,32 @@ function gameLoop(timestamp) {
     
     // Draw game status
     drawGameStatus(ctx, score, lives, level, currentDifficulty);
+    
+    // Draw extra life animation if active
+    if (extraLifeAnimation.active) {
+        const elapsed = Date.now() - extraLifeAnimation.startTime;
+        if (elapsed < extraLifeAnimation.duration) {
+            // Calculate alpha based on time (fade in, then fade out)
+            const progress = elapsed / extraLifeAnimation.duration;
+            extraLifeAnimation.alpha = progress < 0.5 
+                ? progress * 2 // Fade in during first half
+                : 2 - progress * 2; // Fade out during second half
+            
+            // Move upward slightly
+            extraLifeAnimation.y -= 20 * cappedDeltaTime;
+            
+            // Draw the text
+            ctx.save();
+            ctx.fillStyle = 'rgba(0, 255, 0, ' + extraLifeAnimation.alpha + ')';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(extraLifeAnimation.text, extraLifeAnimation.x, extraLifeAnimation.y);
+            ctx.restore();
+        } else {
+            // Animation complete
+            extraLifeAnimation.active = false;
+        }
+    }
     
     // Continue the game loop
     animationFrameId = requestAnimationFrame(gameLoop);
@@ -834,4 +879,40 @@ function updateHUD() {
     
     // Draw game status with current settings
     drawGameStatus(ctx, score, lives, level, currentDifficulty);
+}
+
+/**
+ * Check if player should get an extra life based on score
+ * @param {number} newScore - The updated score
+ */
+function checkExtraLife(newScore) {
+    const threshold = GAME_SETTINGS.EXTRA_LIFE_SCORE_THRESHOLD;
+    const lastThreshold = Math.floor(lastExtraLifeScore / threshold) * threshold;
+    const newThreshold = Math.floor(newScore / threshold) * threshold;
+    
+    // If we've crossed a new threshold, award an extra life
+    if (newThreshold > lastThreshold) {
+        lives++;
+        lastExtraLifeScore = newScore;
+        
+        // Show visual feedback
+        console.log(`BONUS SHIP! Extra life awarded at ${newScore} points. Lives: ${lives}`);
+        
+        // Start the bonus ship animation
+        startExtraLifeAnimation();
+    }
+}
+
+/**
+ * Start the animation for the extra life bonus
+ */
+function startExtraLifeAnimation() {
+    const { width } = getDimensions();
+    
+    // Set the animation properties
+    extraLifeAnimation.active = true;
+    extraLifeAnimation.x = width - 100; // Position near the lives display
+    extraLifeAnimation.y = 90; // Match the y-position of the lives indicator
+    extraLifeAnimation.alpha = 0;
+    extraLifeAnimation.startTime = Date.now();
 } 
