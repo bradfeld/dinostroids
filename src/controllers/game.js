@@ -229,12 +229,11 @@ function startGame() {
     player = new Player();
     
     // Apply difficulty settings to player - with more reasonable acceleration values
-    // Use a base value that's more manageable (50 instead of 200)
-    player.acceleration = 50; // Base acceleration value
+    player.acceleration = 100; // Base acceleration value for Easy
     if (currentDifficulty === 'medium') {
-        player.acceleration = 75;  // 1.5x base for medium
+        player.acceleration = 150;  // 1.5x base for medium
     } else if (currentDifficulty === 'difficult') {
-        player.acceleration = 100;  // 2.0x base for difficult
+        player.acceleration = 200;  // 2.0x base for difficult
     }
     
     player.shootCooldown = difficultySettings.shootCooldown;
