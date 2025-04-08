@@ -154,5 +154,5 @@ function drawDesktopStartScreen(ctx, currentDifficulty, leaderboardData, gamesPl
     
     // Copyright text
     ctx.font = '14px Arial';
-    ctx.fillText('© 2023 Dinostroids', width / 2, height - 40);
+    ctx.fillText('© 2025, Intensity Ventures', width / 2, height - 40);
 } 
