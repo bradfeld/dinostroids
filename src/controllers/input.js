@@ -23,6 +23,9 @@ let touchEndHandler = null;
 // Game controller reference for direct access
 let gameControllerRef = null;
 
+// Track whether a touch is currently being processed
+let processingTouch = false;
+
 /**
  * Initialize keyboard input handlers
  */
@@ -100,65 +103,77 @@ function setupTouchHandlers(canvas) {
         canvas.removeEventListener('touchend', touchEndHandler);
     }
     
+    // Reset touch processing flag
+    processingTouch = false;
+    
     // Create new handlers
     touchStartHandler = function(e) {
         e.preventDefault();
         
+        // Prevent multiple rapid touches
+        if (processingTouch) {
+            console.log("Ignoring touch - already processing another touch");
+            return;
+        }
+        
+        processingTouch = true;
         console.log("Touch start detected");
         
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
-        
-        const height = canvas.height;
-        const width = canvas.width;
-        const buttonHeight = height * 0.08;
-        const buttonSpacing = height * 0.02;
-        const buttonWidth = Math.min(width * 0.8, 400);
-        const startY = height * 0.3;
-        const buttonX = (width - buttonWidth) * 0.5;
-
-        const difficulties = ['easy', 'medium', 'difficult'];
-        let buttonPressed = false;
-
-        for (let index = 0; index < difficulties.length; index++) {
-            const diff = difficulties[index];
-            const buttonY = startY + (buttonHeight + buttonSpacing) * index;
+        try {
+            // Get touch coordinates
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
             
-            if (x >= buttonX && x <= buttonX + buttonWidth &&
-                y >= buttonY && y <= buttonY + buttonHeight) {
+            // Calculate button dimensions
+            const height = canvas.height;
+            const width = canvas.width;
+            const buttonHeight = height * 0.08;
+            const buttonSpacing = height * 0.02;
+            const buttonWidth = Math.min(width * 0.8, 400);
+            const startY = height * 0.3;
+            const buttonX = (width - buttonWidth) * 0.5;
+    
+            // Check if a difficulty button was pressed
+            const difficulties = ['easy', 'medium', 'difficult'];
+            for (let i = 0; i < difficulties.length; i++) {
+                const diff = difficulties[i];
+                const buttonY = startY + (buttonHeight + buttonSpacing) * i;
                 
-                console.log(`Difficulty button pressed: ${diff}`);
-                buttonPressed = true;
-                
-                // Use direct startGame call if game controller is available
-                if (gameControllerRef) {
-                    console.log("Starting game directly with difficulty:", diff);
-                    setTimeout(() => gameControllerRef.startGame(diff), 0);
-                } else if (difficultyCallback) {
-                    // Fallback to callback if no direct reference
-                    console.log("Using callback for difficulty:", diff);
-                    setTimeout(() => difficultyCallback(diff), 0);
+                if (x >= buttonX && x <= buttonX + buttonWidth &&
+                    y >= buttonY && y <= buttonY + buttonHeight) {
+                    
+                    console.log("Difficulty selected:", diff);
+                    
+                    // Just change the difficulty, don't start the game yet
+                    if (difficultyCallback) {
+                        difficultyCallback(diff);
+                    }
+                    
+                    // Release touch processing lock after a short delay
+                    setTimeout(() => {
+                        processingTouch = false;
+                    }, 100);
+                    
+                    return;
                 }
-                
-                // Exit the loop once we found a button
-                break;
             }
-        }
-
-        // If no difficulty button was pressed, start the game
-        if (!buttonPressed) {
-            console.log('No difficulty button pressed, starting game with current difficulty');
             
-            if (gameControllerRef) {
-                // Start game with current difficulty
-                setTimeout(() => gameControllerRef.startGame(), 0);
-            } else if (onStartCallback) {
-                // Fallback to callback
-                setTimeout(() => onStartCallback(), 0);
+            // If no difficulty button was tapped, start the game
+            console.log("Starting game (tap outside difficulty buttons)");
+            if (onStartCallback) {
+                onStartCallback();
             }
+            
+        } catch (err) {
+            console.error("Error in touch handler:", err);
         }
+        
+        // Release touch processing lock
+        setTimeout(() => {
+            processingTouch = false;
+        }, 100);
     };
     
     touchMoveHandler = function(e) {
@@ -169,12 +184,12 @@ function setupTouchHandlers(canvas) {
         e.preventDefault();
     };
     
-    // Add event listeners
+    // Add event listeners with passive: false to prevent scrolling
     canvas.addEventListener('touchstart', touchStartHandler, { passive: false });
     canvas.addEventListener('touchmove', touchMoveHandler, { passive: false });
     canvas.addEventListener('touchend', touchEndHandler, { passive: false });
     
-    console.log("Touch handlers set up successfully");
+    console.log("Touch handlers set up");
 }
 
 /**

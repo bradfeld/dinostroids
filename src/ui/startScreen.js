@@ -22,6 +22,9 @@ export function drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPl
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, width, height);
 
+    // Log current difficulty for debugging
+    console.log(`Start Screen - Current difficulty: ${currentDifficulty}`);
+
     if (isMobilePhone()) {
         // Mobile layout
         drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayed);
@@ -56,10 +59,16 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
     const buttonWidth = Math.min(width * 0.8, 400); // Cap the button width
     const startY = height * 0.3;
 
+    // Log button dimensions for debugging
+    console.log(`Button dimensions - height: ${buttonHeight}, width: ${buttonWidth}, startY: ${startY}`);
+
     difficulties.forEach((diff, index) => {
         const y = startY + (buttonHeight + buttonSpacing) * index;
         const isSelected = diff.toLowerCase() === currentDifficulty;
         const buttonX = (width - buttonWidth) * 0.5;
+
+        // Log button position for debugging
+        console.log(`${diff} button - x: ${buttonX}, y: ${y}, selected: ${isSelected}`);
 
         // Button background
         ctx.fillStyle = isSelected ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)';
@@ -83,22 +92,12 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
     ctx.textAlign = 'center';
     const instructionsY = height * 0.65;
     ctx.fillText('TAP DIFFICULTY TO SELECT', width * 0.5, instructionsY);
-    ctx.fillText('TAP SCREEN TO START', width * 0.5, instructionsY + height * 0.04);
-    ctx.fillText('? FOR HELP', width * 0.5, instructionsY + height * 0.08);
+    ctx.fillText('TAP ANYWHERE ELSE TO START', width * 0.5, instructionsY + height * 0.04);
 
-    // Show top 3 scores
-    if (leaderboardData && leaderboardData.length > 0) {
-        ctx.font = `${Math.floor(height * 0.025)}px Arial`;
-        ctx.fillText('TOP SCORES:', width * 0.5, height * 0.85);
-        
-        const topScores = leaderboardData.slice(0, 3);
-        topScores.forEach((entry, index) => {
-            ctx.fillText(
-                `${entry.initials}: ${entry.score}`,
-                width * 0.5,
-                height * 0.85 + (index + 1) * (height * 0.03)
-            );
-        });
+    // Draw game stats at the bottom if available
+    if (gamesPlayed > 0) {
+        ctx.font = `${Math.floor(height * 0.02)}px Arial`;
+        ctx.fillText(`Games Played: ${gamesPlayed}`, width * 0.5, height * 0.8);
     }
 }
 
@@ -106,7 +105,7 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
  * Draw the desktop version of the start screen
  */
 function drawDesktopStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayed) {
-    const { width, height } = getDimensions();
+    const { width, height } = ctx.canvas;
     
     // Draw title
     ctx.fillStyle = 'white';
@@ -162,12 +161,5 @@ function drawDesktopStartScreen(ctx, currentDifficulty, leaderboardData, gamesPl
     
     // Copyright text
     ctx.font = '14px Arial';
-    ctx.fillText('© Intensity Ventures, 2025', width / 2, height - 20);
-    
-    // Draw leaderboard if data is available
-    if (leaderboardData && leaderboardData.length > 0) {
-        // Position the leaderboard on the right side with enough margin to show all columns
-        // 300px from right edge to ensure the leaderboard is fully visible with all columns
-        drawLeaderboard(width - 300, 50, leaderboardData, ctx);
-    }
+    ctx.fillText('© 2023 Dinostroids', width / 2, height - 40);
 } 
