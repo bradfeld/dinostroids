@@ -10,34 +10,38 @@ export class MobileControls {
         this.gameController = gameController;
         
         // Button dimensions and positions
-        this.buttonRadius = 40;
-        this.buttonPadding = 20;
+        this.buttonSize = 60; // Square button size
+        this.buttonPadding = 15; // Reduced padding to fit better
+        
+        // Calculate positions based on screen size
+        const bottomY = canvas.height - (this.buttonPadding + this.buttonSize);
+        const rightX = canvas.width - (this.buttonPadding + this.buttonSize);
         
         // Define control buttons
         this.buttons = {
             left: {
-                x: this.buttonPadding + this.buttonRadius,
-                y: canvas.height - (this.buttonPadding + this.buttonRadius),
+                x: this.buttonPadding,
+                y: bottomY,
                 label: '←'
             },
             right: {
-                x: 3 * this.buttonPadding + 3 * this.buttonRadius,
-                y: canvas.height - (this.buttonPadding + this.buttonRadius),
+                x: 2 * this.buttonPadding + this.buttonSize,
+                y: bottomY,
                 label: '→'
             },
             shoot: {
-                x: canvas.width - (3 * this.buttonPadding + 3 * this.buttonRadius),
-                y: canvas.height - (this.buttonPadding + this.buttonRadius),
+                x: rightX - (this.buttonSize + this.buttonPadding),
+                y: bottomY,
                 label: 'SHOOT'
             },
             thrust: {
-                x: canvas.width - (this.buttonPadding + this.buttonRadius),
-                y: canvas.height - (this.buttonPadding + this.buttonRadius),
+                x: rightX,
+                y: bottomY,
                 label: 'THRUST'
             },
             hyperspace: {
-                x: canvas.width - (2 * this.buttonPadding + 2 * this.buttonRadius),
-                y: canvas.height - (3 * this.buttonPadding + 3 * this.buttonRadius),
+                x: rightX - (this.buttonSize/2),
+                y: bottomY - (this.buttonSize + this.buttonPadding),
                 label: 'HYPER'
             }
         };
@@ -101,11 +105,11 @@ export class MobileControls {
         const canvasY = (y - rect.top) * scaleY;
 
         for (const [buttonName, button] of Object.entries(this.buttons)) {
-            const distance = Math.sqrt(
-                Math.pow(canvasX - button.x, 2) + 
-                Math.pow(canvasY - button.y, 2)
-            );
-            if (distance <= this.buttonRadius) {
+            // Check if touch is within square button bounds
+            if (canvasX >= button.x && 
+                canvasX <= button.x + this.buttonSize && 
+                canvasY >= button.y && 
+                canvasY <= button.y + this.buttonSize) {
                 return buttonName;
             }
         }
@@ -163,11 +167,11 @@ export class MobileControls {
 
         this.ctx.save();
         
-        // Set up styles for buttons
-        this.ctx.globalAlpha = 0.3;
-        this.ctx.strokeStyle = '#00ff00';
-        this.ctx.lineWidth = 2;
-        this.ctx.font = '16px Arial';
+        // Set up styles for buttons - black and white theme
+        this.ctx.globalAlpha = 0.5;
+        this.ctx.strokeStyle = 'white';
+        this.ctx.lineWidth = 1;
+        this.ctx.font = '14px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
 
@@ -175,17 +179,15 @@ export class MobileControls {
         for (const [buttonName, button] of Object.entries(this.buttons)) {
             const isActive = Array.from(this.activeTouches.values()).includes(buttonName);
             
-            // Draw button circle
-            this.ctx.beginPath();
-            this.ctx.arc(button.x, button.y, this.buttonRadius, 0, Math.PI * 2);
-            this.ctx.fillStyle = isActive ? '#00ff00' : '#003300';
-            this.ctx.fill();
-            this.ctx.stroke();
+            // Draw square button
+            this.ctx.fillStyle = isActive ? 'white' : 'black';
+            this.ctx.fillRect(button.x, button.y, this.buttonSize, this.buttonSize);
+            this.ctx.strokeRect(button.x, button.y, this.buttonSize, this.buttonSize);
 
             // Draw button label
-            this.ctx.fillStyle = '#00ff00';
-            this.ctx.globalAlpha = 0.8;
-            this.ctx.fillText(button.label, button.x, button.y);
+            this.ctx.fillStyle = isActive ? 'black' : 'white';
+            this.ctx.globalAlpha = 0.9;
+            this.ctx.fillText(button.label, button.x + (this.buttonSize/2), button.y + (this.buttonSize/2));
         }
 
         this.ctx.restore();
