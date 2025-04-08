@@ -39,27 +39,27 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
     
     // Title
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 36px Arial';
+    ctx.font = `bold ${Math.floor(height * 0.06)}px Arial`;
     ctx.textAlign = 'center';
     ctx.fillText('DINOSTROIDS', width / 2, height * 0.15);
 
     // Difficulty selection
-    ctx.font = '24px Arial';
-    ctx.fillText('SELECT DIFFICULTY:', width / 2, height * 0.3);
+    ctx.font = `${Math.floor(height * 0.04)}px Arial`;
+    ctx.fillText('SELECT DIFFICULTY:', width / 2, height * 0.25);
 
     // Difficulty buttons
     const difficulties = ['EASY', 'MEDIUM', 'DIFFICULT'];
-    const buttonHeight = height * 0.08;
-    const buttonSpacing = height * 0.02;
-    const buttonWidth = width * 0.7;
-    const startY = height * 0.35;
+    const buttonHeight = height * 0.1;
+    const buttonSpacing = height * 0.03;
+    const buttonWidth = width * 0.8;
+    const startY = height * 0.3;
 
     difficulties.forEach((diff, index) => {
         const y = startY + (buttonHeight + buttonSpacing) * index;
         const isSelected = diff.toLowerCase() === currentDifficulty;
 
         // Button background
-        ctx.fillStyle = isSelected ? '#004400' : '#002200';
+        ctx.fillStyle = isSelected ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)';
         ctx.fillRect(
             width / 2 - buttonWidth / 2,
             y,
@@ -67,30 +67,41 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
             buttonHeight
         );
 
+        // Button border
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(
+            width / 2 - buttonWidth / 2,
+            y,
+            buttonWidth,
+            buttonHeight
+        );
+
         // Button text
-        ctx.fillStyle = isSelected ? '#00ff00' : 'white';
-        ctx.font = '20px Arial';
-        ctx.fillText(diff, width / 2, y + buttonHeight / 2 + 8);
+        ctx.fillStyle = 'white';
+        ctx.font = `${Math.floor(height * 0.04)}px Arial`;
+        ctx.fillText(diff, width / 2, y + buttonHeight / 2 + height * 0.015);
     });
 
     // Instructions
     ctx.fillStyle = 'white';
-    ctx.font = '20px Arial';
-    ctx.fillText('TAP DIFFICULTY TO SELECT', width / 2, height * 0.6);
-    ctx.fillText('TAP SCREEN TO START', width / 2, height * 0.65);
-    ctx.fillText('? FOR HELP', width / 2, height * 0.7);
+    ctx.font = `${Math.floor(height * 0.035)}px Arial`;
+    const instructionsY = height * 0.7;
+    ctx.fillText('TAP DIFFICULTY TO SELECT', width / 2, instructionsY);
+    ctx.fillText('TAP SCREEN TO START', width / 2, instructionsY + height * 0.05);
+    ctx.fillText('? FOR HELP', width / 2, instructionsY + height * 0.1);
 
     // Show top 3 scores
     if (leaderboardData && leaderboardData.length > 0) {
-        ctx.font = '20px Arial';
-        ctx.fillText('TOP SCORES:', width / 2, height * 0.8);
+        ctx.font = `${Math.floor(height * 0.035)}px Arial`;
+        ctx.fillText('TOP SCORES:', width / 2, height * 0.85);
         
         const topScores = leaderboardData.slice(0, 3);
         topScores.forEach((entry, index) => {
             ctx.fillText(
                 `${entry.initials}: ${entry.score}`,
                 width / 2,
-                height * 0.85 + index * 25
+                height * 0.85 + (index + 1) * (height * 0.04)
             );
         });
     }
