@@ -278,6 +278,13 @@ export class GameController {
      * Start the game with the selected difficulty
      */
     startGame(difficulty = 'medium') {
+        // Prevent multiple calls or starting while already in game
+        if (isGameStarted && !isGameOver) {
+            console.log("Game already started, ignoring startGame call");
+            return;
+        }
+        
+        console.log(`Starting game with difficulty: ${difficulty}`);
         currentDifficulty = difficulty;
         
         // Set difficulty-specific values
@@ -305,7 +312,6 @@ export class GameController {
                 break;
         }
         
-        console.log(`Starting game with difficulty: ${difficulty}`);
         console.log(`Player acceleration: ${playerAcceleration}`);
         console.log(`Asteroid speed: ${asteroidSpeed}`);
         
@@ -319,6 +325,9 @@ export class GameController {
         lives = playerLives;
         levelSpeedMultiplier = 1.0;
         extraLifeAnimation.active = false;
+        
+        // Get canvas reference
+        const { canvas } = getCanvas();
         
         // Ensure input handlers are registered
         onHelp(this.toggleHelpScreen);
@@ -339,18 +348,33 @@ export class GameController {
         powerups = [];
         
         // Create initial asteroids for level 1
-        this.createAsteroids();
+        this.createAsteroids(initialAsteroids);
         
         // Initialize mobile controls if on mobile device
-        if (isMobilePhone() && !this.mobileControls) {
+        if (isMobilePhone()) {
+            // Clean up existing controls if they exist
+            if (this.mobileControls) {
+                this.mobileControls.cleanup();
+            }
+            
+            // Create new controls
             this.mobileControls = new MobileControls(canvas, this);
         }
         
         // Start the game loop
         lastFrameTime = performance.now();
-        if (!animationFrameId) {
-            animationFrameId = requestAnimationFrame(this.gameLoop);
+        
+        // Cancel existing animation frame if it exists
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
         }
+        
+        // Start a new animation frame
+        animationFrameId = requestAnimationFrame(this.gameLoop);
+        gameRunning = true;
+        
+        console.log("Game successfully started");
     }
 
     /**

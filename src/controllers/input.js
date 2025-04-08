@@ -15,10 +15,18 @@ let onHelpCallback = null;
 let onEscapeCallback = null;
 let difficultyCallback = null;
 
+// Touch handler references for cleanup
+let touchStartHandler = null;
+let touchMoveHandler = null;
+let touchEndHandler = null;
+
 /**
  * Initialize keyboard input handlers
  */
 export function initInput(canvas) {
+    // Remove any existing event listeners first
+    cleanupInput();
+    
     // Add event listeners for keyboard input
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -77,7 +85,15 @@ function handleKeyUp(event) {
  * @param {HTMLCanvasElement} canvas - The game canvas
  */
 function setupTouchHandlers(canvas) {
-    canvas.addEventListener('touchstart', (e) => {
+    // Clean up any existing touch handlers first
+    if (touchStartHandler) {
+        canvas.removeEventListener('touchstart', touchStartHandler);
+        canvas.removeEventListener('touchmove', touchMoveHandler);
+        canvas.removeEventListener('touchend', touchEndHandler);
+    }
+    
+    // Create new handlers
+    touchStartHandler = function(e) {
         e.preventDefault();
         
         const touch = e.touches[0];
@@ -96,24 +112,50 @@ function setupTouchHandlers(canvas) {
         const difficulties = ['easy', 'medium', 'difficult'];
         let buttonPressed = false;
 
-        difficulties.forEach((diff, index) => {
+        for (let index = 0; index < difficulties.length; index++) {
+            const diff = difficulties[index];
             const buttonY = startY + (buttonHeight + buttonSpacing) * index;
+            
             if (x >= buttonX && x <= buttonX + buttonWidth &&
                 y >= buttonY && y <= buttonY + buttonHeight) {
+                
+                // Use setTimeout to avoid blocking the UI thread
                 if (difficultyCallback) {
-                    difficultyCallback(diff);
+                    console.log(`Difficulty selected: ${diff}`);
                     buttonPressed = true;
+                    
+                    // Use timeout to prevent blocking UI thread
+                    setTimeout(() => {
+                        difficultyCallback(diff);
+                    }, 0);
                 }
+                
+                // Exit the loop once we found a button
+                break;
             }
-        });
-
-        if (!buttonPressed && onStartCallback) {
-            onStartCallback();
         }
-    });
 
-    canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
-    canvas.addEventListener('touchend', (e) => e.preventDefault());
+        // If no difficulty button was pressed, start the game
+        if (!buttonPressed && onStartCallback) {
+            console.log('Start game triggered');
+            setTimeout(() => {
+                onStartCallback();
+            }, 0);
+        }
+    };
+    
+    touchMoveHandler = function(e) {
+        e.preventDefault();
+    };
+    
+    touchEndHandler = function(e) {
+        e.preventDefault();
+    };
+    
+    // Add event listeners
+    canvas.addEventListener('touchstart', touchStartHandler, { passive: false });
+    canvas.addEventListener('touchmove', touchMoveHandler, { passive: false });
+    canvas.addEventListener('touchend', touchEndHandler, { passive: false });
 }
 
 /**
