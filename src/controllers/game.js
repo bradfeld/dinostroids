@@ -95,8 +95,8 @@ export class GameController {
         document.removeEventListener('keydown', handleGameOverKeyInput);
         
         // Reset all input handlers
-        cleanupInputHandlers();
-        setupInputHandlers();
+        this.cleanupInputHandlers();
+        this.setupInputHandlers();
         
         // Clear the canvas
         clear('black');
@@ -181,11 +181,21 @@ export class GameController {
     }
 
     /**
+     * Clean up any existing input handlers to prevent duplicates
+     */
+    cleanupInputHandlers() {
+        onStart(null);
+        onHelp(null);
+        onEscape(null);
+        onDifficulty(null);
+    }
+
+    /**
      * Initialize input handlers
      */
     setupInputHandlers() {
         // First, clear any existing handlers from previous instances
-        cleanupInputHandlers();
+        this.cleanupInputHandlers();
         
         onStart(() => {
             console.log("Start key pressed");
@@ -212,16 +222,6 @@ export class GameController {
                 this.showStartScreen();
             }
         });
-    }
-
-    /**
-     * Clean up any existing input handlers to prevent duplicates
-     */
-    cleanupInputHandlers() {
-        onStart(null);
-        onHelp(null);
-        onEscape(null);
-        onDifficulty(null);
     }
 
     /**
