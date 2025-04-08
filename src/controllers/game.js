@@ -277,11 +277,16 @@ export class GameController {
     /**
      * Start the game with the selected difficulty
      */
-    startGame(difficulty = 'medium') {
+    startGame(difficulty) {
         // Prevent multiple calls or starting while already in game
         if (isGameStarted && !isGameOver) {
             console.log("Game already started, ignoring startGame call");
             return;
+        }
+        
+        // If no difficulty is provided, use the currently selected one
+        if (difficulty === undefined) {
+            difficulty = currentDifficulty;
         }
         
         console.log(`Starting game with difficulty: ${difficulty}`);
@@ -309,6 +314,15 @@ export class GameController {
                 asteroidSpeed = 50;       // Faster asteroids (harder)
                 initialAsteroids = 4;     // More asteroids (harder)
                 playerLives = 3;          // Standard lives
+                break;
+            default:
+                console.warn(`Unknown difficulty: ${difficulty}, defaulting to medium`);
+                playerAcceleration = 120;
+                shootCooldown = 0.2;
+                asteroidSpeed = 40;
+                initialAsteroids = 3;
+                playerLives = 3;
+                currentDifficulty = 'medium';
                 break;
         }
         
@@ -841,8 +855,8 @@ export class GameController {
             }
         });
         
-        // Initialize input system
-        initInput(canvas);
+        // Initialize input system with canvas and this controller instance
+        initInput(canvas, this);
         
         // Load game data
         Promise.all([
