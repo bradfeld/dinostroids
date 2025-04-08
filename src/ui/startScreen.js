@@ -50,7 +50,7 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
 
     // Difficulty selection
     ctx.font = `${Math.floor(height * 0.03)}px Arial`;
-    ctx.fillText('SELECT DIFFICULTY:', width * 0.5, height * 0.25);
+    ctx.fillText('TAP DIFFICULTY TO START:', width * 0.5, height * 0.25);
 
     // Difficulty buttons
     const difficulties = ['EASY', 'MEDIUM', 'DIFFICULT'];
@@ -64,48 +64,28 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
         const isSelected = diff.toLowerCase() === currentDifficulty;
         const buttonX = (width - buttonWidth) * 0.5;
 
-        // Button background
+        // Button background - make it more visible
         ctx.fillStyle = isSelected ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)';
         ctx.fillRect(buttonX, y, buttonWidth, buttonHeight);
 
         // Button border
         ctx.strokeStyle = 'white';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = isSelected ? 2 : 1; // Thicker border for selected difficulty
         ctx.strokeRect(buttonX, y, buttonWidth, buttonHeight);
 
         // Button text
         ctx.fillStyle = 'white';
-        ctx.font = `${Math.floor(height * 0.03)}px Arial`;
+        ctx.font = `${isSelected ? 'bold ' : ''}${Math.floor(height * 0.03)}px Arial`;
         ctx.textAlign = 'center';
         ctx.fillText(diff, width * 0.5, y + buttonHeight * 0.6);
     });
-
-    // Draw START GAME button
-    const startButtonY = startY + (buttonHeight + buttonSpacing) * difficulties.length + buttonSpacing;
-    const startButtonX = (width - buttonWidth) * 0.5;
-    
-    // Button background
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.fillRect(startButtonX, startButtonY, buttonWidth, buttonHeight);
-    
-    // Button border
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(startButtonX, startButtonY, buttonWidth, buttonHeight);
-    
-    // Button text
-    ctx.fillStyle = 'white';
-    ctx.font = `bold ${Math.floor(height * 0.035)}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.fillText('START GAME', width * 0.5, startButtonY + buttonHeight * 0.6);
 
     // Instructions
     ctx.fillStyle = 'white';
     ctx.font = `${Math.floor(height * 0.025)}px Arial`;
     ctx.textAlign = 'center';
-    const instructionsY = startButtonY + buttonHeight + buttonSpacing * 2;
-    ctx.fillText('1. SELECT DIFFICULTY', width * 0.5, instructionsY);
-    ctx.fillText('2. TAP START GAME BUTTON', width * 0.5, instructionsY + height * 0.04);
+    const instructionsY = startY + (buttonHeight + buttonSpacing) * difficulties.length + buttonSpacing;
+    ctx.fillText('TAP ANY DIFFICULTY TO START GAME', width * 0.5, instructionsY);
 
     // Draw game stats at the bottom if available
     if (gamesPlayed > 0) {

@@ -144,11 +144,19 @@ function setupTouchHandlers(canvas) {
                 if (x >= buttonX && x <= buttonX + buttonWidth &&
                     y >= buttonY && y <= buttonY + buttonHeight) {
                     
-                    console.log("Difficulty selected:", diff);
+                    console.log("Difficulty selected and starting game:", diff);
                     
-                    // Just change the difficulty, don't start the game yet
+                    // Set the difficulty
                     if (difficultyCallback) {
                         difficultyCallback(diff);
+                    }
+                    
+                    // Start the game immediately
+                    if (onStartCallback) {
+                        // Small delay to allow difficulty update to complete
+                        setTimeout(() => {
+                            onStartCallback();
+                        }, 50);
                     }
                     
                     // Release touch processing lock after a short delay
@@ -158,27 +166,6 @@ function setupTouchHandlers(canvas) {
                     
                     return;
                 }
-            }
-            
-            // Check if the START GAME button was pressed
-            const startButtonY = startY + (buttonHeight + buttonSpacing) * difficulties.length + buttonSpacing;
-            
-            if (x >= buttonX && x <= buttonX + buttonWidth &&
-                y >= startButtonY && y <= startButtonY + buttonHeight) {
-                
-                console.log("Start game button pressed");
-                
-                // Start the game with current difficulty
-                if (onStartCallback) {
-                    onStartCallback();
-                }
-                
-                // Release touch processing lock after a short delay
-                setTimeout(() => {
-                    processingTouch = false;
-                }, 100);
-                
-                return;
             }
             
             // If no button was pressed, do nothing (ignore taps on blank space)
