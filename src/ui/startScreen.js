@@ -146,6 +146,14 @@ function drawDesktopStartScreen(ctx, currentDifficulty, leaderboardData, gamesPl
     ctx.fillText('Press RETURN to start', width / 2, height * 2/3 + 20);
     ctx.fillText('Press ? for help', width / 2, height * 2/3 + 60);
     
+    // Draw leaderboard if data is available
+    if (leaderboardData && leaderboardData.length > 0) {
+        // Draw the top 5 scores to the right side
+        const leaderboardX = width / 2;
+        const leaderboardY = height / 2 - 180;
+        drawLeaderboard(leaderboardX, leaderboardY, leaderboardData, ctx);
+    }
+    
     // Games played info
     if (gamesPlayed > 0) {
         ctx.font = '16px Arial';
