@@ -19,6 +19,7 @@ import { drawLeaderboard } from '../ui/leaderboard.js';
 import { formatTime, randomInt } from '../utils.js';
 import { drawStartScreen } from '../ui/startScreen.js';
 import { MobileControls } from '../ui/mobileControls.js';
+import { isMobilePhone } from '../utils/device.js';
 
 // Game state variables
 let gameRunning = false;
