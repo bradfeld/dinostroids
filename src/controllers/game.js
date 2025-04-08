@@ -69,6 +69,9 @@ export class GameController {
     constructor() {
         // Remove mobile controls initialization from constructor
         this.mobileControls = null;
+        
+        // Bind the gameLoop method to preserve this context
+        this.gameLoop = this.gameLoop.bind(this);
     }
 
     /**
