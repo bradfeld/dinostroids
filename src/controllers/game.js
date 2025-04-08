@@ -763,52 +763,34 @@ export class GameController {
         // Set up window resize handler
         window.addEventListener('resize', () => {
             resizeToWindow();
-            // Redraw the current screen when window is resized
+            
+            // Redraw the current screen
             if (!isGameStarted) {
                 if (isHelpScreenVisible) {
                     this.drawHelpScreen();
                 } else {
                     this.showStartScreen();
                 }
-            } else if (isGameOver) {
-                const { ctx } = getCanvas();
-                drawGameOver(ctx, score, leaderboardData);
             }
         });
         
-        // Initialize input handling
-        initInput();
+        // Initialize input system
+        initInput(canvas);
         
-        // Set up input callbacks
-        this.setupInputHandlers();
-        
-        // Preload images before starting game
-        preloadImages(() => {
-            console.log("Images loaded, proceeding with game initialization...");
+        // Load game data
+        Promise.all([
+            fetchLeaderboard(),
+            fetchGamesPlayed(),
+            preloadImages()
+        ]).then(([leaderboard, gamesPlayed]) => {
+            console.log("Game data loaded");
             
-            // Load game data in parallel
-            Promise.allSettled([
-                // Fetch games played count
-                (async () => {
-                    try {
-                        gamesPlayedCount = await fetchGamesPlayed();
-                    } catch (err) {
-                        console.error("Failed to fetch games played:", err);
-                    }
-                })(),
-                
-                // Fetch leaderboard data
-                (async () => {
-                    try {
-                        leaderboardData = await fetchLeaderboard();
-                    } catch (err) {
-                        console.error("Failed to fetch leaderboard:", err);
-                    }
-                })()
-            ]).then(() => {
-                console.log("Game data loaded, showing start screen");
-                this.showStartScreen();
-            });
+            // Store the data
+            leaderboardData = leaderboard;
+            gamesPlayedCount = gamesPlayed;
+            
+            // Show the start screen
+            this.showStartScreen();
         });
     }
 

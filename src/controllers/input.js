@@ -4,6 +4,8 @@
  * This controller handles user input for the game.
  */
 
+import { isMobilePhone } from '../utils/device.js';
+
 // Track pressed keys
 const keys = {};
 
@@ -11,15 +13,19 @@ const keys = {};
 let onStartCallback = null;
 let onHelpCallback = null;
 let onEscapeCallback = null;
-let onDifficultyCallback = null;
+let difficultyCallback = null;
 
 /**
  * Initialize keyboard input handlers
  */
-export function initInput() {
+export function initInput(canvas) {
     // Add event listeners for keyboard input
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+
+    if (isMobilePhone()) {
+        setupTouchHandlers(canvas);
+    }
 }
 
 /**
@@ -47,13 +53,13 @@ function handleKeyDown(event) {
     }
     
     // Handle difficulty selection keys (E, M, D)
-    if (onDifficultyCallback) {
+    if (difficultyCallback) {
         if (event.code === 'KeyE') {
-            onDifficultyCallback('easy');
+            difficultyCallback('easy');
         } else if (event.code === 'KeyM') {
-            onDifficultyCallback('medium');
+            difficultyCallback('medium');
         } else if (event.code === 'KeyD') {
-            onDifficultyCallback('difficult');
+            difficultyCallback('difficult');
         }
     }
 }
@@ -100,11 +106,48 @@ export function onEscape(callback) {
 }
 
 /**
- * Register a callback for when a difficulty key is pressed
- * @param {Function|null} callback - The function to call with the selected difficulty, or null to clear
+ * Set up touch event handlers for mobile
+ * @param {HTMLCanvasElement} canvas - The game canvas
+ */
+function setupTouchHandlers(canvas) {
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+        
+        // Check if touch is within difficulty buttons area
+        const height = canvas.height;
+        const width = canvas.width;
+        const buttonHeight = height * 0.08;
+        const buttonSpacing = height * 0.02;
+        const buttonWidth = Math.min(width * 0.8, 400);
+        const startY = height * 0.3;
+        const buttonX = (width - buttonWidth) * 0.5;
+
+        const difficulties = ['easy', 'medium', 'difficult'];
+        difficulties.forEach((diff, index) => {
+            const y = startY + (buttonHeight + buttonSpacing) * index;
+            
+            // Check if touch is within this button
+            if (x >= buttonX && x <= buttonX + buttonWidth &&
+                y <= y + buttonHeight && y >= y) {
+                if (difficultyCallback) {
+                    difficultyCallback(diff);
+                }
+            }
+        });
+    });
+}
+
+/**
+ * Set callback for difficulty change
+ * @param {Function} callback - Callback function
  */
 export function onDifficulty(callback) {
-    onDifficultyCallback = callback;
+    difficultyCallback = callback;
 }
 
 /**
