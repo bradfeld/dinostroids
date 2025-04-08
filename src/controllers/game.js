@@ -286,119 +286,110 @@ export class GameController {
      * Start the game with the selected difficulty
      */
     startGame(difficulty) {
-        // If a game is already in progress, end it first
-        if (isGameStarted && !isGameOver) {
-            console.log("Stopping previous game before starting new one");
-            this.endGame(false); // Don't show start screen
-        }
-        
-        // If no difficulty is provided, use the currently selected one
-        if (difficulty === undefined) {
-            difficulty = currentDifficulty;
-        } else {
-            // Update current difficulty if explicitly provided
-            currentDifficulty = difficulty;
-        }
-        
-        console.log(`Starting game with difficulty: ${difficulty}`);
-        
-        // Set difficulty-specific values
-        switch (difficulty) {
-            case 'easy':
-                playerAcceleration = 101; // Base acceleration value for Easy
-                shootCooldown = 0.3;      // Longer cooldown (easier)
-                asteroidSpeed = 30;       // Slower asteroids (easier)
-                initialAsteroids = 2;     // Fewer asteroids (easier)
-                playerLives = 5;          // More lives (easier)
-                break;
-            case 'medium':
-                playerAcceleration = 120; // Medium acceleration
-                shootCooldown = 0.2;      // Medium cooldown
-                asteroidSpeed = 40;       // Medium speed
-                initialAsteroids = 3;     // Medium amount
-                playerLives = 3;          // Standard lives
-                break;
-            case 'difficult':
-                playerAcceleration = 140; // Higher acceleration (harder to control)
-                shootCooldown = 0.15;     // Shorter cooldown (harder)
-                asteroidSpeed = 50;       // Faster asteroids (harder)
-                initialAsteroids = 4;     // More asteroids (harder)
-                playerLives = 3;          // Standard lives
-                break;
-            default:
-                console.warn(`Unknown difficulty: ${difficulty}, defaulting to medium`);
-                playerAcceleration = 120;
-                shootCooldown = 0.2;
-                asteroidSpeed = 40;
-                initialAsteroids = 3;
-                playerLives = 3;
-                currentDifficulty = 'medium';
-                break;
-        }
-        
-        console.log(`Player acceleration: ${playerAcceleration}`);
-        console.log(`Asteroid speed: ${asteroidSpeed}`);
-        
-        // Reset game state
-        isGameStarted = true;
-        isPaused = false;
-        isGameOver = false;
-        isHelpScreenVisible = false;
-        currentLevel = 1;
-        score = 0;
-        lives = playerLives;
-        levelSpeedMultiplier = 1.0;
-        extraLifeAnimation.active = false;
-        
-        // Get canvas reference
-        const { canvas } = getCanvas();
-        
-        // Ensure input handlers are registered
-        onHelp(this.toggleHelpScreen);
-        onEscape(() => this.endGame(true));
-        onDifficulty(null); // Clear difficulty callback when game starts
-        
-        // Reset entities
-        player = new Player(
-            canvas.width / 2,
-            canvas.height / 2,
-            playerAcceleration
-        );
-        
-        bullets = [];
-        asteroids = [];
-        particles = [];
-        explosions = [];
-        powerups = [];
-        
-        // Create initial asteroids for level 1
-        this.createAsteroids(initialAsteroids);
-        
-        // Initialize mobile controls if on mobile device
-        if (isMobilePhone()) {
-            // Clean up existing controls if they exist
-            if (this.mobileControls) {
-                this.mobileControls.cleanup();
+        // Simple approach without relying on complex state checks
+        try {
+            console.log(`Starting game with difficulty: ${difficulty || currentDifficulty}`);
+            
+            // Stop any existing game loop
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
             }
             
-            // Create new controls
-            this.mobileControls = new MobileControls(canvas, this);
+            // Clean up mobile controls
+            if (this.mobileControls) {
+                this.mobileControls.cleanup();
+                this.mobileControls = null;
+            }
+            
+            // Update difficulty
+            if (difficulty !== undefined) {
+                currentDifficulty = difficulty;
+            }
+            
+            // Set difficulty-specific values
+            switch (currentDifficulty) {
+                case 'easy':
+                    playerAcceleration = 101;
+                    shootCooldown = 0.3;
+                    asteroidSpeed = 30;
+                    initialAsteroids = 2;
+                    playerLives = 5;
+                    break;
+                case 'medium':
+                    playerAcceleration = 120;
+                    shootCooldown = 0.2;
+                    asteroidSpeed = 40;
+                    initialAsteroids = 3;
+                    playerLives = 3;
+                    break;
+                case 'difficult':
+                    playerAcceleration = 140;
+                    shootCooldown = 0.15;
+                    asteroidSpeed = 50;
+                    initialAsteroids = 4;
+                    playerLives = 3;
+                    break;
+                default:
+                    console.warn(`Invalid difficulty: ${currentDifficulty}, using medium`);
+                    playerAcceleration = 120;
+                    shootCooldown = 0.2;
+                    asteroidSpeed = 40;
+                    initialAsteroids = 3;
+                    playerLives = 3;
+                    currentDifficulty = 'medium';
+            }
+            
+            // Reset game state
+            isGameStarted = true;
+            isPaused = false;
+            isGameOver = false;
+            isHelpScreenVisible = false;
+            currentLevel = 1;
+            score = 0;
+            lives = playerLives;
+            levelSpeedMultiplier = 1.0;
+            extraLifeAnimation.active = false;
+            
+            // Get canvas reference
+            const { canvas } = getCanvas();
+            
+            // Update input handlers
+            onHelp(this.toggleHelpScreen);
+            onEscape(() => this.endGame(true));
+            onDifficulty(null);
+            
+            // Create player
+            player = new Player(
+                canvas.width / 2,
+                canvas.height / 2,
+                playerAcceleration
+            );
+            
+            // Reset all entities
+            bullets = [];
+            asteroids = [];
+            particles = [];
+            explosions = [];
+            powerups = [];
+            
+            // Create asteroids
+            this.createAsteroids(initialAsteroids);
+            
+            // Create mobile controls if needed
+            if (isMobilePhone()) {
+                this.mobileControls = new MobileControls(canvas, this);
+            }
+            
+            // Start game loop
+            lastFrameTime = performance.now();
+            animationFrameId = requestAnimationFrame(this.gameLoop);
+            gameRunning = true;
+            
+            console.log("Game started successfully");
+        } catch (err) {
+            console.error("Error starting game:", err);
         }
-        
-        // Start the game loop
-        lastFrameTime = performance.now();
-        
-        // Cancel existing animation frame if it exists
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null;
-        }
-        
-        // Start a new animation frame
-        animationFrameId = requestAnimationFrame(this.gameLoop);
-        gameRunning = true;
-        
-        console.log("Game successfully started");
     }
 
     /**
