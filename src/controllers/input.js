@@ -111,23 +111,24 @@ function setupTouchHandlers(canvas) {
     }
     
     // Create a simple touch handler that detects any touch on the screen
-    // and starts the game with medium difficulty
+    // and starts the game with medium difficulty - BUT ONLY if we're on the start screen
     touchStartHandler = function(e) {
         e.preventDefault();
         
-        console.log("⭐ Touch detected - Starting game with medium difficulty");
-        
-        // Check if game controller exists
-        if (!gameControllerRef) {
-            console.error("No game controller reference available");
-            return;
-        }
-        
-        // Start game with medium difficulty (ignoring touch position)
-        if (typeof gameControllerRef.startGame === 'function') {
-            gameControllerRef.startGame('medium');
+        // Only start the game if the game is not already started
+        // This is our protection against restarting during gameplay
+        if (gameControllerRef && !gameControllerRef.getGameState().isGameStarted) {
+            console.log("⭐ Touch detected on start screen - Starting game with medium difficulty");
+            
+            // Start game with medium difficulty
+            if (typeof gameControllerRef.startGame === 'function') {
+                gameControllerRef.startGame('medium');
+            } else {
+                console.error("startGame is not a function on gameControllerRef");
+            }
         } else {
-            console.error("startGame is not a function on gameControllerRef");
+            // We're in gameplay, don't restart the game
+            console.log("Touch detected during gameplay - ignoring for game start");
         }
     };
     
