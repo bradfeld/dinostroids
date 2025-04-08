@@ -70,8 +70,9 @@ export class GameController {
         // Remove mobile controls initialization from constructor
         this.mobileControls = null;
         
-        // Bind the gameLoop method to preserve this context
+        // Bind methods to preserve this context
         this.gameLoop = this.gameLoop.bind(this);
+        this.toggleHelpScreen = this.toggleHelpScreen.bind(this);
     }
 
     /**
@@ -209,6 +210,7 @@ export class GameController {
             }
         });
         
+        // Use the bound method directly
         onHelp(this.toggleHelpScreen);
         
         onEscape(() => {
