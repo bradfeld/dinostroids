@@ -73,6 +73,50 @@ function handleKeyUp(event) {
 }
 
 /**
+ * Set up touch event handlers for mobile
+ * @param {HTMLCanvasElement} canvas - The game canvas
+ */
+function setupTouchHandlers(canvas) {
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+        
+        const height = canvas.height;
+        const width = canvas.width;
+        const buttonHeight = height * 0.08;
+        const buttonSpacing = height * 0.02;
+        const buttonWidth = Math.min(width * 0.8, 400);
+        const startY = height * 0.3;
+        const buttonX = (width - buttonWidth) * 0.5;
+
+        const difficulties = ['easy', 'medium', 'difficult'];
+        let buttonPressed = false;
+
+        difficulties.forEach((diff, index) => {
+            const buttonY = startY + (buttonHeight + buttonSpacing) * index;
+            if (x >= buttonX && x <= buttonX + buttonWidth &&
+                y >= buttonY && y <= buttonY + buttonHeight) {
+                if (difficultyCallback) {
+                    difficultyCallback(diff);
+                    buttonPressed = true;
+                }
+            }
+        });
+
+        if (!buttonPressed && onStartCallback) {
+            onStartCallback();
+        }
+    });
+
+    canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+    canvas.addEventListener('touchend', (e) => e.preventDefault());
+}
+
+/**
  * Check if a key is currently pressed
  * @param {string} code - The key code to check
  * @returns {boolean} - Whether the key is pressed
@@ -106,43 +150,6 @@ export function onEscape(callback) {
 }
 
 /**
- * Set up touch event handlers for mobile
- * @param {HTMLCanvasElement} canvas - The game canvas
- */
-function setupTouchHandlers(canvas) {
-    canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
-        
-        // Check if touch is within difficulty buttons area
-        const height = canvas.height;
-        const width = canvas.width;
-        const buttonHeight = height * 0.08;
-        const buttonSpacing = height * 0.02;
-        const buttonWidth = Math.min(width * 0.8, 400);
-        const startY = height * 0.3;
-        const buttonX = (width - buttonWidth) * 0.5;
-
-        const difficulties = ['easy', 'medium', 'difficult'];
-        difficulties.forEach((diff, index) => {
-            const y = startY + (buttonHeight + buttonSpacing) * index;
-            
-            // Check if touch is within this button
-            if (x >= buttonX && x <= buttonX + buttonWidth &&
-                y <= y + buttonHeight && y >= y) {
-                if (difficultyCallback) {
-                    difficultyCallback(diff);
-                }
-            }
-        });
-    });
-}
-
-/**
  * Set callback for difficulty change
  * @param {Function} callback - Callback function
  */
@@ -156,4 +163,4 @@ export function onDifficulty(callback) {
 export function cleanupInput() {
     window.removeEventListener('keydown', handleKeyDown);
     window.removeEventListener('keyup', handleKeyUp);
-} 
+}
