@@ -1199,6 +1199,32 @@ export class GameController {
         extraLifeAnimation.alpha = 0;
         extraLifeAnimation.startTime = Date.now();
     }
+
+    // Mobile control methods
+    setRotateLeft(active) {
+        if (!player) return;
+        player.rotatingLeft = active;
+    }
+    
+    setRotateRight(active) {
+        if (!player) return;
+        player.rotatingRight = active;
+    }
+    
+    setThrusting(active) {
+        if (!player) return;
+        player.thrusting = active;
+    }
+    
+    setFiring(active) {
+        if (!player) return;
+        player.shooting = active;
+    }
+    
+    activateHyperspace() {
+        if (!player || player.isDestroyed || player.exploding || player.isInHyperspace) return;
+        player.enterHyperspace();
+    }
 }
 
 // Create and export a singleton instance

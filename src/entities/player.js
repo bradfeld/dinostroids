@@ -28,6 +28,12 @@ class Player {
     this.acceleration = PLAYER_SETTINGS.ACCELERATION;
     this.friction = PLAYER_SETTINGS.FRICTION;
     
+    // Mobile control properties
+    this.rotatingLeft = false;
+    this.rotatingRight = false;
+    this.thrusting = false;
+    this.shooting = false;
+    
     // Weapon properties
     this.canShoot = true;
     this.shootCooldown = PLAYER_SETTINGS.SHOOT_COOLDOWN;
@@ -112,20 +118,20 @@ class Player {
     const canHyperspace = now - this.lastHyperspace > this.hyperspaceCooldown;
     
     if (isKeyPressed('KeyH') && canHyperspace && !this.isInHyperspace) {
-      this.hyperspace();
+      this.enterHyperspace();
       return null;
     }
     
-    // Check input for rotation
-    if (isKeyPressed('ArrowLeft')) {
+    // Check input for rotation - keyboard or mobile controls
+    if (isKeyPressed('ArrowLeft') || this.rotatingLeft) {
       this.rotation -= this.rotationSpeed * deltaTime;
     }
-    if (isKeyPressed('ArrowRight')) {
+    if (isKeyPressed('ArrowRight') || this.rotatingRight) {
       this.rotation += this.rotationSpeed * deltaTime;
     }
     
-    // Check input for thrust
-    this.isThrusting = isKeyPressed('ArrowUp');
+    // Check input for thrust - keyboard or mobile controls
+    this.isThrusting = isKeyPressed('ArrowUp') || this.thrusting;
     
     // Apply thrust if key is pressed
     if (this.isThrusting) {
@@ -164,9 +170,9 @@ class Player {
     if (this.y < 0) this.y = height;
     if (this.y > height) this.y = 0;
     
-    // Handle shooting
+    // Handle shooting - keyboard or mobile controls
     let newBullet = null;
-    if (isKeyPressed('Space') && this.canShoot && !this.isDestroyed) {
+    if ((isKeyPressed('Space') || this.shooting) && this.canShoot && !this.isDestroyed) {
       const now = Date.now();
       if (now - this.lastShot > this.shootCooldown) {
         // Create a new bullet
@@ -343,7 +349,7 @@ class Player {
   /**
    * Hyperspace jump to a random location
    */
-  hyperspace() {
+  enterHyperspace() {
     console.log("Hyperspace jump initiated!");
     
     // Record hyperspace use time
