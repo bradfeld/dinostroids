@@ -267,9 +267,11 @@ export class GameController {
         onHelp(this.toggleHelpScreen);
         
         onEscape(() => {
-            // Only end the game if we're actually playing
+            // End the game when ESC is pressed during gameplay
+            console.log("Escape key pressed, game state:", isGameStarted, isGameOver);
             if (isGameStarted && !isGameOver) {
-                this.endGame();
+                console.log("Ending game due to ESC key");
+                this.endGame(true);
             }
         });
         
@@ -322,6 +324,7 @@ export class GameController {
             try {
                 switch (difficulty) {
                     case 'easy':
+                        console.log("Setting EASY difficulty parameters");
                         playerAcceleration = 100;
                         shootCooldown = 0.3;
                         asteroidSpeed = 30;
@@ -329,6 +332,7 @@ export class GameController {
                         playerLives = 5;
                         break;
                     case 'difficult':
+                        console.log("Setting DIFFICULT difficulty parameters");
                         playerAcceleration = 140;
                         shootCooldown = 0.15;
                         asteroidSpeed = 50;
@@ -337,6 +341,7 @@ export class GameController {
                         break;
                     case 'medium':
                     default:
+                        console.log("Setting MEDIUM difficulty parameters");
                         playerAcceleration = 120;
                         shootCooldown = 0.2;
                         asteroidSpeed = 40;
@@ -344,6 +349,8 @@ export class GameController {
                         playerLives = 3;
                         currentDifficulty = 'medium';
                 }
+                
+                console.log(`Difficulty set to: ${currentDifficulty}, Lives: ${playerLives}, Asteroids: ${initialAsteroids}`);
             } catch (err) {
                 console.error("Error setting difficulty values, using medium defaults:", err);
                 playerAcceleration = 120;
@@ -1061,11 +1068,47 @@ export class GameController {
      * Update the game settings based on the current difficulty
      */
     updateDifficultySettings() {
-        const settings = DIFFICULTY_SETTINGS[currentDifficulty];
-        shootCooldown = settings.shootCooldown;
-        asteroidSpeed = settings.asteroidSpeed;
-        initialAsteroids = settings.initialAsteroids;
-        playerLives = settings.lives;
+        console.log(`Updating game settings for difficulty: ${currentDifficulty}`);
+        
+        try {
+            switch (currentDifficulty) {
+                case 'easy':
+                    console.log("Setting EASY difficulty parameters");
+                    playerAcceleration = 100;
+                    shootCooldown = 0.3;
+                    asteroidSpeed = 30;
+                    initialAsteroids = 2;
+                    playerLives = 5;
+                    break;
+                case 'difficult':
+                    console.log("Setting DIFFICULT difficulty parameters");
+                    playerAcceleration = 140;
+                    shootCooldown = 0.15;
+                    asteroidSpeed = 50;
+                    initialAsteroids = 4;
+                    playerLives = 3;
+                    break;
+                case 'medium':
+                default:
+                    console.log("Setting MEDIUM difficulty parameters");
+                    playerAcceleration = 120;
+                    shootCooldown = 0.2;
+                    asteroidSpeed = 40;
+                    initialAsteroids = 3;
+                    playerLives = 3;
+                    break;
+            }
+            
+            console.log(`Difficulty updated to: ${currentDifficulty}, Lives: ${playerLives}, Asteroids: ${initialAsteroids}`);
+        } catch (err) {
+            console.error("Error updating difficulty settings:", err);
+            // Use medium settings as fallback
+            playerAcceleration = 120;
+            shootCooldown = 0.2;
+            asteroidSpeed = 40;
+            initialAsteroids = 3;
+            playerLives = 3;
+        }
     }
 
     /**
