@@ -160,11 +160,29 @@ function setupTouchHandlers(canvas) {
                 }
             }
             
-            // If no difficulty button was tapped, start the game
-            console.log("Starting game (tap outside difficulty buttons)");
-            if (onStartCallback) {
-                onStartCallback();
+            // Check if the START GAME button was pressed
+            const startButtonY = startY + (buttonHeight + buttonSpacing) * difficulties.length + buttonSpacing;
+            
+            if (x >= buttonX && x <= buttonX + buttonWidth &&
+                y >= startButtonY && y <= startButtonY + buttonHeight) {
+                
+                console.log("Start game button pressed");
+                
+                // Start the game with current difficulty
+                if (onStartCallback) {
+                    onStartCallback();
+                }
+                
+                // Release touch processing lock after a short delay
+                setTimeout(() => {
+                    processingTouch = false;
+                }, 100);
+                
+                return;
             }
+            
+            // If no button was pressed, do nothing (ignore taps on blank space)
+            console.log("Touch outside of any buttons - ignoring");
             
         } catch (err) {
             console.error("Error in touch handler:", err);

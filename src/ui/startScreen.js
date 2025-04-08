@@ -59,16 +59,10 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
     const buttonWidth = Math.min(width * 0.8, 400); // Cap the button width
     const startY = height * 0.3;
 
-    // Log button dimensions for debugging
-    console.log(`Button dimensions - height: ${buttonHeight}, width: ${buttonWidth}, startY: ${startY}`);
-
     difficulties.forEach((diff, index) => {
         const y = startY + (buttonHeight + buttonSpacing) * index;
         const isSelected = diff.toLowerCase() === currentDifficulty;
         const buttonX = (width - buttonWidth) * 0.5;
-
-        // Log button position for debugging
-        console.log(`${diff} button - x: ${buttonX}, y: ${y}, selected: ${isSelected}`);
 
         // Button background
         ctx.fillStyle = isSelected ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)';
@@ -86,18 +80,37 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
         ctx.fillText(diff, width * 0.5, y + buttonHeight * 0.6);
     });
 
+    // Draw START GAME button
+    const startButtonY = startY + (buttonHeight + buttonSpacing) * difficulties.length + buttonSpacing;
+    const startButtonX = (width - buttonWidth) * 0.5;
+    
+    // Button background
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.fillRect(startButtonX, startButtonY, buttonWidth, buttonHeight);
+    
+    // Button border
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(startButtonX, startButtonY, buttonWidth, buttonHeight);
+    
+    // Button text
+    ctx.fillStyle = 'white';
+    ctx.font = `bold ${Math.floor(height * 0.035)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText('START GAME', width * 0.5, startButtonY + buttonHeight * 0.6);
+
     // Instructions
     ctx.fillStyle = 'white';
     ctx.font = `${Math.floor(height * 0.025)}px Arial`;
     ctx.textAlign = 'center';
-    const instructionsY = height * 0.65;
-    ctx.fillText('TAP DIFFICULTY TO SELECT', width * 0.5, instructionsY);
-    ctx.fillText('TAP ANYWHERE ELSE TO START', width * 0.5, instructionsY + height * 0.04);
+    const instructionsY = startButtonY + buttonHeight + buttonSpacing * 2;
+    ctx.fillText('1. SELECT DIFFICULTY', width * 0.5, instructionsY);
+    ctx.fillText('2. TAP START GAME BUTTON', width * 0.5, instructionsY + height * 0.04);
 
     // Draw game stats at the bottom if available
     if (gamesPlayed > 0) {
         ctx.font = `${Math.floor(height * 0.02)}px Arial`;
-        ctx.fillText(`Games Played: ${gamesPlayed}`, width * 0.5, height * 0.8);
+        ctx.fillText(`Games Played: ${gamesPlayed}`, width * 0.5, height * 0.9);
     }
 }
 
