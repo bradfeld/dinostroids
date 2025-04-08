@@ -6,15 +6,100 @@
 
 import { getDimensions } from '../canvas.js';
 import { drawLeaderboard } from './leaderboard.js';
+import { isMobilePhone } from '../utils/device.js';
 
 /**
- * Draw the start screen with difficulty selection
- * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
- * @param {string} currentDifficulty - Current selected difficulty ('easy', 'medium', 'difficult')
- * @param {Array} leaderboardData - Optional leaderboard data
- * @param {number} gamesPlayedCount - Optional count of games played
+ * Draw the start screen
+ * @param {CanvasRenderingContext2D} ctx - The canvas context
+ * @param {string} currentDifficulty - Current difficulty setting
+ * @param {Array} leaderboardData - Leaderboard data
+ * @param {number} gamesPlayed - Number of games played
  */
-export function drawStartScreen(ctx, currentDifficulty, leaderboardData = [], gamesPlayedCount = 0) {
+export function drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayed) {
+    const { width, height } = ctx.canvas;
+
+    // Clear the canvas
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, width, height);
+
+    if (isMobilePhone()) {
+        // Mobile layout
+        drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayed);
+    } else {
+        // Desktop layout
+        drawDesktopStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayed);
+    }
+}
+
+/**
+ * Draw the mobile version of the start screen
+ */
+function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayed) {
+    const { width, height } = ctx.canvas;
+    
+    // Title
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 36px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('DINOSTROIDS', width / 2, height * 0.15);
+
+    // Difficulty selection
+    ctx.font = '24px Arial';
+    ctx.fillText('SELECT DIFFICULTY:', width / 2, height * 0.3);
+
+    // Difficulty buttons
+    const difficulties = ['EASY', 'MEDIUM', 'DIFFICULT'];
+    const buttonHeight = height * 0.08;
+    const buttonSpacing = height * 0.02;
+    const buttonWidth = width * 0.7;
+    const startY = height * 0.35;
+
+    difficulties.forEach((diff, index) => {
+        const y = startY + (buttonHeight + buttonSpacing) * index;
+        const isSelected = diff.toLowerCase() === currentDifficulty;
+
+        // Button background
+        ctx.fillStyle = isSelected ? '#004400' : '#002200';
+        ctx.fillRect(
+            width / 2 - buttonWidth / 2,
+            y,
+            buttonWidth,
+            buttonHeight
+        );
+
+        // Button text
+        ctx.fillStyle = isSelected ? '#00ff00' : 'white';
+        ctx.font = '20px Arial';
+        ctx.fillText(diff, width / 2, y + buttonHeight / 2 + 8);
+    });
+
+    // Instructions
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText('TAP DIFFICULTY TO SELECT', width / 2, height * 0.6);
+    ctx.fillText('TAP SCREEN TO START', width / 2, height * 0.65);
+    ctx.fillText('? FOR HELP', width / 2, height * 0.7);
+
+    // Show top 3 scores
+    if (leaderboardData && leaderboardData.length > 0) {
+        ctx.font = '20px Arial';
+        ctx.fillText('TOP SCORES:', width / 2, height * 0.8);
+        
+        const topScores = leaderboardData.slice(0, 3);
+        topScores.forEach((entry, index) => {
+            ctx.fillText(
+                `${entry.initials}: ${entry.score}`,
+                width / 2,
+                height * 0.85 + index * 25
+            );
+        });
+    }
+}
+
+/**
+ * Draw the desktop version of the start screen
+ */
+function drawDesktopStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayed) {
     const { width, height } = getDimensions();
     
     // Draw title
@@ -64,9 +149,9 @@ export function drawStartScreen(ctx, currentDifficulty, leaderboardData = [], ga
     ctx.fillText('Press ? for help', width / 2, height * 2/3 + 60);
     
     // Games played info
-    if (gamesPlayedCount > 0) {
+    if (gamesPlayed > 0) {
         ctx.font = '16px Arial';
-        ctx.fillText(`Games Played: ${gamesPlayedCount}`, width / 2, height - 80);
+        ctx.fillText(`Games Played: ${gamesPlayed}`, width / 2, height - 80);
     }
     
     // Copyright text
