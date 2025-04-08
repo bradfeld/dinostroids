@@ -259,7 +259,9 @@ export class GameController {
             
             if (!isHelpScreenVisible && !isGameStarted) {
                 // Start a new game if we're on the start screen
-                this.startGame();
+                // Pass the current difficulty explicitly
+                console.log("Starting game with current difficulty:", currentDifficulty);
+                this.startGame(currentDifficulty);
             }
         });
         
@@ -267,12 +269,12 @@ export class GameController {
         onHelp(this.toggleHelpScreen);
         
         onEscape(() => {
-            // End the game when ESC is pressed during gameplay
+            // End the game when ESC is pressed - don't restrict to game state
             console.log("Escape key pressed, game state:", isGameStarted, isGameOver);
-            if (isGameStarted && !isGameOver) {
-                console.log("Ending game due to ESC key");
-                this.endGame(true);
-            }
+            
+            // Always go back to the start screen when ESC is pressed
+            console.log("Ending game due to ESC key");
+            this.endGame(true);
         });
         
         onDifficulty((difficulty) => {
@@ -410,7 +412,10 @@ export class GameController {
             
             // Reset input handlers for gameplay
             onHelp(this.toggleHelpScreen);
-            onEscape(() => this.endGame(true));
+            onEscape(() => {
+                console.log("ESC key pressed during gameplay, ending game");
+                this.endGame(true);
+            });
             onDifficulty(null);
             
             // Start game loop
