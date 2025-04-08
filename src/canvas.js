@@ -43,13 +43,19 @@ export function resizeToWindow() {
   console.log("Resizing canvas to fit window...");
   
   if (isMobilePhone()) {
-    // On mobile, use the full screen width and a reasonable height
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Get the actual viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Set canvas size to match viewport
+    canvas.width = viewportWidth;
+    canvas.height = viewportHeight;
     
     // Prevent scrolling/bouncing on mobile
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
     document.body.style.margin = '0';
     document.body.style.padding = '0';
     
@@ -61,6 +67,15 @@ export function resizeToWindow() {
       document.head.appendChild(viewport);
     }
     viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+    
+    // Position canvas
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    
+    console.log(`Mobile canvas size set to: ${canvas.width}x${canvas.height}`);
   } else {
     // On desktop, maintain the 16:9 aspect ratio with max dimensions
     const maxWidth = Math.min(1920, window.innerWidth - 40);
