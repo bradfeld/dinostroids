@@ -301,6 +301,13 @@ export class GameController {
                 animationFrameId = null;
             }
             
+            // Clean up old mobile controls if they exist
+            if (this.mobileControls) {
+                console.log("Cleaning up existing mobile controls");
+                this.mobileControls.cleanup();
+                this.mobileControls = null;
+            }
+            
             // Basic game state reset
             isGameStarted = true;
             isPaused = false;
@@ -381,6 +388,17 @@ export class GameController {
             } catch (err) {
                 console.error("Error creating asteroids:", err);
                 // Continue anyway
+            }
+            
+            // Create mobile controls if on mobile
+            if (isMobilePhone()) {
+                console.log("Creating mobile controls for gameplay");
+                try {
+                    this.mobileControls = new MobileControls(canvas, this);
+                    console.log("Mobile controls created successfully");
+                } catch (err) {
+                    console.error("Error creating mobile controls:", err);
+                }
             }
             
             // Reset input handlers for gameplay
@@ -632,6 +650,9 @@ export class GameController {
                             const newAsteroids = asteroid.break();
                             score += ASTEROID_SETTINGS.SCORE_VALUES[asteroid.size] || 100;
                             
+                            // Check if player earned an extra life
+                            this.checkExtraLife(score);
+                            
                             // Add new smaller asteroids
                             asteroids.push(...newAsteroids);
                             
@@ -657,11 +678,120 @@ export class GameController {
                 console.error("Error updating asteroids:", err);
             }
             
+            // Check for player collisions with asteroids
+            try {
+                if (player && !player.isDestroyed && !player.exploding && !player.isInHyperspace && !player.invincible) {
+                    for (let i = asteroids.length - 1; i >= 0; i--) {
+                        const asteroid = asteroids[i];
+                        
+                        if (player.isCollidingWith(asteroid)) {
+                            // Player is hit
+                            console.log("Player hit by asteroid!");
+                            player.destroy();
+                            lives--;
+                            
+                            // Create child asteroids
+                            const newAsteroids = asteroid.break();
+                            
+                            // Add score for the asteroid
+                            score += ASTEROID_SETTINGS.SCORE_VALUES[asteroid.size] || 100;
+                            
+                            // Check for extra life
+                            this.checkExtraLife(score);
+                            
+                            // Add new smaller asteroids
+                            asteroids.push(...newAsteroids);
+                            
+                            // Remove the asteroid that hit the player
+                            asteroids.splice(i, 1);
+                            
+                            if (lives <= 0) {
+                                // Game over
+                                setTimeout(() => {
+                                    this.handleGameOver();
+                                }, 2000);
+                            } else {
+                                // Respawn player after a delay
+                                setTimeout(() => {
+                                    player.reset();
+                                }, 2000);
+                            }
+                            
+                            break;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Error checking player collisions:", err);
+            }
+            
+            // Check if level is complete (all asteroids destroyed)
+            try {
+                if (asteroids.length === 0 && isGameStarted && !isGameOver) {
+                    // Move to next level
+                    level++;
+                    
+                    // Increase speed multiplier for next level
+                    levelSpeedMultiplier *= 1.05;
+                    console.log(`Level ${level}: Speed multiplier increased to ${levelSpeedMultiplier.toFixed(2)}`);
+                    
+                    // Calculate new asteroid count based on level
+                    const newAsteroidCount = Math.min(
+                        initialAsteroids + (level - 1),
+                        15 // Cap at 15 asteroids
+                    );
+                    
+                    // Create new asteroids for next level
+                    this.createAsteroids(newAsteroidCount);
+                }
+            } catch (err) {
+                console.error("Error checking level completion:", err);
+            }
+            
             // Draw game status
             try {
                 drawGameStatus(ctx, score, lives, level, currentDifficulty);
             } catch (err) {
                 console.error("Error drawing game status:", err);
+            }
+            
+            // Draw extra life animation if active
+            try {
+                if (extraLifeAnimation.active) {
+                    const elapsed = Date.now() - extraLifeAnimation.startTime;
+                    if (elapsed < extraLifeAnimation.duration) {
+                        // Calculate alpha based on time (fade in, then fade out)
+                        const progress = elapsed / extraLifeAnimation.duration;
+                        extraLifeAnimation.alpha = progress < 0.5 
+                            ? progress * 2 // Fade in during first half
+                            : 2 - progress * 2; // Fade out during second half
+                        
+                        // Move upward slightly
+                        extraLifeAnimation.y -= 20 * cappedDeltaTime;
+                        
+                        // Draw the text
+                        ctx.save();
+                        ctx.fillStyle = `rgba(255, 255, 255, ${extraLifeAnimation.alpha})`;
+                        ctx.font = 'bold 24px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(extraLifeAnimation.text, extraLifeAnimation.x, extraLifeAnimation.y);
+                        ctx.restore();
+                    } else {
+                        // Animation complete
+                        extraLifeAnimation.active = false;
+                    }
+                }
+            } catch (err) {
+                console.error("Error drawing extra life animation:", err);
+            }
+            
+            // Draw mobile controls if on mobile
+            if (this.mobileControls) {
+                try {
+                    this.mobileControls.draw();
+                } catch (err) {
+                    console.error("Error drawing mobile controls:", err);
+                }
             }
             
             // Schedule next frame
