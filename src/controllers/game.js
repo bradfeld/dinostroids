@@ -286,109 +286,142 @@ export class GameController {
      * Start the game with the selected difficulty
      */
     startGame(difficulty) {
-        // Simple approach without relying on complex state checks
         try {
-            console.log(`Starting game with difficulty: ${difficulty || currentDifficulty}`);
+            console.log(`Beginning game start with difficulty: ${difficulty || 'medium'}`);
             
-            // Stop any existing game loop
+            // Use medium difficulty if none specified
+            if (!difficulty) {
+                difficulty = 'medium';
+            }
+            
+            // Cancel any existing animation frame
             if (animationFrameId) {
+                console.log(`Canceling animation frame: ${animationFrameId}`);
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
             }
             
-            // Clean up mobile controls
-            if (this.mobileControls) {
-                this.mobileControls.cleanup();
-                this.mobileControls = null;
-            }
-            
-            // Update difficulty
-            if (difficulty !== undefined) {
-                currentDifficulty = difficulty;
-            }
-            
-            // Set difficulty-specific values
-            switch (currentDifficulty) {
-                case 'easy':
-                    playerAcceleration = 101;
-                    shootCooldown = 0.3;
-                    asteroidSpeed = 30;
-                    initialAsteroids = 2;
-                    playerLives = 5;
-                    break;
-                case 'medium':
-                    playerAcceleration = 120;
-                    shootCooldown = 0.2;
-                    asteroidSpeed = 40;
-                    initialAsteroids = 3;
-                    playerLives = 3;
-                    break;
-                case 'difficult':
-                    playerAcceleration = 140;
-                    shootCooldown = 0.15;
-                    asteroidSpeed = 50;
-                    initialAsteroids = 4;
-                    playerLives = 3;
-                    break;
-                default:
-                    console.warn(`Invalid difficulty: ${currentDifficulty}, using medium`);
-                    playerAcceleration = 120;
-                    shootCooldown = 0.2;
-                    asteroidSpeed = 40;
-                    initialAsteroids = 3;
-                    playerLives = 3;
-                    currentDifficulty = 'medium';
-            }
-            
-            // Reset game state
+            // Basic game state reset
             isGameStarted = true;
             isPaused = false;
             isGameOver = false;
             isHelpScreenVisible = false;
-            currentLevel = 1;
+            level = 1;
             score = 0;
+            currentDifficulty = difficulty;
+            
+            // Set difficulty values - default to medium if there's an error
+            console.log(`Setting game parameters for ${difficulty} difficulty`);
+            try {
+                switch (difficulty) {
+                    case 'easy':
+                        playerAcceleration = 100;
+                        shootCooldown = 0.3;
+                        asteroidSpeed = 30;
+                        initialAsteroids = 2;
+                        playerLives = 5;
+                        break;
+                    case 'difficult':
+                        playerAcceleration = 140;
+                        shootCooldown = 0.15;
+                        asteroidSpeed = 50;
+                        initialAsteroids = 4;
+                        playerLives = 3;
+                        break;
+                    case 'medium':
+                    default:
+                        playerAcceleration = 120;
+                        shootCooldown = 0.2;
+                        asteroidSpeed = 40;
+                        initialAsteroids = 3;
+                        playerLives = 3;
+                        currentDifficulty = 'medium';
+                }
+            } catch (err) {
+                console.error("Error setting difficulty values, using medium defaults:", err);
+                playerAcceleration = 120;
+                shootCooldown = 0.2;
+                asteroidSpeed = 40;
+                initialAsteroids = 3;
+                playerLives = 3;
+                currentDifficulty = 'medium';
+            }
+            
             lives = playerLives;
             levelSpeedMultiplier = 1.0;
             extraLifeAnimation.active = false;
             
-            // Get canvas reference
-            const { canvas } = getCanvas();
+            console.log("Basic game state reset complete");
             
-            // Update input handlers
+            // Get canvas and dimensions
+            const { canvas, ctx } = getCanvas();
+            const { width, height } = getDimensions();
+            console.log(`Canvas dimensions: ${width}x${height}`);
+            
+            // Create player at center of screen
+            try {
+                console.log(`Creating player at ${width/2}, ${height/2} with acceleration ${playerAcceleration}`);
+                player = new Player(width/2, height/2, playerAcceleration);
+                console.log("Player created successfully");
+            } catch (err) {
+                console.error("Error creating player:", err);
+                // Continue anyway - we'll check for player below
+            }
+            
+            // Reset game entities
+            bullets = [];
+            asteroids = [];
+            console.log("Game entities reset");
+            
+            // Create initial asteroids
+            try {
+                console.log(`Creating ${initialAsteroids} asteroids`);
+                this.createAsteroids(initialAsteroids);
+                console.log(`Created ${asteroids.length} asteroids`);
+            } catch (err) {
+                console.error("Error creating asteroids:", err);
+                // Continue anyway
+            }
+            
+            // Reset input handlers for gameplay
             onHelp(this.toggleHelpScreen);
             onEscape(() => this.endGame(true));
             onDifficulty(null);
             
-            // Create player
-            player = new Player(
-                canvas.width / 2,
-                canvas.height / 2,
-                playerAcceleration
-            );
-            
-            // Reset all entities
-            bullets = [];
-            asteroids = [];
-            particles = [];
-            explosions = [];
-            powerups = [];
-            
-            // Create asteroids
-            this.createAsteroids(initialAsteroids);
-            
-            // Create mobile controls if needed
-            if (isMobilePhone()) {
-                this.mobileControls = new MobileControls(canvas, this);
-            }
-            
             // Start game loop
+            console.log("Starting game loop");
             lastFrameTime = performance.now();
-            animationFrameId = requestAnimationFrame(this.gameLoop);
+            startTime = Date.now();
             gameRunning = true;
+            
+            // Start frame loop with error handling
+            try {
+                animationFrameId = requestAnimationFrame(this.gameLoop);
+                console.log("Animation frame requested:", animationFrameId);
+            } catch (err) {
+                console.error("Error starting animation frame:", err);
+            }
             
             console.log("Game started successfully");
         } catch (err) {
-            console.error("Error starting game:", err);
+            console.error("CRITICAL ERROR STARTING GAME:", err);
+            
+            // Emergency fallback - try to reset to start screen
+            try {
+                console.log("Attempting emergency reset to start screen");
+                isGameStarted = false;
+                isPaused = false;
+                isGameOver = false;
+                
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                
+                this.showStartScreen();
+            } catch (fallbackErr) {
+                console.error("Even the fallback failed:", fallbackErr);
+            }
         }
     }
 
@@ -398,6 +431,9 @@ export class GameController {
      */
     createAsteroids(count) {
         const { width, height } = getDimensions();
+        console.log(`Beginning asteroid creation: ${count} asteroids with canvas dimensions ${width}x${height}`);
+        
+        // Clear existing asteroids first
         asteroids = [];
         
         console.log(`Creating ${count} asteroids with speed multiplier: ${levelSpeedMultiplier}`);
@@ -419,11 +455,18 @@ export class GameController {
         
         console.log(`Base speed for ALL asteroids: ${baseSpeed.toFixed(2)}, With level multiplier: ${effectiveSpeed.toFixed(2)}`);
         
+        // Define player position for safe spawning
+        const playerX = player ? player.x : width / 2;
+        const playerY = player ? player.y : height / 2;
+        console.log(`Player position for spawning calculations: (${playerX}, ${playerY})`);
+        
         for (let i = 0; i < count; i++) {
             // Create asteroid at a safe distance from the player
             let x, y, distanceFromPlayer;
+            let attempts = 0;
             
             do {
+                attempts++;
                 // Random position along the edge of the screen to ensure they come from outside
                 if (Math.random() < 0.5) {
                     x = Math.random() < 0.5 ? 0 : width;
@@ -434,10 +477,16 @@ export class GameController {
                 }
                 
                 // Calculate distance from player
-                const dx = player ? player.x - x : width / 2 - x;
-                const dy = player ? player.y - y : height / 2 - y;
+                const dx = playerX - x;
+                const dy = playerY - y;
                 distanceFromPlayer = Math.sqrt(dx * dx + dy * dy);
-            } while (player && distanceFromPlayer < ASTEROID_SETTINGS.SPAWN_DISTANCE_MIN);
+                
+                // Prevent infinite loops
+                if (attempts > 50) {
+                    console.warn(`Could not find safe spawn location after ${attempts} attempts`);
+                    break;
+                }
+            } while (distanceFromPlayer < ASTEROID_SETTINGS.SPAWN_DISTANCE_MIN);
             
             // Select a random type from ASTEROID_SETTINGS.TYPES
             const randomType = ASTEROID_SETTINGS.TYPES[Math.floor(Math.random() * ASTEROID_SETTINGS.TYPES.length)];
@@ -445,33 +494,39 @@ export class GameController {
             // Always create large asteroids (size 1) at the beginning of a level
             const size = 1; // Large asteroid
             
-            console.log(`Creating large asteroid type: ${randomType}, at (${x}, ${y})`);
+            console.log(`Creating large asteroid type: ${randomType}, at (${x.toFixed(2)}, ${y.toFixed(2)})`);
             
-            // Create the asteroid with the current level speed multiplier
-            const asteroid = new Asteroid(
-                randomType,
-                size,
-                x,
-                y,
-                currentDifficulty,
-                levelSpeedMultiplier, // Pass the level speed multiplier
-                baseSpeed // Pass the fixed base speed
-            );
-            
-            // Override the velocity with our single consistent speed
-            const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
-            
-            // All asteroids use the same speed regardless of size
-            const speed = effectiveSpeed;
-            
-            // Set velocity based on the random angle
-            asteroid.velocityX = Math.cos(angle) * speed;
-            asteroid.velocityY = Math.sin(angle) * speed;
-            
-            console.log(`Setting asteroid velocity to (${asteroid.velocityX.toFixed(2)}, ${asteroid.velocityY.toFixed(2)}) with speed: ${speed.toFixed(2)}`);
-            
-            asteroids.push(asteroid);
+            try {
+                // Create the asteroid with the current level speed multiplier
+                const asteroid = new Asteroid(
+                    randomType,
+                    size,
+                    x,
+                    y,
+                    currentDifficulty,
+                    levelSpeedMultiplier, // Pass the level speed multiplier
+                    baseSpeed // Pass the fixed base speed
+                );
+                
+                // Override the velocity with our single consistent speed
+                const angle = Math.random() * Math.PI * 2; // Random angle between 0 and 2π
+                
+                // All asteroids use the same speed regardless of size
+                const speed = effectiveSpeed;
+                
+                // Set velocity based on the random angle
+                asteroid.velocityX = Math.cos(angle) * speed;
+                asteroid.velocityY = Math.sin(angle) * speed;
+                
+                console.log(`Setting asteroid velocity to (${asteroid.velocityX.toFixed(2)}, ${asteroid.velocityY.toFixed(2)}) with speed: ${speed.toFixed(2)}`);
+                
+                asteroids.push(asteroid);
+            } catch (err) {
+                console.error(`Error creating asteroid: ${err.message}`);
+            }
         }
+        
+        console.log(`Created ${asteroids.length} asteroids successfully`);
     }
 
     /**
@@ -479,191 +534,160 @@ export class GameController {
      * @param {number} timestamp - Current timestamp from requestAnimationFrame
      */
     gameLoop(timestamp) {
-        // Calculate delta time in seconds
-        const deltaTime = (timestamp - lastFrameTime) / 1000;
-        lastFrameTime = timestamp;
-        
-        // Cap deltaTime to prevent large jumps after pausing/lag
-        const cappedDeltaTime = Math.min(deltaTime, 0.1);
-        
-        // Skip if game is paused or not running
-        if (isPaused || !gameRunning) {
-            animationFrameId = requestAnimationFrame(this.gameLoop);
-            return;
-        }
-        
-        // Update game time
-        currentTime = Date.now() - startTime;
-        
-        // Clear the canvas
-        clear('black');
-        
-        const { ctx, canvas } = getCanvas();
-        
-        // Update player
-        if (player) {
-            // Debug player state
-            if (player.isDestroyed || player.exploding || player.isInHyperspace) {
-                console.log(`Player state: destroyed=${player.isDestroyed}, exploding=${player.exploding}, hyperspace=${player.isInHyperspace}`);
+        try {
+            // Safety check - exit if game is not running
+            if (!gameRunning) {
+                console.log("Game loop called but game is not running - exiting");
+                return;
             }
             
-            const newBullet = player.update(cappedDeltaTime);
-            
-            // Add new bullet if player fired
-            if (newBullet) {
-                bullets.push(new Bullet(newBullet.x, newBullet.y, newBullet.rotation));
+            // On first frame, log that we've entered the game loop
+            if (!lastFrameTime) {
+                console.log("Entered game loop for the first time");
+                lastFrameTime = timestamp;
             }
             
-            // Draw player (including explosion if active)
-            player.draw(ctx);
-        }
-        
-        // Update and draw bullets
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            const bullet = bullets[i];
-            
-            // Remove bullets that are no longer active
-            if (!bullet.update(cappedDeltaTime)) {
-                bullets.splice(i, 1);
-                continue;
+            // Calculate delta time in seconds (with reasonable fallback)
+            let deltaTime = 0.016; // Default to 60fps if calculation fails
+            try {
+                deltaTime = (timestamp - lastFrameTime) / 1000;
+                lastFrameTime = timestamp;
+            } catch (err) {
+                console.error("Error calculating delta time:", err);
+                lastFrameTime = timestamp;
             }
             
-            // Draw the bullet
-            bullet.draw(ctx);
+            // Cap deltaTime to prevent large jumps
+            const cappedDeltaTime = Math.min(deltaTime, 0.1);
             
-            // Check for collisions with asteroids
-            for (let j = asteroids.length - 1; j >= 0; j--) {
-                const asteroid = asteroids[j];
-                
-                if (bullet.isCollidingWith(asteroid)) {
-                    // Remove bullet
-                    bullet.deactivate();
-                    bullets.splice(i, 1);
-                    
-                    // Break asteroid and add score
-                    const newAsteroids = asteroid.break();
-                    score += ASTEROID_SETTINGS.SCORE_VALUES[asteroid.size] || 100;
-                    
-                    // Check if player earned an extra life
-                    this.checkExtraLife(score);
-                    
-                    // Add new smaller asteroids
-                    asteroids.push(...newAsteroids);
-                    
-                    // Remove the hit asteroid
-                    asteroids.splice(j, 1);
-                    
-                    // Break out of the inner loop since bullet is now gone
-                    break;
-                }
+            // Skip updating if game is paused
+            if (isPaused) {
+                animationFrameId = requestAnimationFrame(this.gameLoop);
+                return;
             }
-        }
-        
-        // Update and draw asteroids
-        asteroids.forEach(asteroid => {
-            asteroid.update(cappedDeltaTime);
-            asteroid.draw(ctx);
-        });
-        
-        // Check for collisions between player and asteroids
-        if (player && !player.isDestroyed && !player.exploding && !player.isInHyperspace && !player.invincible) {
-            for (let i = asteroids.length - 1; i >= 0; i--) {
-                const asteroid = asteroids[i];
-                
-                if (player.isCollidingWith(asteroid)) {
-                    // Player is hit
-                    console.log("Player hit by asteroid!");
-                    player.destroy();
-                    lives -= ASTEROID_SETTINGS.COLLISION_DAMAGE;
+            
+            // Update game time
+            try {
+                currentTime = Date.now() - startTime;
+            } catch (err) {
+                console.error("Error updating game time:", err);
+            }
+            
+            // Occasionally log game state for debugging
+            if (currentTime % 5000 < 20) {
+                console.log(`Game running - Time: ${currentTime}ms, FPS: ${(1 / deltaTime).toFixed(1)}`);
+                console.log(`Entities: Player exists: ${!!player}, Asteroids: ${asteroids.length}, Bullets: ${bullets.length}`);
+            }
+            
+            // Clear the canvas with error handling
+            try {
+                clear('black');
+            } catch (err) {
+                console.error("Error clearing canvas:", err);
+            }
+            
+            const { ctx, canvas } = getCanvas();
+            
+            // Update player with error handling
+            if (player) {
+                try {
+                    const newBullet = player.update(cappedDeltaTime);
                     
-                    // Award points for the asteroid that hit the player
-                    score += ASTEROID_SETTINGS.SCORE_VALUES[asteroid.size] || 100;
-                    console.log(`Scored ${ASTEROID_SETTINGS.SCORE_VALUES[asteroid.size] || 100} points for asteroid collision`);
-                    
-                    // Check if player earned an extra life
-                    this.checkExtraLife(score);
-                    
-                    // Create child asteroids when larger asteroid hits player
-                    const newAsteroids = asteroid.break();
-                    
-                    // Add any child asteroids to the game
-                    asteroids.push(...newAsteroids);
-                    
-                    // Remove the asteroid that hit the player
-                    asteroids.splice(i, 1);
-                    
-                    if (lives <= 0) {
-                        // Game over - wait for explosion animation to finish first
-                        setTimeout(() => {
-                            this.handleGameOver();
-                        }, 2000);
-                    } else {
-                        // Respawn player after a delay - wait for explosion animation (2 seconds)
-                        setTimeout(() => {
-                            player.reset();
-                        }, 2000); // Changed from 1000 to 2000 to match explosion duration
+                    // Add new bullet if player fired
+                    if (newBullet) {
+                        bullets.push(new Bullet(newBullet.x, newBullet.y, newBullet.rotation));
                     }
                     
-                    break;
+                    // Draw player
+                    player.draw(ctx);
+                } catch (err) {
+                    console.error("Error updating player:", err);
                 }
             }
-        }
-        
-        // Check if level is complete (all asteroids destroyed)
-        if (asteroids.length === 0 && isGameStarted && !isGameOver) {
-            // Move to next level
-            level++;
             
-            // Increase asteroid speed by 5% for the new level
-            levelSpeedMultiplier *= 1.05;
-            console.log(`Level ${level}: Speed multiplier increased to ${levelSpeedMultiplier.toFixed(2)}`);
+            // Update bullets with error handling
+            try {
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    const bullet = bullets[i];
+                    
+                    // Remove inactive bullets
+                    if (!bullet.update(cappedDeltaTime)) {
+                        bullets.splice(i, 1);
+                        continue;
+                    }
+                    
+                    // Draw the bullet
+                    bullet.draw(ctx);
+                    
+                    // Check for collisions with asteroids
+                    for (let j = asteroids.length - 1; j >= 0; j--) {
+                        const asteroid = asteroids[j];
+                        
+                        if (bullet.isCollidingWith(asteroid)) {
+                            // Remove bullet
+                            bullet.deactivate();
+                            bullets.splice(i, 1);
+                            
+                            // Break asteroid and add score
+                            const newAsteroids = asteroid.break();
+                            score += ASTEROID_SETTINGS.SCORE_VALUES[asteroid.size] || 100;
+                            
+                            // Add new smaller asteroids
+                            asteroids.push(...newAsteroids);
+                            
+                            // Remove the hit asteroid
+                            asteroids.splice(j, 1);
+                            
+                            // Break out of inner loop
+                            break;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Error updating bullets:", err);
+            }
             
-            // Calculate new asteroid count based on level
-            const newAsteroidCount = Math.min(
-                GAME_SETTINGS.INITIAL_ASTEROIDS + (level - 1) * GAME_SETTINGS.ASTEROID_INCREMENT_PER_LEVEL,
-                20 // Cap at 20 asteroids
-            );
+            // Update asteroids with error handling
+            try {
+                asteroids.forEach(asteroid => {
+                    asteroid.update(cappedDeltaTime);
+                    asteroid.draw(ctx);
+                });
+            } catch (err) {
+                console.error("Error updating asteroids:", err);
+            }
             
-            // Create new asteroids
-            this.createAsteroids(newAsteroidCount);
-        }
-        
-        // Draw game status
-        drawGameStatus(ctx, score, lives, level, currentDifficulty);
-        
-        // Draw extra life animation if active
-        if (extraLifeAnimation.active) {
-            const elapsed = Date.now() - extraLifeAnimation.startTime;
-            if (elapsed < extraLifeAnimation.duration) {
-                // Calculate alpha based on time (fade in, then fade out)
-                const progress = elapsed / extraLifeAnimation.duration;
-                extraLifeAnimation.alpha = progress < 0.5 
-                    ? progress * 2 // Fade in during first half
-                    : 2 - progress * 2; // Fade out during second half
+            // Draw game status
+            try {
+                drawGameStatus(ctx, score, lives, level, currentDifficulty);
+            } catch (err) {
+                console.error("Error drawing game status:", err);
+            }
+            
+            // Schedule next frame
+            try {
+                animationFrameId = requestAnimationFrame(this.gameLoop);
+            } catch (err) {
+                console.error("Error requesting animation frame:", err);
                 
-                // Move upward slightly
-                extraLifeAnimation.y -= 20 * cappedDeltaTime;
-                
-                // Draw the text
-                ctx.save();
-                ctx.fillStyle = 'rgba(255, 255, 255, ' + extraLifeAnimation.alpha + ')';
-                ctx.font = 'bold 24px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(extraLifeAnimation.text, extraLifeAnimation.x, extraLifeAnimation.y);
-                ctx.restore();
-            } else {
-                // Animation complete
-                extraLifeAnimation.active = false;
+                // Attempt recovery by restarting the loop after a short delay
+                setTimeout(() => {
+                    if (gameRunning) {
+                        console.log("Attempting to restart game loop");
+                        animationFrameId = requestAnimationFrame(this.gameLoop);
+                    }
+                }, 1000);
+            }
+        } catch (err) {
+            console.error("CRITICAL ERROR IN GAME LOOP:", err);
+            
+            // Attempt to recover by scheduling next frame
+            try {
+                animationFrameId = requestAnimationFrame(this.gameLoop);
+            } catch (secondErr) {
+                console.error("Could not recover from game loop error:", secondErr);
             }
         }
-        
-        // Draw mobile controls if initialized and on mobile device
-        if (this.mobileControls) {
-            this.mobileControls.draw();
-        }
-        
-        // Continue the game loop
-        animationFrameId = requestAnimationFrame(this.gameLoop);
     }
 
     /**
@@ -824,18 +848,21 @@ export class GameController {
      * Initialize the game
      */
     initGame() {
-        console.log("Initializing game...");
+        console.log("⭐ Initializing game...");
         
         // Initialize canvas
         const { canvas } = initCanvas();
+        console.log("Canvas initialized with dimensions:", canvas.width, "x", canvas.height);
         
         // Initialize mobile controls after canvas is ready if on mobile
         if (isMobilePhone()) {
+            console.log("Setting up mobile controls");
             this.mobileControls = new MobileControls(canvas, this);
         }
         
         // Set up window resize handler
         window.addEventListener('resize', () => {
+            console.log("Window resize detected");
             resizeToWindow();
             
             // Redraw the current screen
@@ -857,21 +884,27 @@ export class GameController {
         });
         
         // Initialize input system with canvas and this controller instance
+        console.log("Initializing input system with canvas and game controller");
         initInput(canvas, this);
         
         // Load game data
+        console.log("Loading game data...");
         Promise.all([
             fetchLeaderboard(),
             fetchGamesPlayed(),
             preloadImages()
         ]).then(([leaderboard, gamesPlayed]) => {
-            console.log("Game data loaded");
+            console.log("✅ Game data loaded successfully");
             
             // Store the data
             leaderboardData = leaderboard;
             gamesPlayedCount = gamesPlayed;
             
             // Show the start screen
+            this.showStartScreen();
+        }).catch(error => {
+            console.error("❌ Error loading game data:", error);
+            // Show start screen anyway
             this.showStartScreen();
         });
     }

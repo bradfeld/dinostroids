@@ -32,6 +32,9 @@ export function initInput(canvas, gameController = null) {
     // Store game controller reference if provided
     if (gameController) {
         gameControllerRef = gameController;
+        console.log("Game controller reference stored successfully");
+    } else {
+        console.warn("No game controller provided to initInput");
     }
     
     // Remove any existing event listeners first
@@ -42,7 +45,10 @@ export function initInput(canvas, gameController = null) {
     window.addEventListener('keyup', handleKeyUp);
 
     if (isMobilePhone()) {
+        console.log("Mobile device detected, setting up touch handlers");
         setupTouchHandlers(canvas);
+    } else {
+        console.log("Desktop device detected, using keyboard controls only");
     }
 }
 
@@ -95,6 +101,8 @@ function handleKeyUp(event) {
  * @param {HTMLCanvasElement} canvas - The game canvas
  */
 function setupTouchHandlers(canvas) {
+    console.log("⭐ Setting up simplified touch handlers for mobile");
+    
     // Clean up any existing touch handlers first
     if (touchStartHandler) {
         canvas.removeEventListener('touchstart', touchStartHandler);
@@ -102,65 +110,25 @@ function setupTouchHandlers(canvas) {
         canvas.removeEventListener('touchend', touchEndHandler);
     }
     
-    // Very simple touch handler - no complex state tracking
+    // Create a simple touch handler that detects any touch on the screen
+    // and starts the game with medium difficulty
     touchStartHandler = function(e) {
-        // Prevent default to avoid scrolling
         e.preventDefault();
         
-        console.log("Touch detected");
+        console.log("⭐ Touch detected - Starting game with medium difficulty");
         
-        // Get touch coordinates
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
-        
-        console.log(`Touch position: (${x}, ${y})`);
-        
-        // Calculate button dimensions
-        const height = canvas.height;
-        const width = canvas.width;
-        const buttonHeight = height * 0.08;
-        const buttonSpacing = height * 0.02;
-        const buttonWidth = Math.min(width * 0.8, 400);
-        const startY = height * 0.3;
-        const buttonX = (width - buttonWidth) * 0.5;
-        
-        console.log(`Button positions: Easy y=${startY}, Medium y=${startY + buttonHeight + buttonSpacing}, Difficult y=${startY + 2 * (buttonHeight + buttonSpacing)}`);
-
-        // Handle difficulty buttons
-        if (x >= buttonX && x <= buttonX + buttonWidth) {
-            // Easy button
-            if (y >= startY && y <= startY + buttonHeight) {
-                console.log("Easy button pressed");
-                if (gameControllerRef) {
-                    gameControllerRef.startGame('easy');
-                }
-                return;
-            }
-            
-            // Medium button
-            if (y >= startY + buttonHeight + buttonSpacing && 
-                y <= startY + 2 * buttonHeight + buttonSpacing) {
-                console.log("Medium button pressed");
-                if (gameControllerRef) {
-                    gameControllerRef.startGame('medium');
-                }
-                return;
-            }
-            
-            // Difficult button
-            if (y >= startY + 2 * (buttonHeight + buttonSpacing) && 
-                y <= startY + 3 * buttonHeight + 2 * buttonSpacing) {
-                console.log("Difficult button pressed");
-                if (gameControllerRef) {
-                    gameControllerRef.startGame('difficult');
-                }
-                return;
-            }
+        // Check if game controller exists
+        if (!gameControllerRef) {
+            console.error("No game controller reference available");
+            return;
         }
         
-        console.log("Touch detected but not on a difficulty button");
+        // Start game with medium difficulty (ignoring touch position)
+        if (typeof gameControllerRef.startGame === 'function') {
+            gameControllerRef.startGame('medium');
+        } else {
+            console.error("startGame is not a function on gameControllerRef");
+        }
     };
     
     touchMoveHandler = function(e) {
@@ -172,11 +140,11 @@ function setupTouchHandlers(canvas) {
     };
     
     // Add event listeners with passive: false to prevent scrolling
+    console.log("Adding simplified touch event listeners");
     canvas.addEventListener('touchstart', touchStartHandler, { passive: false });
     canvas.addEventListener('touchmove', touchMoveHandler, { passive: false });
     canvas.addEventListener('touchend', touchEndHandler, { passive: false });
-    
-    console.log("Touch handlers set up");
+    console.log("Touch handlers successfully set up");
 }
 
 /**
