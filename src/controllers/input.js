@@ -137,6 +137,8 @@ function setupTouchHandlers(canvas) {
     
             // Check if a difficulty button was pressed
             const difficulties = ['easy', 'medium', 'difficult'];
+            let buttonPressed = false;
+            
             for (let i = 0; i < difficulties.length; i++) {
                 const diff = difficulties[i];
                 const buttonY = startY + (buttonHeight + buttonSpacing) * i;
@@ -144,41 +146,42 @@ function setupTouchHandlers(canvas) {
                 if (x >= buttonX && x <= buttonX + buttonWidth &&
                     y >= buttonY && y <= buttonY + buttonHeight) {
                     
-                    console.log("Difficulty selected and starting game:", diff);
+                    console.log("Difficulty selected:", diff);
+                    buttonPressed = true;
                     
-                    // Set the difficulty
-                    if (difficultyCallback) {
-                        difficultyCallback(diff);
+                    // Use the game controller directly if available
+                    if (gameControllerRef) {
+                        console.log("Starting game directly with difficulty:", diff);
+                        // Start the game directly with the selected difficulty
+                        gameControllerRef.startGame(diff);
+                    } else {
+                        // Fall back to callbacks if necessary
+                        if (difficultyCallback) {
+                            difficultyCallback(diff);
+                        }
+                        
+                        if (onStartCallback) {
+                            // Small delay to allow difficulty update to complete
+                            setTimeout(onStartCallback, 50);
+                        }
                     }
                     
-                    // Start the game immediately
-                    if (onStartCallback) {
-                        // Small delay to allow difficulty update to complete
-                        setTimeout(() => {
-                            onStartCallback();
-                        }, 50);
-                    }
-                    
-                    // Release touch processing lock after a short delay
-                    setTimeout(() => {
-                        processingTouch = false;
-                    }, 100);
-                    
-                    return;
+                    break;
                 }
             }
             
-            // If no button was pressed, do nothing (ignore taps on blank space)
-            console.log("Touch outside of any buttons - ignoring");
-            
+            // If no button was pressed, do nothing
+            if (!buttonPressed) {
+                console.log("Touch outside of any buttons - ignoring");
+            }
         } catch (err) {
             console.error("Error in touch handler:", err);
+        } finally {
+            // Always release the touch processing lock
+            setTimeout(() => {
+                processingTouch = false;
+            }, 100);
         }
-        
-        // Release touch processing lock
-        setTimeout(() => {
-            processingTouch = false;
-        }, 100);
     };
     
     touchMoveHandler = function(e) {

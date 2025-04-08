@@ -113,7 +113,7 @@ export class GameController {
     /**
      * End the current game and go back to the start screen
      */
-    endGame() {
+    endGame(showStartScreen = true) {
         console.log("Game ended");
         
         // Stop game loop
@@ -125,6 +125,7 @@ export class GameController {
         // Clean up mobile controls if they exist
         if (this.mobileControls) {
             this.mobileControls.cleanup();
+            this.mobileControls = null;
         }
         
         // Update games played count
@@ -141,8 +142,15 @@ export class GameController {
         isPaused = false;
         isGameOver = false;
         
-        // Show start screen
-        this.showStartScreen();
+        // Clear entities
+        player = null;
+        asteroids = [];
+        bullets = [];
+        
+        // Show start screen if requested
+        if (showStartScreen) {
+            this.showStartScreen();
+        }
     }
 
     /**
@@ -278,19 +286,21 @@ export class GameController {
      * Start the game with the selected difficulty
      */
     startGame(difficulty) {
-        // Prevent multiple calls or starting while already in game
+        // If a game is already in progress, end it first
         if (isGameStarted && !isGameOver) {
-            console.log("Game already started, ignoring startGame call");
-            return;
+            console.log("Stopping previous game before starting new one");
+            this.endGame(false); // Don't show start screen
         }
         
         // If no difficulty is provided, use the currently selected one
         if (difficulty === undefined) {
             difficulty = currentDifficulty;
+        } else {
+            // Update current difficulty if explicitly provided
+            currentDifficulty = difficulty;
         }
         
         console.log(`Starting game with difficulty: ${difficulty}`);
-        currentDifficulty = difficulty;
         
         // Set difficulty-specific values
         switch (difficulty) {
@@ -345,7 +355,7 @@ export class GameController {
         
         // Ensure input handlers are registered
         onHelp(this.toggleHelpScreen);
-        onEscape(() => this.endGame());
+        onEscape(() => this.endGame(true));
         onDifficulty(null); // Clear difficulty callback when game starts
         
         // Reset entities
