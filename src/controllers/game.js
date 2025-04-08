@@ -130,7 +130,7 @@ export class GameController {
         
         // Update games played count
         gamesPlayedCount++;
-        updateGamesPlayed(gamesPlayedCount);
+        incrementGamesPlayed(gamesPlayedCount);
         
         // Check if score is high enough for leaderboard
         if (score > 0) {
