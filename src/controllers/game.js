@@ -132,9 +132,16 @@ export class GameController {
         gamesPlayedCount++;
         incrementGamesPlayed(gamesPlayedCount);
         
-        // Check if score is high enough for leaderboard
+        // Check if score is high enough for leaderboard (only if we have a significant score)
         if (score > 0) {
-            this.checkHighScore(score);
+            // Using direct check rather than calling a method
+            const isHighScore = !leaderboardData || 
+                                leaderboardData.length < 20 || 
+                                score > [...leaderboardData].sort((a, b) => b.score - a.score)[Math.min(19, leaderboardData.length - 1)]?.score || 0;
+            
+            if (isHighScore) {
+                console.log(`Game ended with high score: ${score}`);
+            }
         }
         
         // Reset game state
