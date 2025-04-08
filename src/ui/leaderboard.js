@@ -12,8 +12,9 @@ import { getDimensions } from '../canvas.js';
  * @param {number} y - Y position for the leaderboard top
  * @param {Array} leaderboardData - The leaderboard data
  * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
+ * @param {boolean} useSmallFont - Whether to use smaller font sizes
  */
-export function drawLeaderboard(x, y, leaderboardData, ctx) {
+export function drawLeaderboard(x, y, leaderboardData, ctx, useSmallFont = false) {
     // Log leaderboard data keys for debugging
     if (leaderboardData && leaderboardData.length > 0) {
         console.log("Leaderboard data keys:", Object.keys(leaderboardData[0]));
@@ -29,11 +30,11 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
     const maxVisibleScores = Math.min(
         top20Scores.length, 
         20, // Never show more than 20
-        Math.floor((ctx.canvas.height - y - 50) / 25) // Based on available space
+        Math.floor((ctx.canvas.height - y - 50) / (useSmallFont ? 18 : 25)) // Based on available space
     );
     
     // Calculate wider background for more columns
-    const bgWidth = 500;
+    const bgWidth = useSmallFont ? 400 : 500;
     
     // Draw semi-transparent background
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -41,43 +42,44 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
         x - bgWidth/2, 
         y, 
         bgWidth, 
-        maxVisibleScores * 25 + 50
+        maxVisibleScores * (useSmallFont ? 18 : 25) + (useSmallFont ? 40 : 50)
     );
     
     // Draw title
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 24px Arial';
+    ctx.font = `bold ${useSmallFont ? '18px' : '24px'} Arial`;
     ctx.textAlign = 'center';
-    ctx.fillText('High Scores', x, y + 30);
+    ctx.fillText('High Scores', x, y + (useSmallFont ? 22 : 30));
     
-    // Define column positions and widths
-    const rankCol = x - bgWidth/2 + 50;
-    const scoreCol = x - bgWidth/2 + 120;
-    const initialsCol = x - bgWidth/2 + 190;
-    const levelCol = x - bgWidth/2 + 250;
-    const dateCol = x - bgWidth/2 + 340;
-    const timeCol = x - bgWidth/2 + 430;
+    // Define column positions and widths - adjusted for smaller font
+    const colSpacing = useSmallFont ? 0.8 : 1;
+    const rankCol = x - bgWidth/2 + 40 * colSpacing;
+    const scoreCol = x - bgWidth/2 + 100 * colSpacing;
+    const initialsCol = x - bgWidth/2 + 170 * colSpacing;
+    const levelCol = x - bgWidth/2 + 220 * colSpacing;
+    const dateCol = x - bgWidth/2 + 300 * colSpacing;
+    const timeCol = x - bgWidth/2 + 380 * colSpacing;
     
     // Draw column headers
-    ctx.font = '16px Arial';
+    ctx.font = useSmallFont ? '12px Arial' : '16px Arial';
     ctx.textAlign = 'right';
-    ctx.fillText('Rank', rankCol, y + 60);
-    ctx.fillText('Score', scoreCol, y + 60);
-    ctx.fillText('Initials', initialsCol, y + 60);
-    ctx.fillText('Level', levelCol, y + 60);
-    ctx.fillText('Date', dateCol, y + 60);
-    ctx.fillText('Time', timeCol, y + 60);
+    ctx.fillText('Rank', rankCol, y + (useSmallFont ? 45 : 60));
+    ctx.fillText('Score', scoreCol, y + (useSmallFont ? 45 : 60));
+    ctx.fillText('Initials', initialsCol, y + (useSmallFont ? 45 : 60));
+    ctx.fillText('Level', levelCol, y + (useSmallFont ? 45 : 60));
+    ctx.fillText('Date', dateCol, y + (useSmallFont ? 45 : 60));
+    ctx.fillText('Time', timeCol, y + (useSmallFont ? 45 : 60));
     
     // Draw scores
-    ctx.font = '16px Arial';
+    ctx.font = useSmallFont ? '12px Arial' : '16px Arial';
     for (let i = 0; i < maxVisibleScores; i++) {
         const score = top20Scores[i];
-        const yPos = y + 85 + (i * 25);
+        const yPos = y + (useSmallFont ? 65 : 85) + (i * (useSmallFont ? 18 : 25));
         
         // Highlight current score
         if (score.isCurrent) {
             ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
-            ctx.fillRect(x - bgWidth/2 + 10, yPos - 15, bgWidth - 20, 20);
+            ctx.fillRect(x - bgWidth/2 + 10, yPos - (useSmallFont ? 12 : 15), bgWidth - 20, useSmallFont ? 16 : 20);
             ctx.fillStyle = 'white';
         }
         
@@ -130,11 +132,11 @@ export function drawLeaderboard(x, y, leaderboardData, ctx) {
     // Show total count if there are more scores than visible
     if (leaderboardData.length > maxVisibleScores) {
         ctx.textAlign = 'center';
-        ctx.font = '14px Arial';
+        ctx.font = useSmallFont ? '10px Arial' : '14px Arial';
         ctx.fillText(
             `Showing ${maxVisibleScores} of ${leaderboardData.length} scores`, 
             x, 
-            y + maxVisibleScores * 25 + 40
+            y + maxVisibleScores * (useSmallFont ? 18 : 25) + (useSmallFont ? 30 : 40)
         );
     }
 }
