@@ -114,25 +114,34 @@ export class GameController {
      * End the current game and go back to the start screen
      */
     endGame() {
-        console.log("Game ended by user (ESC key)");
+        console.log("Game ended");
         
-        // Reset game state
-        isGameStarted = false;
-        isGameOver = true;
-        gameRunning = false;
-        
-        // Cancel the animation frame
+        // Stop game loop
         if (animationFrameId) {
             cancelAnimationFrame(animationFrameId);
             animationFrameId = null;
         }
         
-        // Clear entities
-        player = null;
-        asteroids = [];
-        bullets = [];
+        // Clean up mobile controls if they exist
+        if (this.mobileControls) {
+            this.mobileControls.cleanup();
+        }
         
-        // Show the start screen
+        // Update games played count
+        gamesPlayedCount++;
+        updateGamesPlayed(gamesPlayedCount);
+        
+        // Check if score is high enough for leaderboard
+        if (score > 0) {
+            this.checkHighScore(score);
+        }
+        
+        // Reset game state
+        isGameStarted = false;
+        isPaused = false;
+        isGameOver = false;
+        
+        // Show start screen
         this.showStartScreen();
     }
 
@@ -266,58 +275,82 @@ export class GameController {
     }
 
     /**
-     * Start a new game with current difficulty settings
+     * Start the game with the selected difficulty
      */
-    startGame() {
-        if (isHelpScreenVisible || isGameStarted || isGameOver) return;
+    startGame(difficulty = 'medium') {
+        currentDifficulty = difficulty;
         
-        console.log(`Starting game with ${currentDifficulty} difficulty...`);
-        isGameStarted = true;
-        isGameOver = false;
-        gameRunning = true;
-        
-        // Reset game state
-        score = 0;
-        lastExtraLifeScore = 0; // Reset the extra life tracker
-        
-        // Apply settings based on current difficulty
-        const difficultySettings = DIFFICULTY_SETTINGS[currentDifficulty];
-        lives = difficultySettings.lives;
-        level = 1;
-        levelSpeedMultiplier = 1.0; // Reset speed multiplier for new game
-        
-        // Create player
-        player = new Player();
-        
-        // Apply difficulty settings to player - with more reasonable acceleration values
-        player.acceleration = 101; // Base acceleration value for Easy
-        if (currentDifficulty === 'medium') {
-            player.acceleration = 150;  // 1.5x base for medium
-        } else if (currentDifficulty === 'difficult') {
-            player.acceleration = 200;  // 2.0x base for difficult
+        // Set difficulty-specific values
+        switch (difficulty) {
+            case 'easy':
+                playerAcceleration = 101; // Base acceleration value for Easy
+                shootCooldown = 0.3;      // Longer cooldown (easier)
+                asteroidSpeed = 30;       // Slower asteroids (easier)
+                initialAsteroids = 2;     // Fewer asteroids (easier)
+                playerLives = 5;          // More lives (easier)
+                break;
+            case 'medium':
+                playerAcceleration = 120; // Medium acceleration
+                shootCooldown = 0.2;      // Medium cooldown
+                asteroidSpeed = 40;       // Medium speed
+                initialAsteroids = 3;     // Medium amount
+                playerLives = 3;          // Standard lives
+                break;
+            case 'difficult':
+                playerAcceleration = 140; // Higher acceleration (harder to control)
+                shootCooldown = 0.15;     // Shorter cooldown (harder)
+                asteroidSpeed = 50;       // Faster asteroids (harder)
+                initialAsteroids = 4;     // More asteroids (harder)
+                playerLives = 3;          // Standard lives
+                break;
         }
         
-        player.shootCooldown = difficultySettings.shootCooldown;
+        console.log(`Starting game with difficulty: ${difficulty}`);
+        console.log(`Player acceleration: ${playerAcceleration}`);
+        console.log(`Asteroid speed: ${asteroidSpeed}`);
         
-        // Log the actual acceleration value to verify
-        console.log(`Player acceleration set to: ${player.acceleration}`);
+        // Reset game state
+        isGameStarted = true;
+        isPaused = false;
+        isGameOver = false;
+        isHelpScreenVisible = false;
+        currentLevel = 1;
+        score = 0;
+        lives = playerLives;
+        levelSpeedMultiplier = 1.0;
+        extraLifeAnimation.active = false;
         
-        // Create initial asteroids
-        this.createAsteroids(difficultySettings.initialAsteroids);
+        // Ensure input handlers are registered
+        onHelp(this.toggleHelpScreen);
+        onEscape(() => this.endGame());
+        onDifficulty(null); // Clear difficulty callback when game starts
         
-        // Clear bullets
+        // Reset entities
+        player = new Player(
+            canvas.width / 2,
+            canvas.height / 2,
+            playerAcceleration
+        );
+        
         bullets = [];
+        asteroids = [];
+        particles = [];
+        explosions = [];
+        powerups = [];
         
-        // Set start time for game duration tracking
-        startTime = Date.now();
-        currentTime = 0;
+        // Create initial asteroids for level 1
+        this.createAsteroids();
         
-        // Track games played on the server
-        incrementGamesPlayed().catch(err => console.error('Failed to increment games played:', err));
+        // Initialize mobile controls if on mobile device
+        if (isMobilePhone() && !this.mobileControls) {
+            this.mobileControls = new MobileControls(canvas, this);
+        }
         
         // Start the game loop
         lastFrameTime = performance.now();
-        animationFrameId = requestAnimationFrame(this.gameLoop);
+        if (!animationFrameId) {
+            animationFrameId = requestAnimationFrame(this.gameLoop);
+        }
     }
 
     /**
@@ -757,8 +790,10 @@ export class GameController {
         // Initialize canvas
         const { canvas } = initCanvas();
         
-        // Initialize mobile controls after canvas is ready
-        this.mobileControls = new MobileControls(canvas, this);
+        // Initialize mobile controls after canvas is ready if on mobile
+        if (isMobilePhone()) {
+            this.mobileControls = new MobileControls(canvas, this);
+        }
         
         // Set up window resize handler
         window.addEventListener('resize', () => {
@@ -771,6 +806,14 @@ export class GameController {
                 } else {
                     this.showStartScreen();
                 }
+            }
+            
+            // Recreate mobile controls if needed after resize
+            if (isMobilePhone()) {
+                if (this.mobileControls) {
+                    this.mobileControls.cleanup();
+                }
+                this.mobileControls = new MobileControls(canvas, this);
             }
         });
         

@@ -46,8 +46,11 @@ export class MobileControls {
             }
         };
 
-        // Track active touches
+        // Track active touches - map touch ID to button name
         this.activeTouches = new Map();
+        
+        // Debug mode - set to true to log touch events
+        this.debug = true;
         
         if (isMobilePhone()) {
             this.setupTouchEvents();
@@ -58,37 +61,133 @@ export class MobileControls {
      * Set up touch event listeners
      */
     setupTouchEvents() {
-        this.canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            Array.from(e.touches).forEach(touch => {
-                const button = this.getButtonAtPosition(touch.clientX, touch.clientY);
-                if (button) {
-                    this.activeTouches.set(touch.identifier, button);
-                    this.handleButtonPress(button);
+        // Remove any existing listeners to prevent duplicates
+        this.removeEventListeners();
+        
+        // Add touchstart listener
+        this.touchStartHandler = this.handleTouchStart.bind(this);
+        this.touchMoveHandler = this.handleTouchMove.bind(this);
+        this.touchEndHandler = this.handleTouchEnd.bind(this);
+        this.touchCancelHandler = this.handleTouchCancel.bind(this);
+        
+        this.canvas.addEventListener('touchstart', this.touchStartHandler, { passive: false });
+        this.canvas.addEventListener('touchmove', this.touchMoveHandler, { passive: false });
+        this.canvas.addEventListener('touchend', this.touchEndHandler, { passive: false });
+        this.canvas.addEventListener('touchcancel', this.touchCancelHandler, { passive: false });
+        
+        if (this.debug) {
+            console.log('Mobile controls touch events initialized');
+        }
+    }
+    
+    /**
+     * Remove event listeners
+     */
+    removeEventListeners() {
+        if (this.touchStartHandler) {
+            this.canvas.removeEventListener('touchstart', this.touchStartHandler);
+            this.canvas.removeEventListener('touchmove', this.touchMoveHandler);
+            this.canvas.removeEventListener('touchend', this.touchEndHandler);
+            this.canvas.removeEventListener('touchcancel', this.touchCancelHandler);
+        }
+    }
+    
+    /**
+     * Handle touch start
+     */
+    handleTouchStart(e) {
+        e.preventDefault();
+        
+        if (this.debug) {
+            console.log(`Touch start with ${e.touches.length} touches`);
+        }
+        
+        Array.from(e.touches).forEach(touch => {
+            const buttonName = this.getButtonAtPosition(touch.clientX, touch.clientY);
+            if (buttonName) {
+                this.activeTouches.set(touch.identifier, buttonName);
+                this.handleButtonPress(buttonName);
+                
+                if (this.debug) {
+                    console.log(`Button press: ${buttonName}`);
                 }
-            });
+            }
         });
-
-        this.canvas.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            Array.from(e.changedTouches).forEach(touch => {
-                const button = this.activeTouches.get(touch.identifier);
-                if (button) {
-                    this.handleButtonRelease(button);
+    }
+    
+    /**
+     * Handle touch move
+     */
+    handleTouchMove(e) {
+        e.preventDefault();
+        
+        Array.from(e.touches).forEach(touch => {
+            const buttonName = this.getButtonAtPosition(touch.clientX, touch.clientY);
+            const currentButton = this.activeTouches.get(touch.identifier);
+            
+            // If moving from one button to another, or from no button to a button
+            if (buttonName !== currentButton) {
+                // Release previous button if there was one
+                if (currentButton) {
+                    this.handleButtonRelease(currentButton);
+                    if (this.debug) {
+                        console.log(`Button release on move: ${currentButton}`);
+                    }
+                }
+                
+                // Press new button if there is one
+                if (buttonName) {
+                    this.handleButtonPress(buttonName);
+                    this.activeTouches.set(touch.identifier, buttonName);
+                    if (this.debug) {
+                        console.log(`Button press on move: ${buttonName}`);
+                    }
+                } else {
                     this.activeTouches.delete(touch.identifier);
                 }
-            });
+            }
         });
-
-        this.canvas.addEventListener('touchcancel', (e) => {
-            e.preventDefault();
-            Array.from(e.changedTouches).forEach(touch => {
-                const button = this.activeTouches.get(touch.identifier);
-                if (button) {
-                    this.handleButtonRelease(button);
-                    this.activeTouches.delete(touch.identifier);
+    }
+    
+    /**
+     * Handle touch end
+     */
+    handleTouchEnd(e) {
+        e.preventDefault();
+        
+        if (this.debug) {
+            console.log(`Touch end with ${e.changedTouches.length} changed touches`);
+        }
+        
+        Array.from(e.changedTouches).forEach(touch => {
+            const buttonName = this.activeTouches.get(touch.identifier);
+            if (buttonName) {
+                this.handleButtonRelease(buttonName);
+                this.activeTouches.delete(touch.identifier);
+                
+                if (this.debug) {
+                    console.log(`Button release on end: ${buttonName}`);
                 }
-            });
+            }
+        });
+    }
+    
+    /**
+     * Handle touch cancel
+     */
+    handleTouchCancel(e) {
+        e.preventDefault();
+        
+        if (this.debug) {
+            console.log('Touch cancel event');
+        }
+        
+        Array.from(e.changedTouches).forEach(touch => {
+            const buttonName = this.activeTouches.get(touch.identifier);
+            if (buttonName) {
+                this.handleButtonRelease(buttonName);
+                this.activeTouches.delete(touch.identifier);
+            }
         });
     }
 
@@ -191,5 +290,13 @@ export class MobileControls {
         }
 
         this.ctx.restore();
+    }
+    
+    /**
+     * Clean up when removing controls
+     */
+    cleanup() {
+        this.removeEventListeners();
+        this.activeTouches.clear();
     }
 } 
