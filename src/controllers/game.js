@@ -14,7 +14,7 @@ import Player from '../entities/player.js';
 import Asteroid from '../entities/asteroid.js';
 import Bullet from '../entities/bullet.js';
 import { drawGameStatus } from '../ui/gameStatus.js';
-import { drawGameOver, handleGameOverKeyInput, activateInput, onSubmitScore, onRestart, setRedrawCallback } from '../ui/gameOver.js';
+import { drawGameOver, handleGameOverKeyInput, activateInput, onRestart, setRedrawCallback } from '../ui/gameOver.js';
 import { drawLeaderboard } from '../ui/leaderboard.js';
 import { formatTime, randomInt } from '../utils.js';
 import { drawStartScreen } from '../ui/startScreen.js';
@@ -66,9 +66,9 @@ let playerLives;
 let levelSpeedMultiplier = 1.0; // Base speed multiplier that increases per level
 
 export class GameController {
-    constructor(canvas) {
-        // Initialize mobile controls
-        this.mobileControls = new MobileControls(canvas, this);
+    constructor() {
+        // Remove mobile controls initialization from constructor
+        this.mobileControls = null;
     }
 
     /**
@@ -544,8 +544,10 @@ export class GameController {
             }
         }
         
-        // Draw mobile controls if on mobile device
-        this.mobileControls.draw();
+        // Draw mobile controls if initialized and on mobile device
+        if (this.mobileControls) {
+            this.mobileControls.draw();
+        }
         
         // Continue the game loop
         animationFrameId = requestAnimationFrame(this.gameLoop);
@@ -713,6 +715,9 @@ export class GameController {
         
         // Initialize canvas
         const { canvas } = initCanvas();
+        
+        // Initialize mobile controls after canvas is ready
+        this.mobileControls = new MobileControls(canvas, this);
         
         // Set up window resize handler
         window.addEventListener('resize', () => {
