@@ -127,8 +127,12 @@ export function handleGameOverKeyInput(event) {
                 // Auto-submit when all initials are entered
                 if (playerInitials.length === MAX_INITIALS_LENGTH && submitCallback) {
                     setTimeout(() => {
-                        submitCallback(playerInitials);
-                        resetInput();
+                        // Check if input is still active before submitting
+                        // Prevents double submission if Enter was pressed quickly
+                        if (inputActive && submitCallback) {
+                           submitCallback(playerInitials);
+                           resetInput();
+                        }
                     }, 1000); // Longer delay for visual feedback
                 }
             }
