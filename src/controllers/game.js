@@ -14,7 +14,7 @@ import Player from '../entities/player.js';
 import Asteroid from '../entities/asteroid.js';
 import Bullet from '../entities/bullet.js';
 import { drawGameStatus } from '../ui/gameStatus.js';
-import { drawGameOver, handleGameOverKeyInput, activateInput, onRestart, setRedrawCallback } from '../ui/gameOver.js';
+import { drawGameOver, handleGameOverKeyInput, activateInput, onRestart, setRedrawCallback, onSubmitScore } from '../ui/gameOver.js';
 import { drawLeaderboard } from '../ui/leaderboard.js';
 import { formatTime, randomInt } from '../utils.js';
 import { drawStartScreen } from '../ui/startScreen.js';
