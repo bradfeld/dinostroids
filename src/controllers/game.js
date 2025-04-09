@@ -431,9 +431,12 @@ export class GameController {
             startTime = Date.now();
             gameRunning = true;
             
+            // Bind the gameLoop to this instance to preserve the correct 'this' context
+            const boundGameLoop = this.gameLoop.bind(this);
+            
             // Start frame loop with error handling
             try {
-                animationFrameId = requestAnimationFrame(this.gameLoop);
+                animationFrameId = requestAnimationFrame(boundGameLoop);
                 console.log("Animation frame requested:", animationFrameId);
             } catch (err) {
                 console.error("Error starting animation frame:", err);
@@ -599,7 +602,7 @@ export class GameController {
             
             // Skip updating if game is paused
             if (isPaused) {
-                animationFrameId = requestAnimationFrame(this.gameLoop);
+                animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
                 return;
             }
             
@@ -747,94 +750,69 @@ export class GameController {
             // Check if level is complete (all asteroids destroyed)
             try {
                 if (asteroids.length === 0 && isGameStarted && !isGameOver) {
-                    // Move to next level
-                    level++;
-                    
-                    // Increase speed multiplier for next level
-                    levelSpeedMultiplier *= 1.05;
-                    console.log(`Level ${level}: Speed multiplier increased to ${levelSpeedMultiplier.toFixed(2)}`);
-                    
-                    // Calculate new asteroid count based on level
-                    const newAsteroidCount = Math.min(
-                        initialAsteroids + (level - 1),
-                        15 // Cap at 15 asteroids
-                    );
-                    
-                    // Create new asteroids for next level
-                    this.createAsteroids(newAsteroidCount);
+                    console.log("Level complete! Advancing to next level");
+                    this.startNextLevel();
                 }
             } catch (err) {
                 console.error("Error checking level completion:", err);
             }
             
-            // Draw game status
+            // Draw HUD with error handling
             try {
-                drawGameStatus(ctx, score, lives, level, currentDifficulty);
+                this.drawHUD();
             } catch (err) {
-                console.error("Error drawing game status:", err);
+                console.error("Error drawing HUD:", err);
             }
             
             // Draw extra life animation if active
             try {
                 if (extraLifeAnimation.active) {
-                    const elapsed = Date.now() - extraLifeAnimation.startTime;
-                    if (elapsed < extraLifeAnimation.duration) {
-                        // Calculate alpha based on time (fade in, then fade out)
-                        const progress = elapsed / extraLifeAnimation.duration;
-                        extraLifeAnimation.alpha = progress < 0.5 
-                            ? progress * 2 // Fade in during first half
-                            : 2 - progress * 2; // Fade out during second half
-                        
-                        // Move upward slightly
-                        extraLifeAnimation.y -= 20 * cappedDeltaTime;
-                        
-                        // Draw the text
-                        ctx.save();
-                        ctx.fillStyle = `rgba(255, 255, 255, ${extraLifeAnimation.alpha})`;
-                        ctx.font = 'bold 24px Arial';
-                        ctx.textAlign = 'center';
-                        ctx.fillText(extraLifeAnimation.text, extraLifeAnimation.x, extraLifeAnimation.y);
-                        ctx.restore();
-                    } else {
-                        // Animation complete
-                        extraLifeAnimation.active = false;
-                    }
+                    this.drawExtraLifeAnimation();
                 }
             } catch (err) {
                 console.error("Error drawing extra life animation:", err);
             }
             
             // Draw mobile controls if on mobile
-            if (this.mobileControls) {
-                try {
+            try {
+                if (this.mobileControls) {
                     this.mobileControls.draw();
-                } catch (err) {
-                    console.error("Error drawing mobile controls:", err);
                 }
+            } catch (err) {
+                console.error("Error drawing mobile controls:", err);
             }
             
-            // Schedule next frame
-            try {
-                animationFrameId = requestAnimationFrame(this.gameLoop);
-            } catch (err) {
-                console.error("Error requesting animation frame:", err);
-                
-                // Attempt recovery by restarting the loop after a short delay
-                setTimeout(() => {
-                    if (gameRunning) {
-                        console.log("Attempting to restart game loop");
-                        animationFrameId = requestAnimationFrame(this.gameLoop);
-                    }
-                }, 1000);
+            // Request next frame if game is still running
+            if (gameRunning) {
+                try {
+                    animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
+                } catch (err) {
+                    console.error("Error requesting next animation frame:", err);
+                    // Try to recover
+                    setTimeout(() => {
+                        if (gameRunning) {
+                            console.log("Attempting to recover game loop...");
+                            animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
+                        }
+                    }, 1000);
+                }
             }
         } catch (err) {
             console.error("CRITICAL ERROR IN GAME LOOP:", err);
             
-            // Attempt to recover by scheduling next frame
+            // Attempt to recover
             try {
-                animationFrameId = requestAnimationFrame(this.gameLoop);
-            } catch (secondErr) {
-                console.error("Could not recover from game loop error:", secondErr);
+                console.log("Attempting emergency recovery of game loop");
+                animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
+            } catch (recoveryErr) {
+                console.error("Failed to recover game loop:", recoveryErr);
+                // Last resort: try to end the game safely
+                try {
+                    console.error("Game loop unrecoverable - ending game");
+                    this.handleGameOver();
+                } catch (endGameErr) {
+                    console.error("Everything failed. Game state is undefined.", endGameErr);
+                }
             }
         }
     }
@@ -1255,6 +1233,36 @@ export class GameController {
         extraLifeAnimation.startTime = Date.now();
     }
 
+    /**
+     * Draw the extra life animation
+     */
+    drawExtraLifeAnimation() {
+        const { ctx } = getCanvas();
+        const elapsed = Date.now() - extraLifeAnimation.startTime;
+        
+        if (elapsed < extraLifeAnimation.duration) {
+            // Calculate alpha based on time (fade in, then fade out)
+            const progress = elapsed / extraLifeAnimation.duration;
+            extraLifeAnimation.alpha = progress < 0.5 
+                ? progress * 2 // Fade in during first half
+                : 2 - progress * 2; // Fade out during second half
+            
+            // Move upward slightly
+            extraLifeAnimation.y -= 20 * 0.016; // Using fixed deltaTime for consistent movement
+            
+            // Draw the text
+            ctx.save();
+            ctx.fillStyle = `rgba(255, 255, 255, ${extraLifeAnimation.alpha})`;
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(extraLifeAnimation.text, extraLifeAnimation.x, extraLifeAnimation.y);
+            ctx.restore();
+        } else {
+            // Animation complete
+            extraLifeAnimation.active = false;
+        }
+    }
+
     // Mobile control methods
     setRotateLeft(active) {
         if (!player) return;
@@ -1279,6 +1287,27 @@ export class GameController {
     activateHyperspace() {
         if (!player || player.isDestroyed || player.exploding || player.isInHyperspace) return;
         player.enterHyperspace();
+    }
+
+    /**
+     * Start the next level after clearing all asteroids
+     */
+    startNextLevel() {
+        // Move to next level
+        level++;
+        
+        // Increase speed multiplier for next level
+        levelSpeedMultiplier *= 1.05;
+        console.log(`Level ${level}: Speed multiplier increased to ${levelSpeedMultiplier.toFixed(2)}`);
+        
+        // Calculate new asteroid count based on level
+        const newAsteroidCount = Math.min(
+            initialAsteroids + (level - 1),
+            15 // Cap at 15 asteroids
+        );
+        
+        // Create new asteroids for next level
+        this.createAsteroids(newAsteroidCount);
     }
 }
 

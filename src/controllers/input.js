@@ -123,6 +123,7 @@ function setupTouchHandlers(canvas) {
                 const touch = e.touches[0];
                 const rect = canvas.getBoundingClientRect();
                 
+                // Calculate touch position relative to canvas
                 const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
                 const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
                 
@@ -142,6 +143,8 @@ function setupTouchHandlers(canvas) {
                     Medium: ${buttonX}-${buttonX + buttonWidth} x ${startY + buttonHeight + buttonSpacing}-${startY + 2 * buttonHeight + buttonSpacing}
                     Difficult: ${buttonX}-${buttonX + buttonWidth} x ${startY + 2 * (buttonHeight + buttonSpacing)}-${startY + 3 * buttonHeight + 2 * buttonSpacing}`);
                 
+                let difficultySelected = false;
+                
                 // Check which difficulty button was pressed
                 if (x >= buttonX && x <= buttonX + buttonWidth) {
                     // Easy button
@@ -149,45 +152,38 @@ function setupTouchHandlers(canvas) {
                         console.log("Easy button pressed");
                         if (typeof gameControllerRef.startGame === 'function') {
                             gameControllerRef.startGame('easy');
+                            difficultySelected = true;
                         }
-                        return;
                     }
-                    
                     // Medium button
-                    if (y >= startY + buttonHeight + buttonSpacing && 
+                    else if (y >= startY + buttonHeight + buttonSpacing && 
                         y <= startY + 2 * buttonHeight + buttonSpacing) {
                         console.log("Medium button pressed");
                         if (typeof gameControllerRef.startGame === 'function') {
                             gameControllerRef.startGame('medium');
+                            difficultySelected = true;
                         }
-                        return;
                     }
-                    
                     // Difficult button
-                    if (y >= startY + 2 * (buttonHeight + buttonSpacing) && 
+                    else if (y >= startY + 2 * (buttonHeight + buttonSpacing) && 
                         y <= startY + 3 * buttonHeight + 2 * buttonSpacing) {
                         console.log("Difficult button pressed");
                         if (typeof gameControllerRef.startGame === 'function') {
                             gameControllerRef.startGame('difficult');
+                            difficultySelected = true;
                         }
-                        return;
                     }
                 }
                 
-                // If no button was pressed, default to medium
-                console.log("No specific button pressed, defaulting to medium");
-                if (typeof gameControllerRef.startGame === 'function') {
-                    gameControllerRef.startGame('medium');
+                // Only default to medium if no button was deliberately pressed
+                if (!difficultySelected) {
+                    console.log("No specific difficulty button was pressed - touch outside button area");
                 }
             } catch (error) {
                 console.error("Error in touch handler:", error);
-                // If there's an error, still try to start the game with medium difficulty
-                if (typeof gameControllerRef.startGame === 'function') {
-                    gameControllerRef.startGame('medium');
-                }
             }
         } else {
-            // We're in gameplay, ignore touch for start screen functions
+            // We're in gameplay, touch for game controls is handled elsewhere
             console.log("Touch detected during gameplay - ignoring for game start");
         }
     };

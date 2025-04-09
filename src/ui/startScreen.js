@@ -90,8 +90,14 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
     // Draw game stats at the bottom if available
     if (gamesPlayed > 0) {
         ctx.font = `${Math.floor(height * 0.02)}px Arial`;
+        ctx.textAlign = 'center'; // Ensure text is center-aligned
         ctx.fillText(`Games Played: ${gamesPlayed}`, width * 0.5, height * 0.9);
     }
+    
+    // Copyright text
+    ctx.font = `${Math.floor(height * 0.015)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText('© 2025, Intensity Ventures', width * 0.5, height * 0.95);
 }
 
 /**
@@ -157,13 +163,15 @@ function drawDesktopStartScreen(ctx, currentDifficulty, leaderboardData, gamesPl
         drawLeaderboard(leaderboardX, leaderboardY, leaderboardData, ctx, useSmallFont);
     }
     
-    // Games played info
+    // Games played info - centered horizontally
     if (gamesPlayed > 0) {
         ctx.font = '16px Arial';
+        ctx.textAlign = 'center'; // Ensure text is center-aligned
         ctx.fillText(`Games Played: ${gamesPlayed}`, width / 2, height - 80);
     }
     
-    // Copyright text
+    // Copyright text - centered horizontally
     ctx.font = '14px Arial';
+    ctx.textAlign = 'center'; // Ensure text is center-aligned
     ctx.fillText('© 2025, Intensity Ventures', width / 2, height - 40);
 } 
