@@ -1129,7 +1129,7 @@ export class GameController {
         ctx.textAlign = 'left';
         ctx.fillText(`Score: ${score}`, 20, 30);
         
-        // Draw ships graphically on the right
+        // Draw ships graphically on the right using the same graphic as the player ship
         const shipSize = 15;
         const shipSpacing = 30;
         const shipY = 30;
@@ -1144,15 +1144,26 @@ export class GameController {
         for (let i = 0; i < lives; i++) {
             const shipX = width - 30 - (i * shipSpacing);
             
-            // Draw ship pointing upward
+            // Draw ship matching the player ship graphic (pointing right)
+            ctx.save();
+            
+            // Translate to ship position
+            ctx.translate(shipX, shipY);
+            
+            // Rotate to point up (-90 degrees from default right-facing)
+            ctx.rotate(-Math.PI / 2);
+            
+            // Draw ship
             ctx.beginPath();
-            ctx.moveTo(shipX, shipY - shipSize/2); // Tip of the ship
-            ctx.lineTo(shipX - shipSize/2, shipY + shipSize/2); // Bottom left
-            ctx.lineTo(shipX, shipY + shipSize/4); // Bottom middle
-            ctx.lineTo(shipX + shipSize/2, shipY + shipSize/2); // Bottom right
+            ctx.moveTo(shipSize / 2, 0); // Nose of the ship
+            ctx.lineTo(-shipSize / 2, -shipSize / 2); // Bottom left
+            ctx.lineTo(-shipSize / 4, 0); // Back center
+            ctx.lineTo(-shipSize / 2, shipSize / 2); // Bottom right
             ctx.closePath();
             ctx.stroke();
             ctx.fill();
+            
+            ctx.restore();
         }
         
         // Restore context
