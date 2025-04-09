@@ -1120,24 +1120,18 @@ export class GameController {
      * Draw the heads-up display (HUD)
      */
     drawHUD() {
-        // Draw score
         const { ctx } = getCanvas();
+        const { width } = getDimensions();
+        
+        // Draw score on the left
         ctx.fillStyle = 'white';
         ctx.font = '24px Arial';
         ctx.textAlign = 'left';
         ctx.fillText(`Score: ${score}`, 20, 30);
         
-        // Draw time
-        const formattedTime = formatTime(currentTime);
-        ctx.fillText(`Time: ${formattedTime}`, 20, 60);
-        
-        // Draw lives
-        ctx.font = '24px Arial';
-        ctx.fillText(`Lives: ${lives}`, 20, 90);
-        
-        // Draw current difficulty
-        ctx.font = '24px Arial';
-        ctx.fillText(`Difficulty: ${currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}`, 20, 120);
+        // Draw lives (ships) on the right
+        ctx.textAlign = 'right';
+        ctx.fillText(`Ships: ${lives}`, width - 20, 30);
     }
 
     /**
