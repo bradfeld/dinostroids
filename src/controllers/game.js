@@ -1129,9 +1129,34 @@ export class GameController {
         ctx.textAlign = 'left';
         ctx.fillText(`Score: ${score}`, 20, 30);
         
-        // Draw lives (ships) on the right
-        ctx.textAlign = 'right';
-        ctx.fillText(`Ships: ${lives}`, width - 20, 30);
+        // Draw ships graphically on the right
+        const shipSize = 15;
+        const shipSpacing = 30;
+        const shipY = 30;
+        
+        // Save context for ship drawing
+        ctx.save();
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 1.5;
+        
+        // Draw each ship icon
+        for (let i = 0; i < lives; i++) {
+            const shipX = width - 30 - (i * shipSpacing);
+            
+            // Draw ship pointing upward
+            ctx.beginPath();
+            ctx.moveTo(shipX, shipY - shipSize/2); // Tip of the ship
+            ctx.lineTo(shipX - shipSize/2, shipY + shipSize/2); // Bottom left
+            ctx.lineTo(shipX, shipY + shipSize/4); // Bottom middle
+            ctx.lineTo(shipX + shipSize/2, shipY + shipSize/2); // Bottom right
+            ctx.closePath();
+            ctx.stroke();
+            ctx.fill();
+        }
+        
+        // Restore context
+        ctx.restore();
     }
 
     /**
