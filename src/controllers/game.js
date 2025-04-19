@@ -570,6 +570,11 @@ export class GameController {
             // Update player with error handling
             if (player) {
                 try {
+                    // Log player update call to see if it's happening
+                    if (player.invincible) {
+                        console.log(`Calling player.update from game loop, player invincible: ${player.invincible}, time left: ${player.invincibilityTime}`);
+                    }
+                    
                     const newBullet = player.update(cappedDeltaTime);
                     
                     // Add new bullet if player fired
@@ -681,6 +686,18 @@ export class GameController {
                                         // Reset all mobile controls to prevent stuck buttons
                                         this.mobileControls.resetTouchControls();
                                     }
+                                    
+                                    // Add a hard timeout to ensure invincibility ends
+                                    // Add 500ms buffer to the expected invincibility time
+                                    const invincibilityDuration = PLAYER_SETTINGS.INVINCIBILITY_TIME + 500;
+                                    console.log(`Setting hard timeout to end invincibility after ${invincibilityDuration}ms`);
+                                    
+                                    setTimeout(() => {
+                                        if (player && player.invincible) {
+                                            console.log('Hard timeout: Forcing invincibility to end');
+                                            player.forceEndInvincibility();
+                                        }
+                                    }, invincibilityDuration);
                                 }, 2000);
                             }
                             

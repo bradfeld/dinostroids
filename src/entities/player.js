@@ -106,10 +106,39 @@ class Player {
     
     // Handle invincibility timer
     if (this.invincible) {
-      this.invincibilityTime -= deltaTime * 1000; // Convert seconds to milliseconds
+      // Debug log to check deltaTime value
+      console.log(`Updating invincibility: current=${this.invincibilityTime}, deltaTime=${deltaTime}`);
+      
+      // Ensure deltaTime is a valid number
+      const safeDeltaTime = (isNaN(deltaTime) || deltaTime <= 0) ? 0.016 : deltaTime;
+      
+      // Decrement invincibility time
+      this.invincibilityTime -= safeDeltaTime * 1000; // Convert seconds to milliseconds
+      
+      // Debug log after decrementing
+      console.log(`New invincibility time: ${this.invincibilityTime}`);
+      
       if (this.invincibilityTime <= 0) {
         this.invincible = false;
         this.invincibilityTime = 0; // Reset to prevent negative values
+        console.log("Invincibility deactivated - timer reached zero");
+      }
+      
+      // Add failsafe: force invincibility to expire if it's been more than 5 seconds since the last update
+      // This ensures invincibility will always end even if update isn't called properly
+      if (!window._lastInvincibilityCheck) {
+        window._lastInvincibilityCheck = Date.now();
+      } else {
+        const now = Date.now();
+        const timeSinceLastCheck = now - window._lastInvincibilityCheck;
+        window._lastInvincibilityCheck = now;
+        
+        // If more than 5 seconds passed since last check, force invincibility to end
+        if (timeSinceLastCheck > 5000) {
+          console.log(`Failsafe: Force-ending invincibility after ${timeSinceLastCheck}ms`);
+          this.invincible = false;
+          this.invincibilityTime = 0;
+        }
       }
     }
     
@@ -194,6 +223,19 @@ class Player {
    * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
    */
   draw(ctx) {
+    // Check if invincibility should have expired by now
+    // This is a backup in case the update method isn't being called
+    if (this.invincible && window._lastInvincibilityCheck) {
+      const now = Date.now();
+      const timeSinceLastCheck = now - window._lastInvincibilityCheck;
+      
+      // If it's been more than 5 seconds since invincibility was checked
+      // AND invincibility time should be nearly expired, force end it
+      if (timeSinceLastCheck > 5000 && this.invincibilityTime < 1000) {
+        this.forceEndInvincibility();
+      }
+    }
+    
     // Draw explosion if exploding
     if (this.exploding && this.explosionParticles.length > 0) {
       // Draw each explosion particle as a line
@@ -332,12 +374,18 @@ class Player {
     this.thrusting = false;
     this.shooting = false;
     
-    // Make player temporarily invincible
+    // Make player temporarily invincible - track values before and after
+    console.log("Before reset: invincible =", this.invincible, "invincibilityTime =", this.invincibilityTime);
+    
     this.invincible = true;
     this.invincibilityTime = PLAYER_SETTINGS.INVINCIBILITY_TIME;
     
+    // Reset the global invincibility check timer when resetting a player
+    window._lastInvincibilityCheck = Date.now();
+    
     console.log("Player reset complete, invincibility active for " + 
                (PLAYER_SETTINGS.INVINCIBILITY_TIME/1000).toFixed(1) + " seconds");
+    console.log("After reset: invincible =", this.invincible, "invincibilityTime =", this.invincibilityTime);
   }
   
   /**
@@ -389,6 +437,19 @@ class Player {
     setTimeout(() => {
       this.isInHyperspace = false;
     }, 100);
+  }
+  
+  /**
+   * Force end invincibility if it's been active too long
+   * This is a safety method to prevent permanent invincibility
+   */
+  forceEndInvincibility() {
+    if (this.invincible) {
+      // Only log if we're actually turning it off
+      console.log("Force ending invincibility via safety method");
+      this.invincible = false;
+      this.invincibilityTime = 0;
+    }
   }
 }
 
