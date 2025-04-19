@@ -675,6 +675,12 @@ export class GameController {
                                 // Respawn player after a delay
                                 setTimeout(() => {
                                     player.reset();
+                                    
+                                    // Reset mobile controls state if they exist
+                                    if (this.mobileControls) {
+                                        // Reset all mobile controls to prevent stuck buttons
+                                        this.mobileControls.resetTouchControls();
+                                    }
                                 }, 2000);
                             }
                             

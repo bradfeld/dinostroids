@@ -299,4 +299,25 @@ export class MobileControls {
         this.removeEventListeners();
         this.activeTouches.clear();
     }
+
+    /**
+     * Reset all touch controls
+     * Used when player respawns to prevent stuck controls
+     */
+    resetTouchControls() {
+        // Clear the active touches map
+        this.activeTouches.clear();
+        
+        // Reset all button states in the game controller
+        if (this.gameController) {
+            this.gameController.setRotateLeft(false);
+            this.gameController.setRotateRight(false);
+            this.gameController.setThrusting(false);
+            this.gameController.setFiring(false);
+        }
+        
+        if (this.debug) {
+            console.log('Mobile controls reset');
+        }
+    }
 } 

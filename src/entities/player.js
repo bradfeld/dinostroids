@@ -326,9 +326,18 @@ class Player {
     this.exploding = false;
     this.explosionParticles = [];
     
+    // Reset mobile control states
+    this.rotatingLeft = false;
+    this.rotatingRight = false;
+    this.thrusting = false;
+    this.shooting = false;
+    
     // Make player temporarily invincible
     this.invincible = true;
     this.invincibilityTime = PLAYER_SETTINGS.INVINCIBILITY_TIME;
+    
+    console.log("Player reset complete, invincibility active for " + 
+               (PLAYER_SETTINGS.INVINCIBILITY_TIME/1000).toFixed(1) + " seconds");
   }
   
   /**
