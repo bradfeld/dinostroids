@@ -7,41 +7,36 @@
 
 // Game settings
 export const GAME_SETTINGS = {
-  FPS: 60,
-  INITIAL_LIVES: 3,
-  LEVEL_MULTIPLIER: 0.5,
-  INITIAL_ASTEROIDS: 4,
-  ASTEROID_INCREMENT_PER_LEVEL: 2,
-  EXTRA_LIFE_SCORE_THRESHOLD: 10000,
-  FRAME_DURATION: 1000 / 60, // milliseconds per frame at 60 FPS
-  SPAWN_BUFFER: 100 // Distance from player to avoid spawning asteroids
+  INITIAL_LIVES: 3,          // Number of player ships at start
+  EXTRA_LIFE_SCORE_THRESHOLD: 10000,  // Score needed for an extra life
+  STARTING_LEVEL: 1,         // Initial level
+  ASTEROID_COUNT_INCREMENT: 2,  // Number of extra asteroids per level
+  MAX_ASTEROIDS: 15          // Maximum number of asteroids on screen
 };
 
 // Player settings
 export const PLAYER_SETTINGS = {
-  RADIUS: 15,
-  ROTATION_SPEED: 4, // radians per second
-  ACCELERATION: 200, // pixels per second per second
-  FRICTION: 0.98,
-  INVINCIBILITY_TIME: 3000, // milliseconds
-  SHOOT_COOLDOWN: 250 // milliseconds
+  RADIUS: 15,               // Radius for collision detection
+  ROTATION_SPEED: 5,        // Rotation speed in radians per second
+  ACCELERATION: 300,        // Acceleration in pixels per second squared
+  FRICTION: 0.98,           // Friction coefficient (1 = no friction)
+  SHOOT_COOLDOWN: 200       // Cooldown between shots in milliseconds
 };
 
 // Bullet settings
 export const BULLET_SETTINGS = {
-  RADIUS: 2,
-  SPEED: 500, // pixels per second
-  LIFESPAN: 1000 // milliseconds
+  RADIUS: 2,                // Radius for collision detection
+  SPEED: 800,               // Speed in pixels per second
+  LIFESPAN: 1000            // Lifespan in milliseconds
 };
 
 // Asteroid settings
 export const ASTEROID_SETTINGS = {
-  BASE_RADIUS: 50, // For size 1 (largest)
-  SPEED_MULTIPLIER: 50, // pixels per second
-  ROTATION_SPEED: 1, // radians per second
-  POINTS_BASE: 100, // Points multiplied by size
-  COLLISION_DAMAGE: 1, // Lives lost when hit
-  SPAWN_DISTANCE_MIN: 100, // Minimum distance from player to spawn
+  BASE_RADIUS: 40,          // Base radius for large asteroids
+  ROTATION_SPEED: 1,        // Rotation speed in radians per second
+  SPAWN_DISTANCE_MIN: 200,  // Minimum distance from player to spawn 
+  POINTS_BASE: 100,         // Base points for destroying an asteroid
+  BREAK_VELOCITY_FACTOR: 1.2, // Velocity factor for broken pieces
   // Points awarded for destroying an asteroid based on size
   SCORE_VALUES: {
     1: 100, // Large
@@ -60,14 +55,6 @@ export const UI_SETTINGS = {
   SUBTITLE_SIZE: 24,
   BODY_SIZE: 16,
   HUD_SIZE: 20
-};
-
-// Image paths
-export const IMAGES = {
-  // Map of image keys to file paths
-  bront: './images/bront.png',
-  steg: './images/steg.png',
-  trex: './images/trex.png'
 };
 
 // Sound settings

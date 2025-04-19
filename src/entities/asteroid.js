@@ -6,8 +6,8 @@
 
 import { getDimensions } from '../canvas.js';
 import { ASTEROID_SETTINGS, DIFFICULTY_SETTINGS } from '../constants.js';
-import { getImageByKey } from '../services/images.js';
 import { randomFloatBetween, randomInt } from '../utils.js';
+import { drawDinosaur } from '../services/vectorDinos.js';
 
 class Asteroid {
   /**
@@ -72,15 +72,6 @@ class Asteroid {
     this.rotation = 0;
     this.rotationSpeed = randomFloatBetween(-1, 1) * ASTEROID_SETTINGS.ROTATION_SPEED;
     
-    // Load the image for this asteroid type
-    const imageKey = this.getImageKey();
-    console.log(`Loading asteroid image: ${imageKey}`);
-    this.image = getImageByKey(imageKey);
-    
-    if (!this.image) {
-      console.error(`Failed to load image for asteroid type: ${imageKey}`);
-    }
-    
     // Calculate points based on size
     this.points = ASTEROID_SETTINGS.POINTS_BASE * this.size;
   }
@@ -115,23 +106,6 @@ class Asteroid {
   }
   
   /**
-   * Get the image key for this asteroid type
-   * @returns {string} Image key
-   */
-  getImageKey() {
-    // Debug the asteroid type
-    console.log(`Getting image key for type: ${this.type}`);
-    
-    // Make sure we have a valid type, defaulting to a known one if not
-    if (!this.type || !ASTEROID_SETTINGS.TYPES.includes(this.type)) {
-      console.warn(`Invalid asteroid type: ${this.type}, defaulting to 'bront'`);
-      this.type = 'bront';
-    }
-    
-    return this.type;
-  }
-  
-  /**
    * Update the asteroid's position
    * @param {number} deltaTime - Time since last update in milliseconds
    */
@@ -163,26 +137,8 @@ class Asteroid {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rotation);
     
-    if (this.image) {
-      // Draw the dinosaur image with proper scaling
-      const scale = (this.radius * 2) / Math.max(this.image.width, this.image.height);
-      const width = this.image.width * scale;
-      const height = this.image.height * scale;
-      
-      ctx.drawImage(
-        this.image,
-        -width / 2,
-        -height / 2,
-        width,
-        height
-      );
-    } else {
-      // Fallback if image isn't loaded
-      ctx.beginPath();
-      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-      ctx.strokeStyle = 'gray';
-      ctx.stroke();
-    }
+    // Draw the vector dinosaur
+    drawDinosaur(ctx, this.type, 0, 0, this.radius * 2, 'white');
     
     ctx.restore();
   }
@@ -248,56 +204,45 @@ class Asteroid {
     
     for (let i = 0; i < count; i++) {
       // Add some variation to position and velocity
-      const offsetX = randomFloatBetween(-10, 10);
-      const offsetY = randomFloatBetween(-10, 10);
+      const offsetAngle = parentAngle + randomFloatBetween(-Math.PI/4, Math.PI/4);
       
-      // Calculate parent's current speed
-      const parentSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
-      console.log(`Parent asteroid speed: ${parentSpeed.toFixed(2)}`);
+      // Create child offset from parent position
+      const offsetDistance = this.radius * 0.8;
+      const childX = this.x + Math.cos(offsetAngle) * offsetDistance;
+      const childY = this.y + Math.sin(offsetAngle) * offsetDistance;
       
-      const asteroid = new Asteroid(
-        this.type,
-        size,
-        this.x + offsetX,
-        this.y + offsetY,
-        this.difficulty, // Pass the same difficulty to child asteroids
-        this.speedMultiplier, // Pass the same speed multiplier to child asteroids
-        this.fixedBaseSpeed // Pass the fixed base speed to child asteroids
-      );
-      
-      // Generate a random angle within 180 degrees of parent's direction
-      // First, calculate an angle between -90 and +90 degrees (in radians)
-      const angleOffset = randomFloatBetween(-Math.PI/2, Math.PI/2);
-      
-      // Then add this offset to the parent's direction angle
-      const angle = parentAngle + angleOffset;
-      
-      console.log(`Child asteroid angle offset: ${(angleOffset * 180 / Math.PI).toFixed(2)} degrees`);
-      console.log(`Child asteroid final direction: ${(angle * 180 / Math.PI).toFixed(2)} degrees`);
-      
-      // All asteroids use the same base speed regardless of size
-      // This ensures consistent speed within a level
-      const speed = this.fixedBaseSpeed * this.speedMultiplier;
-      console.log(`Child asteroid using fixed speed: ${speed.toFixed(2)}`);
-      
-      // Set velocity based on the calculated angle
-      asteroid.velocityX = Math.cos(angle) * speed;
-      asteroid.velocityY = Math.sin(angle) * speed;
-      
-      targetArray.push(asteroid);
+      // Create new asteroid with same characteristics but different size
+      try {
+        const newAsteroid = new Asteroid(
+          this.type,
+          size,
+          childX,
+          childY,
+          this.difficulty,
+          this.speedMultiplier * 1.2, // Make children slightly faster
+          this.fixedBaseSpeed
+        );
+        
+        // Add to target array
+        targetArray.push(newAsteroid);
+      } catch (err) {
+        console.error(`Error creating child asteroid: ${err.message}`);
+      }
     }
   }
   
   /**
    * Check if this asteroid is colliding with another entity
    * @param {Object} entity - The entity to check collision with
-   * @returns {boolean} Whether a collision occurred
+   * @returns {boolean} - Whether there is a collision
    */
   isCollidingWith(entity) {
+    // Calculate distance between centers
     const dx = this.x - entity.x;
     const dy = this.y - entity.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
+    // Collision if distance is less than the sum of radii
     return distance < this.radius + entity.radius;
   }
 }

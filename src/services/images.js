@@ -2,83 +2,40 @@
  * Images Service
  * 
  * This service handles loading and caching of images used in the game.
+ * With vector graphics for dinosaurs, this service is simplified.
  */
-
-import { IMAGES } from '../constants.js';
-
-// Object to store loaded images
-const imageCache = {};
 
 /**
  * Preload all images needed for the game
+ * This is now a placeholder that resolves immediately since we use vector graphics
  * @param {Function} [callback] - Optional callback function when all images are loaded
- * @returns {Promise} - Promise that resolves when all images are loaded
+ * @returns {Promise} - Promise that resolves immediately
  */
 export function preloadImages(callback) {
-    console.log("Preloading dinosaur images...");
+    console.log("Using vector graphics, no image preloading needed");
     
-    return new Promise((resolve, reject) => {
-        let imagesLoaded = 0;
-        const totalImages = Object.keys(IMAGES).length;
-        
-        // If there are no images to load, resolve immediately
-        if (totalImages === 0) {
-            console.log("No dinosaur images to load.");
-            if (callback) callback();
-            resolve();
-            return;
-        }
-        
-        // Function to handle when all images are loaded
-        const onAllImagesLoaded = () => {
-            console.log("All dinosaur images loaded successfully!");
-            if (callback) callback();
-            resolve();
-        };
-        
-        // Function to handle individual image load
-        const onImageLoad = (key) => {
-            console.log(`${key} dinosaur image loaded.`);
-            imagesLoaded++;
-            if (imagesLoaded === totalImages) {
-                onAllImagesLoaded();
-            }
-        };
-        
-        // Function to handle load errors
-        const onImageError = (key, e) => {
-            console.error(`Error loading ${key} dinosaur image:`, e);
-            // Continue even if an image fails to load
-            imagesLoaded++;
-            if (imagesLoaded === totalImages) {
-                onAllImagesLoaded();
-            }
-        };
-        
-        // Load each image
-        Object.entries(IMAGES).forEach(([key, path]) => {
-            const img = new Image();
-            img.onload = () => onImageLoad(key);
-            img.onerror = (e) => onImageError(key, e);
-            img.src = path;
-            imageCache[key] = img;
-        });
-    });
+    // Call the callback immediately if provided
+    if (callback) callback();
+    
+    // Return a resolved promise
+    return Promise.resolve();
 }
 
 /**
- * Get a loaded image by key
+ * Get a loaded image by key - replaced by vector graphics
+ * This is now just a placeholder function for backward compatibility
  * @param {string} key - Key of the image (bront, steg, trex)
- * @returns {HTMLImageElement|null} - The loaded image or null if not found
+ * @returns {null} - Always returns null as we're using vector graphics
  */
 export function getImageByKey(key) {
-    return imageCache[key] || null;
+    return null;
 }
 
 /**
  * Check if all required images are loaded
- * @returns {boolean} - True if all images are loaded
+ * With vector graphics, we always return true
+ * @returns {boolean} - Always returns true
  */
 export function areImagesLoaded() {
-    return Object.values(imageCache).every(img => img && img.complete);
+    return true;
 } 
