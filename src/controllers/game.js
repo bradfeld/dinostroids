@@ -8,7 +8,7 @@
 import { initCanvas, resizeToWindow, getCanvas, clear, getDimensions } from '../canvas.js';
 import { fetchGamesPlayed, fetchLeaderboard, submitScore, incrementGamesPlayed } from '../services/api.js';
 import { preloadImages } from '../services/images.js';
-import { initInput, onStart, onHelp, isKeyPressed, onEscape, onDifficulty } from './input.js';
+import { initInput, onStart, onHelp, isKeyPressed, onEscape, onDifficulty, onPause } from './input.js';
 import { GAME_SETTINGS, PLAYER_SETTINGS, ASTEROID_SETTINGS, DIFFICULTY_SETTINGS } from '../constants.js';
 import Player from '../entities/player.js';
 import Asteroid from '../entities/asteroid.js';
@@ -177,6 +177,7 @@ export class GameController {
         onHelp(null);
         onEscape(null);
         onDifficulty(null);
+        onPause(null);
     }
 
     /**
@@ -214,6 +215,14 @@ export class GameController {
                 currentDifficulty = difficulty;
                 this.updateDifficultySettings();
                 this.showStartScreen();
+            }
+        });
+        
+        // Add pause handler
+        onPause(() => {
+            // Toggle pause state (only for desktop version)
+            if (!isMobilePhone() && isGameStarted && !isGameOver) {
+                this.togglePause();
             }
         });
     }
@@ -525,8 +534,20 @@ export class GameController {
             // Cap deltaTime to prevent large jumps
             const cappedDeltaTime = Math.min(deltaTime, 0.1);
             
-            // Skip updating if game is paused
+            // Clear the canvas with error handling
+            try {
+                clear('black');
+            } catch (err) {
+                console.error("Error clearing canvas:", err);
+            }
+            
+            // If paused, draw the game objects but don't update them
             if (isPaused) {
+                // Draw static game state
+                this.drawStaticGameState();
+                // Draw pause overlay
+                this.drawPauseOverlay();
+                // Request next frame
                 animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
                 return;
             }
@@ -544,15 +565,8 @@ export class GameController {
                 console.log(`Entities: Player exists: ${!!player}, Asteroids: ${asteroids.length}, Bullets: ${bullets.length}`);
             }
             
-            // Clear the canvas with error handling
-            try {
-                clear('black');
-            } catch (err) {
-                console.error("Error clearing canvas:", err);
-            }
-            
             const { ctx, canvas } = getCanvas();
-            
+
             // Update player with error handling
             if (player) {
                 try {
@@ -1261,6 +1275,98 @@ export class GameController {
         
         // Create new asteroids for next level
         this.createAsteroids(newAsteroidCount);
+    }
+
+    /**
+     * Toggle the pause state of the game
+     */
+    togglePause() {
+        // Only toggle pause during active gameplay
+        if (!isGameStarted || isGameOver) return;
+        
+        isPaused = !isPaused;
+        console.log(`Game ${isPaused ? 'paused' : 'resumed'}`);
+        
+        // If we're resuming, reset the lastFrameTime to avoid time jumps
+        if (!isPaused) {
+            lastFrameTime = performance.now();
+        }
+    }
+
+    /**
+     * Draw pause overlay when game is paused
+     */
+    drawPauseOverlay() {
+        const { ctx, canvas } = getCanvas();
+        
+        // Semi-transparent overlay
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Pause text
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME PAUSED', canvas.width / 2, canvas.height / 2 - 40);
+        
+        // Instructions
+        ctx.font = '24px Arial';
+        ctx.fillText('Press P to resume', canvas.width / 2, canvas.height / 2 + 20);
+    }
+
+    /**
+     * Draw the current game state without updating (for pause)
+     */
+    drawStaticGameState() {
+        const { ctx } = getCanvas();
+        
+        // Draw player
+        if (player) {
+            try {
+                player.draw(ctx);
+            } catch (err) {
+                console.error("Error drawing player:", err);
+            }
+        }
+        
+        // Draw bullets
+        try {
+            bullets.forEach(bullet => bullet.draw(ctx));
+        } catch (err) {
+            console.error("Error drawing bullets:", err);
+        }
+        
+        // Draw asteroids
+        try {
+            asteroids.forEach(asteroid => asteroid.draw(ctx));
+        } catch (err) {
+            console.error("Error drawing asteroids:", err);
+        }
+        
+        // Draw HUD
+        try {
+            this.drawHUD();
+        } catch (err) {
+            console.error("Error drawing HUD:", err);
+        }
+        
+        // Draw extra life animation if active
+        if (extraLifeAnimation.active) {
+            try {
+                this.drawExtraLifeAnimation();
+            } catch (err) {
+                console.error("Error drawing extra life animation:", err);
+            }
+        }
+        
+        // Draw mobile controls if on mobile
+        if (this.mobileControls) {
+            try {
+                this.mobileControls.draw();
+            } catch (err) {
+                console.error("Error drawing mobile controls:", err);
+            }
+        }
     }
 }
 

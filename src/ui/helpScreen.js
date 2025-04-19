@@ -66,6 +66,7 @@ export function drawHelpScreen() {
             '• Arrow Keys: Move ship',
             '• Space: Fire',
             '• H: Hyperspace jump (random teleport)',
+            '• P: Pause/Resume game',
             '• ?: Toggle help screen',
             '• ESC: End game and return to menu',
             '',

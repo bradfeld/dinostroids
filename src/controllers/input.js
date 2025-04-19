@@ -5,6 +5,7 @@
  */
 
 import { isMobilePhone } from '../utils/device.js';
+import { getCanvas } from '../canvas.js';
 
 // Track pressed keys
 const keys = {};
@@ -14,6 +15,7 @@ let onStartCallback = null;
 let onHelpCallback = null;
 let onEscapeCallback = null;
 let difficultyCallback = null;
+let pauseCallback = null;
 
 // Touch handler references for cleanup
 let touchStartHandler = null;
@@ -74,6 +76,11 @@ function handleKeyDown(event) {
     // Handle Escape key to end game and return to start screen
     if (event.code === 'Escape' && onEscapeCallback) {
         onEscapeCallback();
+    }
+    
+    // Handle P key for pausing the game
+    if (event.code === 'KeyP' && pauseCallback) {
+        pauseCallback();
     }
     
     // Handle difficulty selection keys (E, M, D)
@@ -246,9 +253,38 @@ export function onDifficulty(callback) {
 }
 
 /**
+ * Register a callback for when the pause button (P) is pressed
+ * @param {Function|null} callback - The function to call when pause is pressed, or null to clear
+ */
+export function onPause(callback) {
+    pauseCallback = callback;
+}
+
+/**
  * Clean up event listeners
  */
 export function cleanupInput() {
     window.removeEventListener('keydown', handleKeyDown);
     window.removeEventListener('keyup', handleKeyUp);
+    
+    // Clear callbacks
+    onStartCallback = null;
+    onHelpCallback = null;
+    onEscapeCallback = null;
+    difficultyCallback = null;
+    pauseCallback = null;
+    
+    // Clean up touch handlers
+    if (touchStartHandler) {
+        // Clean up any existing touch handlers
+        const canvas = getCanvas();
+        if (canvas) {
+            canvas.removeEventListener('touchstart', touchStartHandler);
+            canvas.removeEventListener('touchmove', touchMoveHandler);
+            canvas.removeEventListener('touchend', touchEndHandler);
+        }
+        touchStartHandler = null;
+        touchMoveHandler = null;
+        touchEndHandler = null;
+    }
 }
