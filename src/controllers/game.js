@@ -14,7 +14,7 @@ import Player from '../entities/player.js';
 import Asteroid from '../entities/asteroid.js';
 import Bullet from '../entities/bullet.js';
 import { drawGameStatus } from '../ui/gameStatus.js';
-import { drawGameOver, handleGameOverKeyInput, activateInput, onRestart, setRedrawCallback, onSubmitScore } from '../ui/gameOver.js';
+import { drawGameOver, handleGameOverKeyInput, activateInput, onRestart, setRedrawCallback, onSubmitScore, setupGameOverEvents } from '../ui/gameOver.js';
 import { drawLeaderboard } from '../ui/leaderboard.js';
 import { formatTime, randomInt } from '../utils.js';
 import { drawStartScreen } from '../ui/startScreen.js';
@@ -811,7 +811,7 @@ export class GameController {
         console.log(`Game over check - Is high score: ${isHighScore}, Score: ${score}`);
         
         // Get canvas for drawing
-        const { ctx } = getCanvas();
+        const { ctx, canvas } = getCanvas();
         
         // Create a function to redraw the game over screen
         const redrawGameOver = () => {
@@ -824,9 +824,18 @@ export class GameController {
         // Draw game over screen initially
         redrawGameOver();
         
-        // Add keyboard handler for game over screen
-        document.addEventListener('keydown', handleGameOverKeyInput);
-        console.log("Added keydown event listener for game over screen");
+        // Setup appropriate event handlers based on device type
+        const isMobile = isMobilePhone();
+        
+        if (isMobile) {
+            // Set up touch events for mobile devices
+            console.log("Setting up mobile touch controls for game over screen");
+            setupGameOverEvents(canvas);
+        } else {
+            // Add keyboard handler for desktop
+            console.log("Setting up keyboard controls for game over screen");
+            document.addEventListener('keydown', handleGameOverKeyInput);
+        }
         
         if (isHighScore) {
             console.log("New high score detected!");

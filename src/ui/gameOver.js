@@ -6,6 +6,7 @@
 
 import { clear, getDimensions } from '../canvas.js';
 import { submitScore } from '../services/api.js';
+import { isMobilePhone } from '../utils/device.js';
 
 // Track the player's initials input
 let playerInitials = '';
@@ -15,6 +16,7 @@ let submitCallback = null;
 let restartCallback = null;
 let redrawCallback = null; // Function to redraw the screen after input changes
 let redrawIntervalId = null; // Interval ID for forced redraw
+let touchEventAdded = false; // Track if touch event is already added
 
 /**
  * Draw the game over screen
@@ -26,6 +28,7 @@ let redrawIntervalId = null; // Interval ID for forced redraw
  */
 export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime = 0) {
     const { width, height } = getDimensions();
+    const isMobile = isMobilePhone();
     
     // Clear canvas with dark background
     clear('black');
@@ -46,7 +49,14 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
     if (isHighScore) {
         ctx.font = '24px Arial';
         ctx.fillText('New High Score!', width / 2, height / 4 + 100);
-        ctx.fillText('Enter your initials (up to 3 letters):', width / 2, height / 4 + 140);
+        
+        // Different instructions for mobile vs desktop
+        if (isMobile) {
+            ctx.fillText('Enter your initials (3 letters max):', width / 2, height / 4 + 140);
+            // TODO: Add on-screen keyboard for mobile in the future
+        } else {
+            ctx.fillText('Enter your initials (up to 3 letters):', width / 2, height / 4 + 140);
+        }
         
         // Display the initials being typed in real time
         ctx.font = '48px Arial';
@@ -62,11 +72,19 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
         
         // Add instructions for submission
         ctx.font = '16px Arial';
-        ctx.fillText('Press ENTER when done or type up to 3 letters', width / 2, height / 4 + 240);
+        if (isMobile) {
+            ctx.fillText('Tap ENTER when done or type up to 3 letters', width / 2, height / 4 + 240);
+        } else {
+            ctx.fillText('Press ENTER when done or type up to 3 letters', width / 2, height / 4 + 240);
+        }
     } else {
-        // Draw restart prompt
+        // Draw restart prompt - different for mobile vs desktop
         ctx.font = '24px Arial';
-        ctx.fillText('Press SPACE to play again', width / 2, height / 4 + 120);
+        if (isMobile) {
+            ctx.fillText('Touch the screen to play again', width / 2, height / 4 + 120);
+        } else {
+            ctx.fillText('Press SPACE to play again', width / 2, height / 4 + 120);
+        }
     }
 }
 
@@ -95,6 +113,21 @@ function isNewHighScore(score, leaderboard) {
  */
 export function setRedrawCallback(callback) {
     redrawCallback = callback;
+}
+
+/**
+ * Handle touch input for the game over screen
+ * @param {TouchEvent} event - The touch event
+ */
+export function handleGameOverTouchInput(event) {
+    // Prevent default behavior to avoid scrolling/zooming
+    event.preventDefault();
+    
+    // If this is for high score input, we'll handle it differently in the future
+    // For now, we'll just use touch for restarting the game
+    if (!inputActive && restartCallback) {
+        restartCallback();
+    }
 }
 
 /**
@@ -178,6 +211,24 @@ export function activateInput() {
             redrawCallback();
         }, 100);
     }
+}
+
+/**
+ * Set up event listeners for the game over screen
+ * @param {HTMLCanvasElement} canvas - The canvas element to attach events to
+ */
+export function setupGameOverEvents(canvas) {
+    // Remove any existing touch event listeners to prevent duplicates
+    if (touchEventAdded) {
+        canvas.removeEventListener('touchstart', handleGameOverTouchInput);
+        touchEventAdded = false;
+    }
+    
+    // Add touch event listener for mobile devices
+    canvas.addEventListener('touchstart', handleGameOverTouchInput, { passive: false });
+    touchEventAdded = true;
+    
+    console.log("Game over touch events initialized");
 }
 
 /**
