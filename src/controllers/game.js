@@ -1277,6 +1277,18 @@ export class GameController {
     activateHyperspace() {
         if (!player || player.isDestroyed || player.exploding || player.isInHyperspace) return;
         player.enterHyperspace();
+        
+        // Add a hard timeout to ensure hyperspace invincibility ends
+        // Use a fixed value of 3500ms (3s + 500ms buffer)
+        const invincibilityDuration = 3500; // Fixed value
+        console.log(`Setting hard timeout to end hyperspace invincibility after ${invincibilityDuration}ms`);
+        
+        setTimeout(() => {
+            if (player && player.invincible) {
+                console.log('Hard timeout: Forcing hyperspace invincibility to end');
+                player.forceEndInvincibility();
+            }
+        }, invincibilityDuration);
     }
 
     /**

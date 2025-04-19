@@ -436,9 +436,19 @@ class Player {
     this.velocityX *= 0.5;
     this.velocityY *= 0.5;
     
-    // Apply invincibility
+    // Apply invincibility - use the same safe approach as reset()
+    // Get invincibility time from settings with a fallback value of 3000ms (3 seconds)
+    const invincibilityTime = typeof PLAYER_SETTINGS.INVINCIBILITY_TIME !== 'undefined' 
+                            ? PLAYER_SETTINGS.INVINCIBILITY_TIME 
+                            : 3000;
+    
+    console.log("Using hyperspace invincibility time:", invincibilityTime, "ms");
+    
     this.invincible = true;
-    this.invincibilityTime = PLAYER_SETTINGS.INVINCIBILITY_TIME;
+    this.invincibilityTime = invincibilityTime;
+    
+    // Reset the global invincibility check timer when entering hyperspace
+    window._lastInvincibilityCheck = Date.now();
     
     // Reset hyperspace state after a short delay
     setTimeout(() => {
