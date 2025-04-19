@@ -688,8 +688,8 @@ export class GameController {
                                     }
                                     
                                     // Add a hard timeout to ensure invincibility ends
-                                    // Add 500ms buffer to the expected invincibility time
-                                    const invincibilityDuration = PLAYER_SETTINGS.INVINCIBILITY_TIME + 500;
+                                    // Use a fixed value of 3500ms (3s + 500ms buffer)
+                                    const invincibilityDuration = 3500; // Fixed value
                                     console.log(`Setting hard timeout to end invincibility after ${invincibilityDuration}ms`);
                                     
                                     setTimeout(() => {

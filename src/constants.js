@@ -20,7 +20,8 @@ export const PLAYER_SETTINGS = {
   ROTATION_SPEED: 5,        // Rotation speed in radians per second
   ACCELERATION: 300,        // Acceleration in pixels per second squared
   FRICTION: 0.98,           // Friction coefficient (1 = no friction)
-  SHOOT_COOLDOWN: 200       // Cooldown between shots in milliseconds
+  SHOOT_COOLDOWN: 200,      // Cooldown between shots in milliseconds
+  INVINCIBILITY_TIME: 3000  // Invincibility time after reset in milliseconds
 };
 
 // Bullet settings

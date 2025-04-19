@@ -377,14 +377,21 @@ class Player {
     // Make player temporarily invincible - track values before and after
     console.log("Before reset: invincible =", this.invincible, "invincibilityTime =", this.invincibilityTime);
     
+    // Get invincibility time from settings with a fallback value of 3000ms (3 seconds)
+    const invincibilityTime = typeof PLAYER_SETTINGS.INVINCIBILITY_TIME !== 'undefined' 
+                              ? PLAYER_SETTINGS.INVINCIBILITY_TIME 
+                              : 3000;
+    
+    console.log("Using invincibility time:", invincibilityTime, "ms");
+    
     this.invincible = true;
-    this.invincibilityTime = PLAYER_SETTINGS.INVINCIBILITY_TIME;
+    this.invincibilityTime = invincibilityTime;
     
     // Reset the global invincibility check timer when resetting a player
     window._lastInvincibilityCheck = Date.now();
     
     console.log("Player reset complete, invincibility active for " + 
-               (PLAYER_SETTINGS.INVINCIBILITY_TIME/1000).toFixed(1) + " seconds");
+               (this.invincibilityTime/1000).toFixed(1) + " seconds");
     console.log("After reset: invincible =", this.invincible, "invincibilityTime =", this.invincibilityTime);
   }
   
