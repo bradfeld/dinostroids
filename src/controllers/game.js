@@ -15,6 +15,7 @@ import Asteroid from '../entities/asteroid.js';
 import Bullet from '../entities/bullet.js';
 import { drawGameStatus } from '../ui/gameStatus.js';
 import { drawGameOver, handleGameOverKeyInput, activateInput, onRestart, setRedrawCallback, onSubmitScore, setupGameOverEvents } from '../ui/gameOver.js';
+import { setupMobileGameOverEvents, onMobileRestart, forceShowMobileStartScreen } from '../ui/mobileGameOver.js';
 import { drawLeaderboard } from '../ui/leaderboard.js';
 import { formatTime, randomInt } from '../utils.js';
 import { drawStartScreen } from '../ui/startScreen.js';
@@ -839,18 +840,16 @@ export class GameController {
         // Setup appropriate event handlers based on device type
         const isMobile = isMobilePhone();
         
-        // Handle mobile differently - use direct event handler
         if (isMobile) {
             if (!isHighScore) {
-                // For mobile, use a minimal direct handler with no callbacks
-                canvas.addEventListener('touchstart', (e) => {
-                    // Remove self immediately
-                    canvas.removeEventListener('touchstart', e.currentTarget);
-                    e.preventDefault();
-                    
-                    // Force a complete refresh to start screen
-                    this.forceShowStartScreenMobile();
-                }, { passive: false, once: true }); // Use once:true to ensure it only fires once
+                // Set up mobile restart callback
+                onMobileRestart(() => {
+                    // Use the force show start screen function for mobile
+                    forceShowMobileStartScreen(this);
+                });
+                
+                // Set up the mobile game over touch event
+                setupMobileGameOverEvents(canvas, true); // Use once:true option
             } else {
                 // High score case - use the regular system
                 setupGameOverEvents(canvas);
@@ -1453,126 +1452,6 @@ export class GameController {
                 console.error("Error drawing mobile controls:", err);
             }
         }
-    }
-
-    /**
-     * Special method to completely end the game and return to start screen
-     * Used for mobile game over handling
-     */
-    endGameAndReturnToStart() {
-        console.log("Ending game and returning to start screen from game over");
-        
-        // Cancel any animation frames
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null;
-        }
-        
-        // Clean up mobile controls if they exist
-        if (this.mobileControls) {
-            this.mobileControls.cleanup();
-            this.mobileControls = null;
-        }
-        
-        // Fully reset game state
-        isGameOver = false;
-        isGameStarted = false;
-        gameRunning = false;
-        isPaused = false;
-        isHelpScreenVisible = false;
-        
-        // Clean up all entities
-        player = null;
-        asteroids = [];
-        bullets = [];
-        
-        // Clear any animation frames
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null;
-        }
-        
-        // Reset input handlers
-        this.cleanupInputHandlers();
-        
-        // Use a small timeout to ensure everything is reset
-        setTimeout(() => {
-            // Reset game controller reference
-            resetGameControllerRef(this);
-            
-            // Re-initialize input
-            const { canvas } = getCanvas();
-            initInput(canvas, this);
-            
-            // Show the start screen
-            this.showStartScreen();
-        }, 100);
-    }
-
-    /**
-     * Dedicated method to force a clean start screen for mobile
-     * This is a simplified approach that directly redraws the start screen
-     */
-    forceShowStartScreenMobile() {
-        console.log("FORCE SHOWING START SCREEN FOR MOBILE");
-        
-        // Kill ALL animation frames
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null;
-        }
-        
-        // Kill ALL timers
-        const highestTimeoutId = setTimeout(";");
-        for (let i = 0; i < highestTimeoutId; i++) {
-            clearTimeout(i);
-        }
-        
-        // Reset ALL game state
-        isGameStarted = false;
-        isGameOver = false;
-        gameRunning = false;
-        isPaused = false;
-        isHelpScreenVisible = false;
-        
-        // Clear ALL entities
-        player = null;
-        asteroids = [];
-        bullets = [];
-        
-        // Clean up ALL mobile controls if they exist
-        if (this.mobileControls) {
-            this.mobileControls.cleanup();
-            this.mobileControls = null;
-        }
-        
-        // Clean up ALL input handlers
-        this.cleanupInputHandlers();
-        onStart(null);
-        onHelp(null);
-        onEscape(null);
-        onDifficulty(null);
-        onPause(null);
-        cleanupInput();
-        
-        // Get a fresh canvas
-        const { canvas, ctx } = getCanvas();
-        
-        // Clear screen
-        clear('black');
-        
-        // Reset controller reference and input BEFORE drawing
-        resetGameControllerRef(this);
-        initInput(canvas, this);
-        
-        // Set up handlers again
-        this.setupInputHandlers();
-        
-        // Draw the start screen directly
-        drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
-        
-        // Create fresh mobile controls at the end
-        this.mobileControls = new MobileControls(canvas, this);
     }
 }
 
