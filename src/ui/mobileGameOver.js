@@ -9,35 +9,84 @@ import { getCanvas } from '../canvas.js';
 import { resetGameControllerRef, initInput } from '../controllers/input.js';
 import { handleGameOverKeyInput } from './gameOver.js';
 
+// Store the current game controller reference globally
+let currentGameController = null;
+
 /**
- * Set up the mobile game over screen with a simple touch-to-restart behavior
+ * Touch handler for game over screen
+ * Defined outside of setup function to maintain consistent reference
+ */
+function handleTouchRestart(event) {
+  // Prevent default behavior
+  event.preventDefault();
+  
+  // Only proceed if we have a valid controller
+  if (currentGameController) {
+    // Remove event listeners to prevent multiple calls
+    const { canvas } = getCanvas();
+    canvas.removeEventListener('touchstart', handleTouchRestart, { capture: true });
+    document.body.removeEventListener('touchstart', handleBodyTouchRestart, { capture: true });
+    
+    // Reset and return to start screen
+    resetToStartScreen(currentGameController);
+  }
+}
+
+/**
+ * Alternative touch handler attached to body as fallback
+ */
+function handleBodyTouchRestart(event) {
+  // If this is triggered and we have a valid controller in game over state
+  if (currentGameController && currentGameController.isGameOver) {
+    // Prevent default
+    event.preventDefault();
+    
+    // Remove all event listeners
+    const { canvas } = getCanvas();
+    canvas.removeEventListener('touchstart', handleTouchRestart, { capture: true });
+    document.body.removeEventListener('touchstart', handleBodyTouchRestart, { capture: true });
+    
+    // Reset and return to start screen
+    resetToStartScreen(currentGameController);
+  }
+}
+
+/**
+ * Set up the mobile game over screen with touch-to-restart behavior
  * @param {Object} gameController - Reference to the game controller
  */
 export function setupMobileGameOver(gameController) {
-  console.log("Setting up mobile game over screen");
+  // Store the controller reference globally
+  currentGameController = gameController;
   
-  // Get canvas for touch events
-  const { canvas } = getCanvas();
-  
-  // Clean up any existing touch events
-  canvas.removeEventListener('touchstart', handleTouchRestart);
-  
-  // Create a handler with the game controller in closure
-  function handleTouchRestart(event) {
-    // Prevent default to avoid scrolling/zooming
-    event.preventDefault();
+  // Set up touch events with a small delay to ensure DOM is ready
+  setTimeout(() => {
+    const { canvas } = getCanvas();
     
-    // Remove the event listener immediately to prevent multiple calls
-    canvas.removeEventListener('touchstart', handleTouchRestart);
+    // Clean up any existing touch events
+    canvas.removeEventListener('touchstart', handleTouchRestart, { capture: true });
+    document.body.removeEventListener('touchstart', handleBodyTouchRestart, { capture: true });
     
-    console.log("Mobile game over screen touched - returning to start");
+    // Add new event listeners with capture to ensure they get priority
+    canvas.addEventListener('touchstart', handleTouchRestart, { 
+      passive: false,
+      capture: true 
+    });
     
-    // Reset and return to start screen (follow desktop flow)
-    resetToStartScreen(gameController);
-  }
-  
-  // Add the touch event listener
-  canvas.addEventListener('touchstart', handleTouchRestart, { passive: false });
+    // Add a fallback listener to document.body
+    document.body.addEventListener('touchstart', handleBodyTouchRestart, {
+      passive: false,
+      capture: true
+    });
+    
+    // Add a fallback click handler (helps on some devices)
+    canvas.addEventListener('click', function clickHandler() {
+      if (currentGameController && currentGameController.isGameOver) {
+        canvas.removeEventListener('click', clickHandler);
+        resetToStartScreen(currentGameController);
+      }
+    }, { capture: true });
+  }, 100);
 }
 
 /**
@@ -46,8 +95,6 @@ export function setupMobileGameOver(gameController) {
  * @param {Object} gameController - Reference to the game controller
  */
 function resetToStartScreen(gameController) {
-  console.log("Resetting game state and returning to start screen");
-  
   // Remove any game over listeners (parallel to desktop version)
   document.removeEventListener('keydown', handleGameOverKeyInput);
   
@@ -68,6 +115,9 @@ function resetToStartScreen(gameController) {
   // Re-initialize input system with the current game controller
   const { canvas } = getCanvas();
   initInput(canvas, gameController);
+  
+  // Clear the global reference
+  currentGameController = null;
   
   // Use the game controller's showStartScreen method for consistency
   gameController.showStartScreen();
