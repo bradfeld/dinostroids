@@ -47,9 +47,9 @@ function drawRestartButton(ctx) {
     buttonProps.height
   );
   
-  // Button text
+  // Button text - smaller font size to fit within button
   ctx.fillStyle = 'white';
-  ctx.font = 'bold 24px Arial';
+  ctx.font = 'bold 20px Arial'; // Reduced from 24px to 20px
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(
@@ -109,9 +109,9 @@ function handleButtonTouch(event) {
         buttonProps.width, buttonProps.height
       );
       
-      // Draw text in black for contrast
+      // Draw text in black for contrast - also with smaller font
       ctx.fillStyle = 'black';
-      ctx.font = 'bold 24px Arial';
+      ctx.font = 'bold 20px Arial'; // Reduced from 24px to 20px
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(
