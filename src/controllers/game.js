@@ -8,7 +8,7 @@
 import { initCanvas, resizeToWindow, getCanvas, clear, getDimensions } from '../canvas.js';
 import { fetchGamesPlayed, fetchLeaderboard, submitScore, incrementGamesPlayed } from '../services/api.js';
 import { preloadImages } from '../services/images.js';
-import { initInput, onStart, onHelp, isKeyPressed, onEscape, onDifficulty, onPause } from './input.js';
+import { initInput, onStart, onHelp, isKeyPressed, onEscape, onDifficulty, onPause, resetGameControllerRef } from './input.js';
 import { GAME_SETTINGS, PLAYER_SETTINGS, ASTEROID_SETTINGS, DIFFICULTY_SETTINGS } from '../constants.js';
 import Player from '../entities/player.js';
 import Asteroid from '../entities/asteroid.js';
@@ -868,7 +868,9 @@ export class GameController {
                         animationFrameId = null;
                     }
                     
-                    // Show the start screen after submitting score
+                    // Reset game controller reference for input system
+                    resetGameControllerRef(this);
+                    
                     this.showStartScreen();
                 } catch (error) {
                     console.error("Failed to submit score:", error);
@@ -882,6 +884,9 @@ export class GameController {
                         cancelAnimationFrame(animationFrameId);
                         animationFrameId = null;
                     }
+                    
+                    // Reset game controller reference for input system
+                    resetGameControllerRef(this);
                     
                     this.showStartScreen();
                 }
@@ -905,6 +910,9 @@ export class GameController {
                     cancelAnimationFrame(animationFrameId);
                     animationFrameId = null;
                 }
+                
+                // Reset game controller reference for input system
+                resetGameControllerRef(this);
                 
                 // Show the start screen
                 this.showStartScreen();

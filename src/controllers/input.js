@@ -288,3 +288,15 @@ export function cleanupInput() {
         touchEndHandler = null;
     }
 }
+
+/**
+ * Reset the game controller reference
+ * This is needed when returning to the start screen from game over
+ * @param {Object} gameController - The game controller instance
+ */
+export function resetGameControllerRef(gameController) {
+    console.log("Resetting game controller reference for input system");
+    if (gameController) {
+        gameControllerRef = gameController;
+    }
+}
