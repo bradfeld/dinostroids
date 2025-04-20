@@ -15,7 +15,7 @@ import Asteroid from '../entities/asteroid.js';
 import Bullet from '../entities/bullet.js';
 import { drawGameStatus } from '../ui/gameStatus.js';
 import { drawGameOver, handleGameOverKeyInput, activateInput, onRestart, setRedrawCallback, onSubmitScore, setupGameOverEvents } from '../ui/gameOver.js';
-import { setupMobileGameOver } from '../ui/mobileGameOver.js';
+import { setupMobileGameOver, onMobileRestart } from '../ui/mobileGameOver.js';
 import { drawLeaderboard } from '../ui/leaderboard.js';
 import { formatTime, randomInt } from '../utils.js';
 import { drawStartScreen } from '../ui/startScreen.js';
@@ -844,6 +844,33 @@ export class GameController {
             if (!isHighScore) {
                 // Use the simplified mobile game over handler
                 setupMobileGameOver(this);
+                
+                // Set up restart callback for mobile, matching desktop pattern
+                onMobileRestart(() => {
+                    // Remove the game over keyboard handler to prevent duplicates
+                    document.removeEventListener('keydown', handleGameOverKeyInput);
+                    
+                    // Reset game state
+                    isGameOver = false;
+                    isGameStarted = false;
+                    
+                    // Clean up
+                    this.cleanupInputHandlers();
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    
+                    // Reset game controller reference for input system
+                    resetGameControllerRef(this);
+                    
+                    // Re-initialize input system with the current game controller
+                    const { canvas } = getCanvas();
+                    initInput(canvas, this);
+                    
+                    // Show the start screen
+                    this.showStartScreen();
+                });
             } else {
                 // High score case - use the regular system
                 setupGameOverEvents(canvas);

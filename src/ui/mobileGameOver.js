@@ -8,8 +8,8 @@ import { getCanvas, clear } from '../canvas.js';
 import { resetGameControllerRef, initInput } from '../controllers/input.js';
 import { handleGameOverKeyInput } from './gameOver.js';
 
-// Store the current game controller reference
-let currentGameController = null;
+// Store the restart callback - matching desktop pattern
+let restartCallback = null;
 
 // Button properties
 const buttonProps = {
@@ -122,12 +122,12 @@ function handleButtonTouch(event) {
       
       ctx.restore();
       
-      // Reset and go to start screen with slight delay for visual feedback
-      setTimeout(() => {
-        if (currentGameController) {
-          resetToStartScreen(currentGameController);
-        }
-      }, 150);
+      // Execute the restart callback with a slight delay for visual feedback
+      if (restartCallback) {
+        setTimeout(() => {
+          restartCallback();
+        }, 150);
+      }
     }
   }
 }
@@ -137,9 +137,6 @@ function handleButtonTouch(event) {
  * @param {Object} gameController - Reference to the game controller
  */
 export function setupMobileGameOver(gameController) {
-  // Store controller reference
-  currentGameController = gameController;
-  
   // Get canvas context
   const { canvas, ctx } = getCanvas();
   
@@ -154,34 +151,10 @@ export function setupMobileGameOver(gameController) {
 }
 
 /**
- * Reset game state and return to start screen
- * @param {Object} gameController - Reference to the game controller
+ * Set the callback for mobile game restart
+ * Follows the same pattern as the desktop version
+ * @param {Function} callback - Function to call when the button is touched
  */
-function resetToStartScreen(gameController) {
-  // Remove any game over listeners
-  document.removeEventListener('keydown', handleGameOverKeyInput);
-  
-  // Reset game state flags
-  gameController.isGameOver = false;
-  gameController.isGameStarted = false;
-  
-  // Clean up
-  gameController.cleanupInputHandlers();
-  if (gameController.animationFrameId) {
-    cancelAnimationFrame(gameController.animationFrameId);
-    gameController.animationFrameId = null;
-  }
-  
-  // Reset game controller reference for input system
-  resetGameControllerRef(gameController);
-  
-  // Re-initialize input system with the current game controller
-  const { canvas } = getCanvas();
-  initInput(canvas, gameController);
-  
-  // Clear the global reference
-  currentGameController = null;
-  
-  // Use the game controller's showStartScreen method for consistency
-  gameController.showStartScreen();
+export function onMobileRestart(callback) {
+  restartCallback = callback;
 } 
