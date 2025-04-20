@@ -15,7 +15,7 @@ import Asteroid from '../entities/asteroid.js';
 import Bullet from '../entities/bullet.js';
 import { drawGameStatus } from '../ui/gameStatus.js';
 import { drawGameOver, handleGameOverKeyInput, activateInput, onRestart, setRedrawCallback, onSubmitScore, setupGameOverEvents } from '../ui/gameOver.js';
-import { setupMobileGameOverEvents, onMobileRestart, forceShowMobileStartScreen } from '../ui/mobileGameOver.js';
+import { setupMobileGameOver } from '../ui/mobileGameOver.js';
 import { drawLeaderboard } from '../ui/leaderboard.js';
 import { formatTime, randomInt } from '../utils.js';
 import { drawStartScreen } from '../ui/startScreen.js';
@@ -842,14 +842,8 @@ export class GameController {
         
         if (isMobile) {
             if (!isHighScore) {
-                // Set up mobile restart callback
-                onMobileRestart(() => {
-                    // Use the force show start screen function for mobile
-                    forceShowMobileStartScreen(this);
-                });
-                
-                // Set up the mobile game over touch event
-                setupMobileGameOverEvents(canvas, true); // Use once:true option
+                // Use the simplified mobile game over handler
+                setupMobileGameOver(this);
             } else {
                 // High score case - use the regular system
                 setupGameOverEvents(canvas);
