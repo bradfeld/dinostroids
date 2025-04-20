@@ -829,11 +829,9 @@ export class GameController {
         
         if (isMobile) {
             // Set up touch events for mobile devices
-            console.log("Setting up mobile touch controls for game over screen");
             setupGameOverEvents(canvas);
         } else {
             // Add keyboard handler for desktop
-            console.log("Setting up keyboard controls for game over screen");
             document.addEventListener('keydown', handleGameOverKeyInput);
         }
         
@@ -902,7 +900,6 @@ export class GameController {
         } else {
             // Set up the restart handler to return to start screen (for non-high scores)
             onRestart(() => {
-                console.log("Restart callback triggered from game over screen");
                 // Remove the game over keyboard handler to prevent duplicates
                 document.removeEventListener('keydown', handleGameOverKeyInput);
                 
@@ -930,10 +927,8 @@ export class GameController {
                 this.showStartScreen();
             });
             
-            // Make sure touch handlers are set up for the game over screen on mobile
-            if (isMobilePhone()) {
-                console.log("Setting up mobile touch handlers for game over screen");
-                const { canvas } = getCanvas();
+            // Ensure touch handlers are properly set up on mobile AFTER setting restart callback
+            if (isMobile) {
                 setupGameOverEvents(canvas);
             }
         }

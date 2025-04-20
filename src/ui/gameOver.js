@@ -223,7 +223,7 @@ export function activateInput() {
  * @param {HTMLCanvasElement} canvas - The canvas element to attach events to
  */
 export function setupGameOverEvents(canvas) {
-    // Remove any existing touch event listeners to prevent duplicates
+    // Always remove existing touch events first
     if (touchEventAdded) {
         canvas.removeEventListener('touchstart', handleGameOverTouchInput);
         touchEventAdded = false;
@@ -232,8 +232,6 @@ export function setupGameOverEvents(canvas) {
     // Add touch event listener for mobile devices
     canvas.addEventListener('touchstart', handleGameOverTouchInput, { passive: false });
     touchEventAdded = true;
-    
-    console.log("Game over touch events initialized");
 }
 
 /**
@@ -249,5 +247,16 @@ export function onSubmitScore(callback) {
  * @param {Function} callback - Function to call when game is restarted
  */
 export function onRestart(callback) {
+    // Store the restart callback
     restartCallback = callback;
+    
+    // When restart callback is set, make sure touch events are reconnected if needed
+    if (touchEventAdded && callback) {
+        const canvas = document.querySelector('canvas');
+        if (canvas) {
+            // Remove and re-add touch event to ensure it uses the new callback
+            canvas.removeEventListener('touchstart', handleGameOverTouchInput);
+            canvas.addEventListener('touchstart', handleGameOverTouchInput, { passive: false });
+        }
+    }
 } 
