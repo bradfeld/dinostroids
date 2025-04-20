@@ -123,10 +123,15 @@ export function handleGameOverTouchInput(event) {
     // Prevent default behavior to avoid scrolling/zooming
     event.preventDefault();
     
+    console.log("Touch detected on game over screen, inputActive:", inputActive);
+    
     // If this is for high score input, we'll handle it differently in the future
     // For now, we'll just use touch for restarting the game
     if (!inputActive && restartCallback) {
+        console.log("Calling restart callback from touch handler");
         restartCallback();
+    } else {
+        console.log("Touch detected but no action taken. inputActive:", inputActive, "restartCallback exists:", !!restartCallback);
     }
 }
 
