@@ -854,38 +854,9 @@ export class GameController {
                     // Prevent default
                     e.preventDefault();
                     
-                    // Reset everything
-                    isGameOver = false;
-                    isGameStarted = false;
-                    gameRunning = false;
-                    
-                    // Clean up any animations
-                    if (animationFrameId) {
-                        cancelAnimationFrame(animationFrameId);
-                        animationFrameId = null;
-                    }
-                    
-                    // Clean up mobile controls if they exist
-                    if (gameController.mobileControls) {
-                        gameController.mobileControls.cleanup();
-                        gameController.mobileControls = null;
-                    }
-                    
-                    // Reset game controller reference
-                    resetGameControllerRef(gameController);
-                    
-                    // Re-initialize input system
-                    initInput(canvas, gameController);
-                    
-                    // IMPORTANT: Force redraw the start screen immediately
-                    clear('black');
-                    const ctx = canvas.getContext('2d');
-                    drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
-                    
-                    // Set up fresh mobile controls
-                    if (isMobilePhone()) {
-                        gameController.mobileControls = new MobileControls(canvas, gameController);
-                    }
+                    // Use a clean endGame approach instead of manual state changes
+                    // This ensures we fully reset the game state
+                    gameController.endGameAndReturnToStart();
                 };
                 
                 // Add the touch handler immediately - no delay needed
@@ -1492,6 +1463,60 @@ export class GameController {
                 console.error("Error drawing mobile controls:", err);
             }
         }
+    }
+
+    /**
+     * Special method to completely end the game and return to start screen
+     * Used for mobile game over handling
+     */
+    endGameAndReturnToStart() {
+        console.log("Ending game and returning to start screen from game over");
+        
+        // Cancel any animation frames
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+        
+        // Clean up mobile controls if they exist
+        if (this.mobileControls) {
+            this.mobileControls.cleanup();
+            this.mobileControls = null;
+        }
+        
+        // Fully reset game state
+        isGameOver = false;
+        isGameStarted = false;
+        gameRunning = false;
+        isPaused = false;
+        isHelpScreenVisible = false;
+        
+        // Clean up all entities
+        player = null;
+        asteroids = [];
+        bullets = [];
+        
+        // Clear any animation frames
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+        
+        // Reset input handlers
+        this.cleanupInputHandlers();
+        
+        // Use a small timeout to ensure everything is reset
+        setTimeout(() => {
+            // Reset game controller reference
+            resetGameControllerRef(this);
+            
+            // Re-initialize input
+            const { canvas } = getCanvas();
+            initInput(canvas, this);
+            
+            // Show the start screen
+            this.showStartScreen();
+        }, 100);
     }
 }
 
