@@ -16,7 +16,6 @@ let submitCallback = null;
 let restartCallback = null;
 let redrawCallback = null; // Function to redraw the screen after input changes
 let redrawIntervalId = null; // Interval ID for forced redraw
-let touchEventAdded = false; // Track if touch event is already added
 
 /**
  * Draw the game over screen
@@ -50,11 +49,8 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
         ctx.font = '24px Arial';
         ctx.fillText('New High Score!', width / 2, height / 4 + 100);
         
-        // Different instructions for mobile vs desktop
-        if (isMobile) {
-            ctx.fillText('Enter your initials (3 letters max):', width / 2, height / 4 + 140);
-            // TODO: Add on-screen keyboard for mobile in the future
-        } else {
+        // Only desktop initials input instructions - mobile handled in mobileGameOver.js
+        if (!isMobile) {
             ctx.fillText('Enter your initials (up to 3 letters):', width / 2, height / 4 + 140);
         }
         
@@ -70,20 +66,15 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
         ctx.clearRect(width / 2 - 100, height / 4 + 170, 200, 60);
         ctx.fillText(displayText, width / 2, height / 4 + 200);
         
-        // Add instructions for submission
+        // Add instructions for submission - desktop only
         ctx.font = '16px Arial';
-        if (isMobile) {
-            ctx.fillText('Tap ENTER when done or type up to 3 letters', width / 2, height / 4 + 240);
-        } else {
+        if (!isMobile) {
             ctx.fillText('Press ENTER when done or type up to 3 letters', width / 2, height / 4 + 240);
         }
     } else {
-        // Draw restart prompt - different for mobile vs desktop
+        // Draw restart prompt - desktop only now
         ctx.font = '24px Arial';
-        if (isMobile) {
-            // No longer needed as we have a visual button now
-            // ctx.fillText('Touch the screen to play again', width / 2, height / 4 + 120);
-        } else {
+        if (!isMobile) {
             ctx.fillText('Press SPACE to play again', width / 2, height / 4 + 120);
         }
     }
@@ -114,30 +105,6 @@ function isNewHighScore(score, leaderboard) {
  */
 export function setRedrawCallback(callback) {
     redrawCallback = callback;
-}
-
-/**
- * Handle touch input for the game over screen
- * @param {TouchEvent} event - The touch event
- */
-export function handleGameOverTouchInput(event) {
-    // Prevent default behavior to avoid scrolling/zooming
-    event.preventDefault();
-    
-    // For mobile, we simplify the logic to always restart the game on touch
-    // unless we're in high score input mode
-    if (inputActive) {
-        // In future we'll add on-screen keyboard for high scores
-        return;
-    }
-    
-    // Force execute the restart callback
-    if (restartCallback) {
-        // Create a small delay to ensure touch is registered
-        setTimeout(() => {
-            restartCallback();
-        }, 50);
-    }
 }
 
 /**
@@ -224,22 +191,6 @@ export function activateInput() {
 }
 
 /**
- * Set up event listeners for the game over screen
- * @param {HTMLCanvasElement} canvas - The canvas element to attach events to
- */
-export function setupGameOverEvents(canvas) {
-    // Always remove existing touch events first
-    if (touchEventAdded) {
-        canvas.removeEventListener('touchstart', handleGameOverTouchInput);
-        touchEventAdded = false;
-    }
-    
-    // Add touch event listener for mobile devices
-    canvas.addEventListener('touchstart', handleGameOverTouchInput, { passive: false });
-    touchEventAdded = true;
-}
-
-/**
  * Set the callback for score submission
  * @param {Function} callback - Function to call when score is submitted
  */
@@ -254,14 +205,4 @@ export function onSubmitScore(callback) {
 export function onRestart(callback) {
     // Store the restart callback
     restartCallback = callback;
-    
-    // When restart callback is set, make sure touch events are reconnected if needed
-    if (touchEventAdded && callback) {
-        const canvas = document.querySelector('canvas');
-        if (canvas) {
-            // Remove and re-add touch event to ensure it uses the new callback
-            canvas.removeEventListener('touchstart', handleGameOverTouchInput);
-            canvas.addEventListener('touchstart', handleGameOverTouchInput, { passive: false });
-        }
-    }
 } 
