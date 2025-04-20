@@ -839,44 +839,57 @@ export class GameController {
         // Setup appropriate event handlers based on device type
         const isMobile = isMobilePhone();
         
-        // Always set up the restart handler first for mobile
+        // Handle mobile differently - use direct event handler
         if (isMobile) {
-            // Set up the restart handler first, before touch events
             if (!isHighScore) {
-                onRestart(() => {
-                    // Reset game state
+                // For mobile, directly attach a touch event handler
+                // Store reference to current context for use in callback
+                const gameController = this;
+                
+                // Define a one-time touch handler
+                const handleTouchRestart = function(e) {
+                    // Remove this handler immediately to prevent multiple calls
+                    canvas.removeEventListener('touchstart', handleTouchRestart);
+                    
+                    // Prevent default
+                    e.preventDefault();
+                    
+                    // Reset everything
                     isGameOver = false;
                     isGameStarted = false;
                     
-                    // Clean up
-                    this.cleanupInputHandlers();
+                    // Clean up any animations
                     if (animationFrameId) {
                         cancelAnimationFrame(animationFrameId);
                         animationFrameId = null;
                     }
                     
                     // Clean up mobile controls if they exist
-                    if (this.mobileControls) {
-                        this.mobileControls.cleanup();
-                        this.mobileControls = null;
+                    if (gameController.mobileControls) {
+                        gameController.mobileControls.cleanup();
+                        gameController.mobileControls = null;
                     }
                     
-                    // Reset game controller reference for input system
-                    resetGameControllerRef(this);
+                    // Reset the game controller reference
+                    resetGameControllerRef(gameController);
                     
-                    // Re-initialize input system with the current game controller
-                    const { canvas } = getCanvas();
-                    initInput(canvas, this);
+                    // Re-initialize input system
+                    initInput(canvas, gameController);
                     
-                    // Show the start screen with clean state
-                    this.showStartScreen();
-                });
+                    // Go back to start screen
+                    gameController.showStartScreen();
+                };
+                
+                // Add the touch handler with a slight delay to prevent immediate triggering
+                setTimeout(() => {
+                    canvas.addEventListener('touchstart', handleTouchRestart, { passive: false });
+                }, 500);
+            } else {
+                // High score case - use the regular system
+                setupGameOverEvents(canvas);
             }
-            
-            // Now set up the touch events after the restart handler is defined
-            setupGameOverEvents(canvas);
         } else {
-            // Add keyboard handler for desktop
+            // Desktop - add keyboard handler
             document.addEventListener('keydown', handleGameOverKeyInput);
             
             // Set up restart handler for desktop non-high score games
