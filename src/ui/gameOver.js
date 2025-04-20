@@ -205,4 +205,14 @@ export function onSubmitScore(callback) {
 export function onRestart(callback) {
     // Store the restart callback
     restartCallback = callback;
+}
+
+/**
+ * Set up event listeners for the game over screen
+ * This is kept for compatibility, but mobile handling is now in mobileGameOver.js
+ * @param {HTMLCanvasElement} canvas - The canvas element to attach events to
+ */
+export function setupGameOverEvents(canvas) {
+    // No longer does anything for mobile
+    // Mobile game over is handled by mobileGameOver.js
 } 
