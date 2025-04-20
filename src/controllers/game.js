@@ -860,6 +860,35 @@ export class GameController {
         } else {
             // Add keyboard handler for desktop
             document.addEventListener('keydown', handleGameOverKeyInput);
+            
+            // Set up restart handler for desktop non-high score games
+            if (!isHighScore) {
+                onRestart(() => {
+                    // Remove the game over keyboard handler to prevent duplicates
+                    document.removeEventListener('keydown', handleGameOverKeyInput);
+                    
+                    // Reset game state
+                    isGameOver = false;
+                    isGameStarted = false;
+                    
+                    // Clean up
+                    this.cleanupInputHandlers();
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    
+                    // Reset game controller reference for input system
+                    resetGameControllerRef(this);
+                    
+                    // Re-initialize input system with the current game controller
+                    const { canvas } = getCanvas();
+                    initInput(canvas, this);
+                    
+                    // Show the start screen
+                    this.showStartScreen();
+                });
+            }
         }
         
         if (isHighScore) {
