@@ -857,6 +857,7 @@ export class GameController {
                     // Reset everything
                     isGameOver = false;
                     isGameStarted = false;
+                    gameRunning = false;
                     
                     // Clean up any animations
                     if (animationFrameId) {
@@ -870,20 +871,25 @@ export class GameController {
                         gameController.mobileControls = null;
                     }
                     
-                    // Reset the game controller reference
+                    // Reset game controller reference
                     resetGameControllerRef(gameController);
                     
                     // Re-initialize input system
                     initInput(canvas, gameController);
                     
-                    // Go back to start screen
-                    gameController.showStartScreen();
+                    // IMPORTANT: Force redraw the start screen immediately
+                    clear('black');
+                    const ctx = canvas.getContext('2d');
+                    drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
+                    
+                    // Set up fresh mobile controls
+                    if (isMobilePhone()) {
+                        gameController.mobileControls = new MobileControls(canvas, gameController);
+                    }
                 };
                 
-                // Add the touch handler with a slight delay to prevent immediate triggering
-                setTimeout(() => {
-                    canvas.addEventListener('touchstart', handleTouchRestart, { passive: false });
-                }, 500);
+                // Add the touch handler immediately - no delay needed
+                canvas.addEventListener('touchstart', handleTouchRestart, { passive: false });
             } else {
                 // High score case - use the regular system
                 setupGameOverEvents(canvas);
