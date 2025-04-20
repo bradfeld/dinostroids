@@ -827,8 +827,35 @@ export class GameController {
         // Setup appropriate event handlers based on device type
         const isMobile = isMobilePhone();
         
+        // Always set up the restart handler first for mobile
         if (isMobile) {
-            // Set up touch events for mobile devices
+            // Set up the restart handler first, before touch events
+            if (!isHighScore) {
+                onRestart(() => {
+                    // Reset game state
+                    isGameOver = false;
+                    isGameStarted = false;
+                    
+                    // Clean up
+                    this.cleanupInputHandlers();
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    
+                    // Reset game controller reference for input system
+                    resetGameControllerRef(this);
+                    
+                    // Re-initialize input system with the current game controller
+                    const { canvas } = getCanvas();
+                    initInput(canvas, this);
+                    
+                    // Show the start screen
+                    this.showStartScreen();
+                });
+            }
+            
+            // Now set up the touch events after the restart handler is defined
             setupGameOverEvents(canvas);
         } else {
             // Add keyboard handler for desktop
@@ -897,40 +924,6 @@ export class GameController {
                     this.showStartScreen();
                 }
             });
-        } else {
-            // Set up the restart handler to return to start screen (for non-high scores)
-            onRestart(() => {
-                // Remove the game over keyboard handler to prevent duplicates
-                document.removeEventListener('keydown', handleGameOverKeyInput);
-                
-                // Reset game over state
-                isGameOver = false;
-                isGameStarted = false;
-                
-                // Clear all key states
-                this.cleanupInputHandlers();
-                
-                // Clear any animation frames to prevent hanging
-                if (animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                    animationFrameId = null;
-                }
-                
-                // Reset game controller reference for input system
-                resetGameControllerRef(this);
-                
-                // Re-initialize input system with the current game controller to ensure touch handlers work
-                const { canvas } = getCanvas();
-                initInput(canvas, this);
-                
-                // Show the start screen
-                this.showStartScreen();
-            });
-            
-            // Ensure touch handlers are properly set up on mobile AFTER setting restart callback
-            if (isMobile) {
-                setupGameOverEvents(canvas);
-            }
         }
     }
 
