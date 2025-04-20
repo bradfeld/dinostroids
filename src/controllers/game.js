@@ -871,6 +871,10 @@ export class GameController {
                     // Reset game controller reference for input system
                     resetGameControllerRef(this);
                     
+                    // Re-initialize input system with the current game controller to ensure touch handlers work
+                    const { canvas } = getCanvas();
+                    initInput(canvas, this);
+                    
                     this.showStartScreen();
                 } catch (error) {
                     console.error("Failed to submit score:", error);
@@ -887,6 +891,10 @@ export class GameController {
                     
                     // Reset game controller reference for input system
                     resetGameControllerRef(this);
+                    
+                    // Re-initialize input system with the current game controller to ensure touch handlers work
+                    const { canvas } = getCanvas();
+                    initInput(canvas, this);
                     
                     this.showStartScreen();
                 }
@@ -913,6 +921,10 @@ export class GameController {
                 
                 // Reset game controller reference for input system
                 resetGameControllerRef(this);
+                
+                // Re-initialize input system with the current game controller to ensure touch handlers work
+                const { canvas } = getCanvas();
+                initInput(canvas, this);
                 
                 // Show the start screen
                 this.showStartScreen();
