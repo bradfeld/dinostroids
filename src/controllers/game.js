@@ -842,25 +842,15 @@ export class GameController {
         // Handle mobile differently - use direct event handler
         if (isMobile) {
             if (!isHighScore) {
-                // For mobile, directly attach a touch event handler
-                // Store reference to current context for use in callback
-                const gameController = this;
-                
-                // Define a one-time touch handler
-                const handleTouchRestart = function(e) {
-                    // Remove this handler immediately to prevent multiple calls
-                    canvas.removeEventListener('touchstart', handleTouchRestart);
-                    
-                    // Prevent default
+                // For mobile, use a minimal direct handler with no callbacks
+                canvas.addEventListener('touchstart', (e) => {
+                    // Remove self immediately
+                    canvas.removeEventListener('touchstart', e.currentTarget);
                     e.preventDefault();
                     
-                    // Use a clean endGame approach instead of manual state changes
-                    // This ensures we fully reset the game state
-                    gameController.endGameAndReturnToStart();
-                };
-                
-                // Add the touch handler immediately - no delay needed
-                canvas.addEventListener('touchstart', handleTouchRestart, { passive: false });
+                    // Force a complete refresh to start screen
+                    this.forceShowStartScreenMobile();
+                }, { passive: false, once: true }); // Use once:true to ensure it only fires once
             } else {
                 // High score case - use the regular system
                 setupGameOverEvents(canvas);
@@ -1517,6 +1507,72 @@ export class GameController {
             // Show the start screen
             this.showStartScreen();
         }, 100);
+    }
+
+    /**
+     * Dedicated method to force a clean start screen for mobile
+     * This is a simplified approach that directly redraws the start screen
+     */
+    forceShowStartScreenMobile() {
+        console.log("FORCE SHOWING START SCREEN FOR MOBILE");
+        
+        // Kill ALL animation frames
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+        
+        // Kill ALL timers
+        const highestTimeoutId = setTimeout(";");
+        for (let i = 0; i < highestTimeoutId; i++) {
+            clearTimeout(i);
+        }
+        
+        // Reset ALL game state
+        isGameStarted = false;
+        isGameOver = false;
+        gameRunning = false;
+        isPaused = false;
+        isHelpScreenVisible = false;
+        
+        // Clear ALL entities
+        player = null;
+        asteroids = [];
+        bullets = [];
+        
+        // Clean up ALL mobile controls if they exist
+        if (this.mobileControls) {
+            this.mobileControls.cleanup();
+            this.mobileControls = null;
+        }
+        
+        // Clean up ALL input handlers
+        this.cleanupInputHandlers();
+        onStart(null);
+        onHelp(null);
+        onEscape(null);
+        onDifficulty(null);
+        onPause(null);
+        cleanupInput();
+        
+        // Get a fresh canvas
+        const { canvas, ctx } = getCanvas();
+        
+        // Clear screen
+        clear('black');
+        
+        // Reset controller reference and input BEFORE drawing
+        resetGameControllerRef(this);
+        initInput(canvas, this);
+        
+        // Set up handlers again
+        this.setupInputHandlers();
+        
+        // Draw the start screen directly
+        drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
+        
+        // Create fresh mobile controls at the end
+        this.mobileControls = new MobileControls(canvas, this);
     }
 }
 
