@@ -81,7 +81,8 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
         // Draw restart prompt - different for mobile vs desktop
         ctx.font = '24px Arial';
         if (isMobile) {
-            ctx.fillText('Touch the screen to play again', width / 2, height / 4 + 120);
+            // No longer needed as we have a visual button now
+            // ctx.fillText('Touch the screen to play again', width / 2, height / 4 + 120);
         } else {
             ctx.fillText('Press SPACE to play again', width / 2, height / 4 + 120);
         }
