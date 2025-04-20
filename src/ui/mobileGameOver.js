@@ -6,9 +6,8 @@
  */
 
 import { getCanvas } from '../canvas.js';
-import { drawStartScreen } from './startScreen.js';
-import { MobileControls } from './mobileControls.js';
 import { resetGameControllerRef, initInput } from '../controllers/input.js';
+import { handleGameOverKeyInput } from './gameOver.js';
 
 /**
  * Set up the mobile game over screen with a simple touch-to-restart behavior
@@ -33,7 +32,7 @@ export function setupMobileGameOver(gameController) {
     
     console.log("Mobile game over screen touched - returning to start");
     
-    // Reset and return to start screen
+    // Reset and return to start screen (follow desktop flow)
     resetToStartScreen(gameController);
   }
   
@@ -43,58 +42,33 @@ export function setupMobileGameOver(gameController) {
 
 /**
  * Reset game state and return to start screen
+ * Matches the desktop flow more closely
  * @param {Object} gameController - Reference to the game controller
  */
 function resetToStartScreen(gameController) {
   console.log("Resetting game state and returning to start screen");
   
-  // Cancel animation frame if it exists
+  // Remove any game over listeners (parallel to desktop version)
+  document.removeEventListener('keydown', handleGameOverKeyInput);
+  
+  // Reset game state flags (match desktop pattern)
+  gameController.isGameOver = false;
+  gameController.isGameStarted = false;
+  
+  // Clean up
+  gameController.cleanupInputHandlers();
   if (gameController.animationFrameId) {
     cancelAnimationFrame(gameController.animationFrameId);
     gameController.animationFrameId = null;
   }
   
-  // Reset game state
-  gameController.isGameStarted = false;
-  gameController.isGameOver = false;
-  gameController.gameRunning = false;
-  gameController.isPaused = false;
-  gameController.isHelpScreenVisible = false;
-  
-  // Clear entities
-  gameController.player = null;
-  gameController.asteroids = [];
-  gameController.bullets = [];
-  
-  // Clean up mobile controls if they exist
-  if (gameController.mobileControls) {
-    gameController.mobileControls.cleanup();
-    gameController.mobileControls = null;
-  }
-  
-  // Clean up input handlers
-  gameController.cleanupInputHandlers();
-  
-  // Get canvas
-  const { canvas, ctx } = getCanvas();
-  
-  // Reset controller reference for input system
+  // Reset game controller reference for input system
   resetGameControllerRef(gameController);
   
-  // Re-initialize input
+  // Re-initialize input system with the current game controller
+  const { canvas } = getCanvas();
   initInput(canvas, gameController);
   
-  // Set up input handlers again
-  gameController.setupInputHandlers();
-  
-  // Create new mobile controls
-  gameController.mobileControls = new MobileControls(canvas, gameController);
-  
-  // Draw the start screen
-  drawStartScreen(
-    ctx, 
-    gameController.currentDifficulty, 
-    gameController.leaderboardData, 
-    gameController.gamesPlayedCount
-  );
+  // Use the game controller's showStartScreen method for consistency
+  gameController.showStartScreen();
 } 
