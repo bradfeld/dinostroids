@@ -97,6 +97,12 @@ export class GameController {
             animationFrameId = null;
         }
         
+        // Clean up mobile controls if they exist
+        if (this.mobileControls) {
+            this.mobileControls.cleanup();
+            this.mobileControls = null;
+        }
+        
         // Clean up event handlers that might be left over
         document.removeEventListener('keydown', handleGameOverKeyInput);
         
@@ -109,6 +115,12 @@ export class GameController {
         
         // Draw start screen with current difficulty and game data
         drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
+        
+        // Set up fresh mobile controls if on mobile
+        if (isMobilePhone()) {
+            const { canvas } = getCanvas();
+            this.mobileControls = new MobileControls(canvas, this);
+        }
     }
 
     /**
@@ -843,6 +855,12 @@ export class GameController {
                         animationFrameId = null;
                     }
                     
+                    // Clean up mobile controls if they exist
+                    if (this.mobileControls) {
+                        this.mobileControls.cleanup();
+                        this.mobileControls = null;
+                    }
+                    
                     // Reset game controller reference for input system
                     resetGameControllerRef(this);
                     
@@ -850,7 +868,7 @@ export class GameController {
                     const { canvas } = getCanvas();
                     initInput(canvas, this);
                     
-                    // Show the start screen
+                    // Show the start screen with clean state
                     this.showStartScreen();
                 });
             }
