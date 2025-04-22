@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Favicon Generator</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    .favicon-container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin: 30px 0;
+    }
+    .favicon {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #ccc;
+      background-color: white;
+    }
+    .favicon-lg {
+      width: 64px;
+      height: 64px;
+    }
+    .instructions {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      border-left: 4px solid #007bff;
+    }
+    code {
+      background-color: #f0f0f0;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 15px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #png-preview {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px dashed #ccc;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dinostroids Favicon Generator</h1>
+  
+  <div class="instructions">
+    <h2>Instructions:</h2>
+    <ol>
+      <li>Click the "Generate PNG Favicon" button below</li>
+      <li>A PNG version will be generated and shown below</li>
+      <li>Click "Download PNG Favicon" to save it</li>
+      <li>Place it in the public directory of your project</li>
+    </ol>
+  </div>
+
+  <div class="favicon-container">
+    <div>
+      <h2>SVG Version (32x32):</h2>
+      <img src="favicon.svg" alt="Favicon" class="favicon" id="favicon">
+    </div>
+    
+    <div>
+      <h2>SVG Version (64x64):</h2>
+      <img src="favicon.svg" alt="Favicon" class="favicon favicon-lg" id="favicon-lg">
+    </div>
+  </div>
+
+  <button id="generate-png">Generate PNG Favicon</button>
+  
+  <div id="png-preview" style="display: none;">
+    <h2>PNG Version:</h2>
+    <img id="png-favicon" alt="PNG Favicon">
+    <div>
+      <button id="download-png">Download PNG Favicon</button>
+    </div>
+  </div>
+
+  <h2>HTML code to add to your index.html:</h2>
+  <pre><code>&lt;link rel="icon" type="image/svg+xml" href="public/favicon.svg"&gt;
+&lt;link rel="alternate icon" type="image/png" href="public/favicon.png"&gt;</code></pre>
+
+  <script>
+    document.getElementById('generate-png').addEventListener('click', function() {
+      // Create a canvas element
+      const canvas = document.createElement('canvas');
+      canvas.width = 32;
+      canvas.height = 32;
+      const ctx = canvas.getContext('2d');
+
+      // Draw black background
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.arc(16, 16, 15, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw dinosaur (simplified version of the SVG)
+      ctx.strokeStyle = '#CCCCCC';
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      ctx.beginPath();
+      // Body and head
+      ctx.moveTo(7, 15);     // Start at back
+      ctx.lineTo(12, 10);    // Up to neck
+      ctx.lineTo(18, 13);    // To middle body
+      ctx.lineTo(25, 10);    // To head
+      ctx.lineTo(26, 13);    // Head tip
+      ctx.lineTo(25, 16);    // Mouth
+      ctx.lineTo(18, 14);    // Back to body
+      ctx.lineTo(12, 12);    // Middle body
+      ctx.lineTo(9, 15);     // Back leg connection
+
+      // Legs
+      ctx.moveTo(14, 21);    // Front leg
+      ctx.lineTo(14, 26);    // Front leg down
+      ctx.moveTo(17, 21);    // Mid-front leg
+      ctx.lineTo(17, 26);    // Mid-front leg down
+      ctx.moveTo(22, 21);    // Mid-back leg
+      ctx.lineTo(22, 26);    // Mid-back leg down
+      ctx.moveTo(25, 21);    // Back leg
+      ctx.lineTo(25, 26);    // Back leg down
+
+      ctx.stroke();
+
+      // Show the PNG preview
+      const pngUrl = canvas.toDataURL('image/png');
+      document.getElementById('png-favicon').src = pngUrl;
+      document.getElementById('png-preview').style.display = 'block';
+      
+      // Set up download handler
+      document.getElementById('download-png').addEventListener('click', function() {
+        const link = document.createElement('a');
+        link.download = 'favicon.png';
+        link.href = pngUrl;
+        link.click();
+      });
+    });
+  </script>
+</body>
+</html> 
