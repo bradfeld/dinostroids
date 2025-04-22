@@ -111,14 +111,14 @@
       canvas.height = 32;
       const ctx = canvas.getContext('2d');
 
-      // Draw black background
-      ctx.fillStyle = '#000000';
+      // Draw white background
+      ctx.fillStyle = '#FFFFFF';
       ctx.beginPath();
       ctx.arc(16, 16, 15, 0, Math.PI * 2);
       ctx.fill();
 
-      // Draw dinosaur (simplified version of the SVG)
-      ctx.strokeStyle = '#CCCCCC';
+      // Draw dinosaur in black (simplified version of the SVG)
+      ctx.strokeStyle = '#000000';
       ctx.lineWidth = 1.5;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';

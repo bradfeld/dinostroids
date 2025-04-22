@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
-  <!-- Black background circle -->
-  <circle cx="50" cy="50" r="48" fill="#000000"/>
+  <!-- White background circle -->
+  <circle cx="50" cy="50" r="48" fill="#FFFFFF"/>
   
-  <!-- Dinosaur line drawing -->
+  <!-- Dinosaur line drawing in black -->
   <path d="M20,40 L35,25 L55,35 L75,25 L80,35 L75,45 L55,40 L35,30 L25,40 M40,65 L40,80 M50,65 L50,80 M65,65 L65,80 M75,65 L75,80" 
-        stroke="#CCCCCC" 
+        stroke="#000000" 
         stroke-width="3" 
         fill="none"
         stroke-linecap="round" 
