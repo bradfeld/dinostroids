@@ -102,8 +102,11 @@ export function drawLeaderboard(x, y, leaderboardData, ctx, useSmallFont = false
             try {
                 const date = new Date(dateField);
                 if (!isNaN(date.getTime())) { // Check if date is valid
-                    // Date - right justified
-                    const dateStr = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().substr(2)}`;
+                    // Date - right justified in mm/dd/yy format with leading zeros
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const year = date.getFullYear().toString().substr(2);
+                    const dateStr = `${month}/${day}/${year}`;
                     ctx.fillText(dateStr, dateCol, yPos);
                     
                     // Time in AM/PM format - right justified
@@ -151,10 +154,15 @@ export function formatLeaderboardEntry(entry) {
     
     // Format date if available
     let dateStr = '';
-    if (entry.createdAt) {
+    if (entry.createdAt || entry.date) {
         try {
-            const date = new Date(entry.createdAt);
-            dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+            const date = new Date(entry.createdAt || entry.date);
+            if (!isNaN(date.getTime())) {
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                const year = date.getFullYear().toString().substr(2);
+                dateStr = `${month}/${day}/${year}`;
+            }
         } catch (e) {
             // Ignore date parsing errors
         }
