@@ -11,15 +11,15 @@
  * @param {number} x - Center x position
  * @param {number} y - Center y position
  * @param {number} size - Size of the dinosaur
- * @param {string} color - Stroke color (default: white)
+ * @param {string} color - Stroke color (default: bright white)
  */
-export function drawBrontosaurus(ctx, x, y, size, color = 'white') {
+export function drawBrontosaurus(ctx, x, y, size, color = '#FFFFFF') {
     const scale = size / 100; // Normalize to a 100px base size
     
     ctx.save();
     ctx.translate(x, y);
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2 * scale;
+    ctx.lineWidth = 3 * scale; // Increased line width for better visibility
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     
@@ -83,15 +83,15 @@ export function drawBrontosaurus(ctx, x, y, size, color = 'white') {
  * @param {number} x - Center x position
  * @param {number} y - Center y position
  * @param {number} size - Size of the dinosaur
- * @param {string} color - Stroke color (default: white)
+ * @param {string} color - Stroke color (default: bright white)
  */
-export function drawStegosaurus(ctx, x, y, size, color = 'white') {
+export function drawStegosaurus(ctx, x, y, size, color = '#FFFFFF') {
     const scale = size / 100; // Normalize to a 100px base size
     
     ctx.save();
     ctx.translate(x, y);
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2 * scale;
+    ctx.lineWidth = 3 * scale; // Increased line width for better visibility
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     
@@ -172,15 +172,15 @@ export function drawStegosaurus(ctx, x, y, size, color = 'white') {
  * @param {number} x - Center x position
  * @param {number} y - Center y position
  * @param {number} size - Size of the dinosaur
- * @param {string} color - Stroke color (default: white)
+ * @param {string} color - Stroke color (default: bright white)
  */
-export function drawTRex(ctx, x, y, size, color = 'white') {
+export function drawTRex(ctx, x, y, size, color = '#FFFFFF') {
     const scale = size / 100; // Normalize to a 100px base size
     
     ctx.save();
     ctx.translate(x, y);
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2 * scale;
+    ctx.lineWidth = 3 * scale; // Increased line width for better visibility
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     
@@ -252,9 +252,9 @@ export function drawTRex(ctx, x, y, size, color = 'white') {
  * @param {number} x - Center x position
  * @param {number} y - Center y position
  * @param {number} size - Size of the dinosaur
- * @param {string} color - Stroke color (default: white)
+ * @param {string} color - Stroke color (default: bright white)
  */
-export function drawDinosaur(ctx, type, x, y, size, color = 'white') {
+export function drawDinosaur(ctx, type, x, y, size, color = '#FFFFFF') {
     switch (type) {
         case 'bront':
             drawBrontosaurus(ctx, x, y, size, color);

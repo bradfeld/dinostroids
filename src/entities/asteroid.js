@@ -138,7 +138,7 @@ class Asteroid {
     ctx.rotate(this.rotation);
     
     // Draw the vector dinosaur
-    drawDinosaur(ctx, this.type, 0, 0, this.radius * 2, 'white');
+    drawDinosaur(ctx, this.type, 0, 0, this.radius * 2, '#FFFFFF');
     
     ctx.restore();
   }

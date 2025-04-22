@@ -33,7 +33,7 @@ export const BULLET_SETTINGS = {
 
 // Asteroid settings
 export const ASTEROID_SETTINGS = {
-  BASE_RADIUS: 40,          // Base radius for large asteroids
+  BASE_RADIUS: 50,          // Base radius for large asteroids (increased by 25% from 40)
   ROTATION_SPEED: 1,        // Rotation speed in radians per second
   SPAWN_DISTANCE_MIN: 200,  // Minimum distance from player to spawn 
   POINTS_BASE: 100,         // Base points for destroying an asteroid
@@ -113,9 +113,9 @@ export const ASTEROID_INITIAL_SIZE_VARIATION = 15;
 
 // Define asteroid sizes
 export const ASTEROID_SIZES = {
-    large: 45,
-    medium: 25,
-    small: 15
+    large: 56,   // Increased by 25% from 45
+    medium: 31,  // Increased by 25% from 25
+    small: 19    // Increased by 25% from 15
 };
 
 // Define asteroid speeds by difficulty
@@ -183,7 +183,7 @@ export const ASTEROID_TYPE = {
 
 // Asteroid properties
 export const ASTEROID_PROPERTIES = {
-    [ASTEROID_TYPE.BIG]: { baseSize: 45, score: 20 },
-    [ASTEROID_TYPE.MEDIUM]: { baseSize: 25, score: 50 },
-    [ASTEROID_TYPE.LITTLE]: { baseSize: 15, score: 100 }
+    [ASTEROID_TYPE.BIG]: { baseSize: 56, score: 20 },     // Increased by 25% from 45
+    [ASTEROID_TYPE.MEDIUM]: { baseSize: 31, score: 50 },  // Increased by 25% from 25
+    [ASTEROID_TYPE.LITTLE]: { baseSize: 19, score: 100 }  // Increased by 25% from 15
 }; 
