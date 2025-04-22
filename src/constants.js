@@ -5,6 +5,13 @@
  * Centralizing these values makes it easier to tweak game parameters.
  */
 
+// Define asteroid sizes first so they can be referenced by other constants
+export const ASTEROID_SIZES = {
+    large: 56,   // Increased by 25% from 45
+    medium: 31,  // Increased by 25% from 25
+    small: 19    // Increased by 25% from 15
+};
+
 // Game settings
 export const GAME_SETTINGS = {
   INITIAL_LIVES: 3,          // Number of player ships at start
@@ -33,7 +40,7 @@ export const BULLET_SETTINGS = {
 
 // Asteroid settings
 export const ASTEROID_SETTINGS = {
-  BASE_RADIUS: 50,          // Base radius for large asteroids (increased by 25% from 40)
+  BASE_RADIUS: ASTEROID_SIZES.large,  // Base radius for large asteroids - referencing ASTEROID_SIZES
   ROTATION_SPEED: 1,        // Rotation speed in radians per second
   SPAWN_DISTANCE_MIN: 200,  // Minimum distance from player to spawn 
   POINTS_BASE: 100,         // Base points for destroying an asteroid
@@ -111,13 +118,6 @@ export const ASTEROID_MIN_SPEED = 0.6 * 3; // 1.8
 export const ASTEROID_SPEED_VARIATION = 1.6 * 3; // 4.8
 export const ASTEROID_INITIAL_SIZE_VARIATION = 15;
 
-// Define asteroid sizes
-export const ASTEROID_SIZES = {
-    large: 56,   // Increased by 25% from 45
-    medium: 31,  // Increased by 25% from 25
-    small: 19    // Increased by 25% from 15
-};
-
 // Define asteroid speeds by difficulty
 export const ASTEROID_SPEEDS = {
     easy: {
@@ -176,14 +176,37 @@ export const DIFFICULTY_SETTINGS = {
 
 // Asteroid types
 export const ASTEROID_TYPE = {
-    BIG: 'BIG',
-    MEDIUM: 'MEDIUM',
-    LITTLE: 'LITTLE'
+    BIG: 'BIG',     // Maps to 'large' size
+    MEDIUM: 'MEDIUM', // Maps to 'medium' size
+    LITTLE: 'LITTLE'  // Maps to 'small' size
 };
 
-// Asteroid properties
+// Size category mapping between ASTEROID_TYPE and ASTEROID_SIZES
+const SIZE_TYPE_MAP = {
+    [ASTEROID_TYPE.BIG]: 'large',
+    [ASTEROID_TYPE.MEDIUM]: 'medium',
+    [ASTEROID_TYPE.LITTLE]: 'small'
+};
+
+// Point values for different asteroid sizes
+const SCORE_VALUES = {
+    large: 20,
+    medium: 50,
+    small: 100
+};
+
+// Asteroid properties - referencing ASTEROID_SIZES for baseSize values
 export const ASTEROID_PROPERTIES = {
-    [ASTEROID_TYPE.BIG]: { baseSize: 56, score: 20 },     // Increased by 25% from 45
-    [ASTEROID_TYPE.MEDIUM]: { baseSize: 31, score: 50 },  // Increased by 25% from 25
-    [ASTEROID_TYPE.LITTLE]: { baseSize: 19, score: 100 }  // Increased by 25% from 15
+    [ASTEROID_TYPE.BIG]: { 
+        baseSize: ASTEROID_SIZES[SIZE_TYPE_MAP[ASTEROID_TYPE.BIG]], 
+        score: SCORE_VALUES[SIZE_TYPE_MAP[ASTEROID_TYPE.BIG]] 
+    },
+    [ASTEROID_TYPE.MEDIUM]: { 
+        baseSize: ASTEROID_SIZES[SIZE_TYPE_MAP[ASTEROID_TYPE.MEDIUM]], 
+        score: SCORE_VALUES[SIZE_TYPE_MAP[ASTEROID_TYPE.MEDIUM]] 
+    },
+    [ASTEROID_TYPE.LITTLE]: { 
+        baseSize: ASTEROID_SIZES[SIZE_TYPE_MAP[ASTEROID_TYPE.LITTLE]], 
+        score: SCORE_VALUES[SIZE_TYPE_MAP[ASTEROID_TYPE.LITTLE]] 
+    }
 }; 
