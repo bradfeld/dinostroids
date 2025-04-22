@@ -65,7 +65,13 @@ export function drawLeaderboard(x, y, leaderboardData, ctx, useSmallFont = false
     ctx.textAlign = 'right';
     ctx.fillText('Rank', rankCol, y + (useSmallFont ? 45 : 60));
     ctx.fillText('Score', scoreCol, y + (useSmallFont ? 45 : 60));
-    ctx.fillText('Initials', initialsCol, y + (useSmallFont ? 45 : 60));
+    
+    // Left-justify the initials header
+    ctx.textAlign = 'left';
+    ctx.fillText('Initials', initialsCol - 50 * colSpacing, y + (useSmallFont ? 45 : 60)); // Adjust position for left alignment
+    
+    // Switch back to right alignment for remaining headers
+    ctx.textAlign = 'right';
     ctx.fillText('Level', levelCol, y + (useSmallFont ? 45 : 60));
     ctx.fillText('Date', dateCol, y + (useSmallFont ? 45 : 60));
     ctx.fillText('Time', timeCol, y + (useSmallFont ? 45 : 60));
@@ -90,8 +96,12 @@ export function drawLeaderboard(x, y, leaderboardData, ctx, useSmallFont = false
         // Score - right justified
         ctx.fillText(`${score.score}`, scoreCol, yPos);
         
-        // Initials - right justified
-        ctx.fillText(score.initials || '---', initialsCol, yPos);
+        // Initials - left justified
+        ctx.textAlign = 'left';
+        ctx.fillText(score.initials || '---', initialsCol - 50 * colSpacing, yPos);
+        
+        // Reset to right alignment for remaining columns
+        ctx.textAlign = 'right';
         
         // Level - right justified with NO period after
         ctx.fillText(`${score.level || '1'}`, levelCol, yPos);
