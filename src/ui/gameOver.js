@@ -393,8 +393,32 @@ export function handleGameOverKeyInput(event) {
             // Only allow letters
             if (playerInitials.length < MAX_INITIALS_LENGTH) {
                 playerInitials += event.key.toUpperCase();
+                console.log(`Key pressed: ${event.key.toUpperCase()}, Current initials: ${playerInitials}`);
                 
-                // Redraw the screen to show the updated initials
+                // DIRECT FEEDBACK: Immediately draw the updated initials
+                const { ctx } = getCanvas();
+                const { width, height } = getDimensions();
+                
+                // Clear the area where initials appear to prevent ghosting
+                ctx.fillStyle = 'black';
+                ctx.fillRect(width / 2 - 100, height / 4 + 180, 200, 80);
+                
+                // Draw the current initials immediately
+                ctx.font = '60px Arial';
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                
+                // Calculate positions for all letters entered so far
+                if (playerInitials.length > 0) {
+                    for (let i = 0; i < playerInitials.length; i++) {
+                        const letterSpacing = 40;
+                        const offsetFromCenter = (playerInitials.length - 1) * letterSpacing / 2;
+                        const x = width / 2 - offsetFromCenter + (i * letterSpacing);
+                        ctx.fillText(playerInitials[i], x, height / 4 + 230);
+                    }
+                }
+                
+                // Also trigger the standard redraw callback
                 if (redrawCallback) {
                     redrawCallback();
                 }
@@ -413,9 +437,34 @@ export function handleGameOverKeyInput(event) {
             }
         } else if (event.key === 'Backspace') {
             // Handle backspace
-            playerInitials = playerInitials.slice(0, -1);
+            if (playerInitials.length > 0) {
+                playerInitials = playerInitials.slice(0, -1);
+                console.log(`Backspace pressed. Current initials: ${playerInitials}`);
+                
+                // DIRECT FEEDBACK: Immediately clear and redraw initials
+                const { ctx } = getCanvas();
+                const { width, height } = getDimensions();
+                
+                // Clear the area where initials appear
+                ctx.fillStyle = 'black';
+                ctx.fillRect(width / 2 - 100, height / 4 + 180, 200, 80);
+                
+                // Draw the remaining letters
+                if (playerInitials.length > 0) {
+                    ctx.font = '60px Arial';
+                    ctx.fillStyle = 'white';
+                    ctx.textAlign = 'center';
+                    
+                    for (let i = 0; i < playerInitials.length; i++) {
+                        const letterSpacing = 40;
+                        const offsetFromCenter = (playerInitials.length - 1) * letterSpacing / 2;
+                        const x = width / 2 - offsetFromCenter + (i * letterSpacing);
+                        ctx.fillText(playerInitials[i], x, height / 4 + 230);
+                    }
+                }
+            }
             
-            // Redraw the screen to show the updated initials
+            // Also trigger the standard redraw callback
             if (redrawCallback) {
                 redrawCallback();
             }
@@ -759,6 +808,7 @@ function resetInput() {
  * Activate the initials input
  */
 export function activateInput() {
+    console.log("Activating high score initials input");
     inputActive = true;
     playerInitials = '';
     
@@ -766,12 +816,24 @@ export function activateInput() {
         mobileKeyboard.visible = true;
     }
     
-    // Set up a forced redraw every 100ms to ensure display updates
+    // Set up a forced redraw interval to ensure display updates on both platforms
     if (redrawCallback && !redrawIntervalId) {
+        console.log("Setting up redraw interval for input");
         redrawIntervalId = setInterval(() => {
-            redrawCallback();
+            if (redrawCallback) {
+                redrawCallback();
+            }
         }, 100);
     }
+    
+    // Clear any existing input after a brief delay to ensure clean state
+    setTimeout(() => {
+        // Force one initial redraw to make sure the UI is ready
+        if (redrawCallback) {
+            console.log("Initial redraw for high score input");
+            redrawCallback();
+        }
+    }, 50);
 }
 
 /**
