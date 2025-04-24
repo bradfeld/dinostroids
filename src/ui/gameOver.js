@@ -353,6 +353,7 @@ export function handleGameOverKeyInput(event) {
  */
 function handleMobileTouchInput(event) {
     event.preventDefault();
+    event.stopPropagation(); // Prevent event bubbling
     
     // Only process touch events on mobile
     if (!isMobilePhone()) return;
@@ -365,6 +366,8 @@ function handleMobileTouchInput(event) {
     const rect = canvas.getBoundingClientRect();
     const touchX = touch.clientX - rect.left;
     const touchY = touch.clientY - rect.top;
+    
+    console.log(`Mobile touch at (${touchX}, ${touchY})`);
     
     // If input is active (high score entry)
     if (inputActive && mobileKeyboard.visible) {
@@ -470,6 +473,15 @@ function handleMobileTouchInput(event) {
     } else if (!inputActive) {
         // Check for restart button press when not in high score entry
         if (isTouchOnButton(touchX, touchY, mobileKeyboard.restartButton)) {
+            console.log("Restart button touched");
+            
+            // Store the callback locally to ensure it's not lost during redraws
+            const restartCb = restartCallback;
+            
+            // Temporarily remove the event listener to prevent double-activation
+            const { canvas } = getCanvas();
+            canvas.removeEventListener('touchstart', handleMobileTouchInput);
+            
             // Visual feedback for button press
             const ctx = getCanvas().ctx;
             ctx.fillStyle = 'white';
@@ -489,12 +501,20 @@ function handleMobileTouchInput(event) {
                 mobileKeyboard.restartButton.y + mobileKeyboard.restartButton.height / 2
             );
             
-            // Restart after a short delay for visual feedback
+            // Restart using a hard timeout to ensure it happens after visual feedback
+            console.log("Scheduling restart callback");
             setTimeout(() => {
-                if (restartCallback) {
-                    restartCallback();
+                console.log("Executing restart callback");
+                if (restartCb) {
+                    // Force state reset before callback to ensure clean restart
+                    inputActive = false;
+                    mobileKeyboard.visible = false;
+                    
+                    // Execute the restart callback
+                    restartCb();
                 }
-            }, 150);
+            }, 300); // Longer delay for reliability
+            
             return;
         }
     }
@@ -571,12 +591,28 @@ export function onRestart(callback) {
  * @param {HTMLCanvasElement} canvas - The canvas element to attach events to
  */
 export function setupGameOverEvents(canvas) {
+    console.log("Setting up game over events");
+    
+    // Clean up any existing event listeners first to prevent duplicates
+    cleanupGameOverEvents(canvas);
+    
     // Set up desktop keyboard handlers
     if (!isMobilePhone()) {
+        console.log("Setting up desktop keyboard event handlers");
         document.addEventListener('keydown', handleGameOverKeyInput);
     } else {
         // Set up mobile touch handlers
-        canvas.addEventListener('touchstart', handleMobileTouchInput, { passive: false });
+        console.log("Setting up mobile touch event handlers");
+        if (canvas) {
+            // First make sure we cleanup any existing handlers
+            canvas.removeEventListener('touchstart', handleMobileTouchInput);
+            
+            // Add our touch handler with the passive option explicitly set to false
+            canvas.addEventListener('touchstart', handleMobileTouchInput, { passive: false });
+            console.log("Mobile touch handler added to canvas");
+        } else {
+            console.warn("No canvas provided for touch events");
+        }
     }
 }
 
@@ -585,11 +621,27 @@ export function setupGameOverEvents(canvas) {
  * @param {HTMLCanvasElement} canvas - The canvas element to remove events from
  */
 export function cleanupGameOverEvents(canvas) {
+    console.log("Cleaning up game over events");
+    
     // Remove desktop keyboard handlers
     document.removeEventListener('keydown', handleGameOverKeyInput);
     
-    // Remove mobile touch handlers
-    canvas.removeEventListener('touchstart', handleMobileTouchInput);
+    // Remove mobile touch handlers - ensure multiple passes to catch any duplicate listeners
+    if (canvas) {
+        canvas.removeEventListener('touchstart', handleMobileTouchInput);
+        canvas.removeEventListener('touchstart', handleMobileTouchInput);
+        
+        // Also remove with the passive option to match any possible registration variations
+        canvas.removeEventListener('touchstart', handleMobileTouchInput, { passive: false });
+        
+        // Clear any scheduled callbacks by forcing a reset
+        resetInput();
+    }
+    
+    // Reset callbacks to prevent stale references
+    submitCallback = null;
+    restartCallback = null;
+    redrawCallback = null;
     
     // Reset state
     resetInput();
