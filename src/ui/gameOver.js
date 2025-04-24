@@ -94,10 +94,10 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         
-        // Display the initials in a larger font with proper spacing
+        // Position for initials
         const initialsY = height / 4 + 230;
         
-        // Either show the entered initials or placeholder text if empty
+        // Either show the entered initials or placeholder indicator if empty
         if (playerInitials.length > 0) {
             // Show the entered initials with proper spacing
             for (let i = 0; i < playerInitials.length; i++) {
@@ -109,9 +109,25 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
                 // Draw the letter
                 ctx.fillText(playerInitials[i], x, initialsY);
             }
-        } else {
-            // Show nothing if no initials entered yet
-            console.log("No initials entered yet");
+        } else if (inputActive) {
+            // Show a blinking cursor or placeholder when no initials entered yet
+            // Different indicators for desktop and mobile
+            if (!isMobile) {
+                // For desktop: Show a blinking cursor
+                // Use time-based blinking (every 500ms)
+                const shouldShowCursor = Math.floor(Date.now() / 500) % 2 === 0;
+                if (shouldShowCursor) {
+                    // Draw a vertical cursor line
+                    ctx.fillRect(width / 2 - 2, initialsY - 40, 4, 45);
+                }
+                
+                // Also draw empty placeholders
+                ctx.font = '24px Arial';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; // semi-transparent
+                ctx.fillText("TYPE HERE", width / 2, initialsY + 20);
+            }
+            
+            console.log("Input active but no initials entered yet");
         }
         
         // Force a clear redraw interval to update the display after each key press
@@ -127,6 +143,7 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
         if (!isMobile) {
             // Desktop: keyboard instructions
             ctx.font = '16px Arial';
+            ctx.fillStyle = 'white'; // Reset to full opacity
             ctx.fillText('Press ENTER when done or type up to 3 letters', width / 2, initialsY + 50);
         } else {
             // Mobile: virtual keyboard
@@ -816,6 +833,12 @@ export function activateInput() {
         mobileKeyboard.visible = true;
     }
     
+    // IMMEDIATE REDRAW: Force an immediate redraw to show initial state
+    if (redrawCallback) {
+        console.log("Immediate redraw on input activation");
+        redrawCallback();
+    }
+    
     // Set up a forced redraw interval to ensure display updates on both platforms
     if (redrawCallback && !redrawIntervalId) {
         console.log("Setting up redraw interval for input");
@@ -826,14 +849,13 @@ export function activateInput() {
         }, 100);
     }
     
-    // Clear any existing input after a brief delay to ensure clean state
+    // Force additional redraw after a short delay to catch any initialization issues
     setTimeout(() => {
-        // Force one initial redraw to make sure the UI is ready
         if (redrawCallback) {
-            console.log("Initial redraw for high score input");
+            console.log("Follow-up redraw for high score input");
             redrawCallback();
         }
-    }, 50);
+    }, 100);
 }
 
 /**
