@@ -14,8 +14,7 @@ import Player from '../entities/player.js';
 import Asteroid from '../entities/asteroid.js';
 import Bullet from '../entities/bullet.js';
 import { drawGameStatus } from '../ui/gameStatus.js';
-import { drawGameOver, handleGameOverKeyInput, activateInput, onRestart, setRedrawCallback, onSubmitScore, setupGameOverEvents } from '../ui/gameOver.js';
-import { setupMobileGameOver, onMobileRestart } from '../ui/mobileGameOver.js';
+import { drawGameOver, handleGameOverKeyInput, activateInput, onRestart, setRedrawCallback, onSubmitScore, setupGameOverEvents, cleanupGameOverEvents } from '../ui/gameOver.js';
 import { drawLeaderboard } from '../ui/leaderboard.js';
 import { formatTime, randomInt } from '../utils.js';
 import { drawStartScreen } from '../ui/startScreen.js';
@@ -816,8 +815,8 @@ export class GameController {
         asteroids = [];
         bullets = [];
         
-        // First, clean up any existing input handlers
-        document.removeEventListener('keydown', handleGameOverKeyInput);
+        // Clean up any existing input handlers
+        cleanupGameOverEvents(getCanvas().canvas);
         
         // Check if this is a high score before drawing the screen
         const isHighScore = this.isNewHighScore();
@@ -837,78 +836,36 @@ export class GameController {
         // Draw game over screen initially
         redrawGameOver();
         
-        // Setup appropriate event handlers based on device type
-        const isMobile = isMobilePhone();
+        // Set up game over event handlers - handles both desktop and mobile
+        setupGameOverEvents(canvas);
         
-        if (isMobile) {
-            if (!isHighScore) {
-                // Use the simplified mobile game over handler
-                setupMobileGameOver(this);
-                
-                // Set up restart callback for mobile, matching desktop pattern
-                onMobileRestart(() => {
-                    // Remove the game over keyboard handler to prevent duplicates
-                    document.removeEventListener('keydown', handleGameOverKeyInput);
-                    
-                    // Reset game state
-                    isGameOver = false;
-                    isGameStarted = false;
-                    
-                    // Clean up
-                    this.cleanupInputHandlers();
-                    if (animationFrameId) {
-                        cancelAnimationFrame(animationFrameId);
-                        animationFrameId = null;
-                    }
-                    
-                    // Reset game controller reference for input system
-                    resetGameControllerRef(this);
-                    
-                    // Re-initialize input system with the current game controller
-                    const { canvas } = getCanvas();
-                    initInput(canvas, this);
-                    
-                    // Show the start screen
-                    this.showStartScreen();
-                });
-            } else {
-                // High score case - use the regular system
-                setupGameOverEvents(canvas);
-            }
-        } else {
-            // Desktop - add keyboard handler
-            document.addEventListener('keydown', handleGameOverKeyInput);
+        // Set up the restart callback for non-high score case
+        onRestart(() => {
+            // Clean up any event handlers
+            cleanupGameOverEvents(canvas);
             
-            // Set up restart handler for desktop non-high score games
-            if (!isHighScore) {
-                onRestart(() => {
-                    // Remove the game over keyboard handler to prevent duplicates
-                    document.removeEventListener('keydown', handleGameOverKeyInput);
-                    
-                    // Reset game state
-                    isGameOver = false;
-                    isGameStarted = false;
-                    
-                    // Clean up
-                    this.cleanupInputHandlers();
-                    if (animationFrameId) {
-                        cancelAnimationFrame(animationFrameId);
-                        animationFrameId = null;
-                    }
-                    
-                    // Reset game controller reference for input system
-                    resetGameControllerRef(this);
-                    
-                    // Re-initialize input system with the current game controller
-                    const { canvas } = getCanvas();
-                    initInput(canvas, this);
-                    
-                    // Show the start screen
-                    this.showStartScreen();
-                });
+            // Reset game state
+            isGameOver = false;
+            isGameStarted = false;
+            
+            // Clean up
+            this.cleanupInputHandlers();
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
             }
-        }
+            
+            // Reset game controller reference for input system
+            resetGameControllerRef(this);
+            
+            // Re-initialize input system with the current game controller
+            initInput(canvas, this);
+            
+            // Show the start screen
+            this.showStartScreen();
+        });
         
+        // If it's a high score, activate the initials input
         if (isHighScore) {
             console.log("New high score detected!");
             activateInput();
@@ -927,7 +884,7 @@ export class GameController {
                     leaderboardData = await fetchLeaderboard();
                     
                     // Clean up game over input handlers
-                    document.removeEventListener('keydown', handleGameOverKeyInput);
+                    cleanupGameOverEvents(canvas);
                     
                     // Reset game state completely
                     isGameOver = false;
@@ -943,8 +900,7 @@ export class GameController {
                     // Reset game controller reference for input system
                     resetGameControllerRef(this);
                     
-                    // Re-initialize input system with the current game controller to ensure touch handlers work
-                    const { canvas } = getCanvas();
+                    // Re-initialize input system with the current game controller
                     initInput(canvas, this);
                     
                     this.showStartScreen();
@@ -952,7 +908,7 @@ export class GameController {
                     console.error("Failed to submit score:", error);
                     
                     // Even if submission fails, go back to start screen
-                    document.removeEventListener('keydown', handleGameOverKeyInput);
+                    cleanupGameOverEvents(canvas);
                     isGameOver = false;
                     
                     // Clear any animation frames to prevent hanging
@@ -964,8 +920,7 @@ export class GameController {
                     // Reset game controller reference for input system
                     resetGameControllerRef(this);
                     
-                    // Re-initialize input system with the current game controller to ensure touch handlers work
-                    const { canvas } = getCanvas();
+                    // Re-initialize input system with the current game controller
                     initInput(canvas, this);
                     
                     this.showStartScreen();
