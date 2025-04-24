@@ -471,12 +471,32 @@ function handleMobileTouchInput(event) {
                     ctx.textBaseline = 'middle';
                     ctx.fillText(button.letter, button.x + button.width / 2, button.y + button.height / 2);
                     
-                    // Immediate redraw to update the display
+                    // DIRECT FEEDBACK: Immediately draw the initials without waiting for callback
+                    const { width, height } = getDimensions();
+                    
+                    // Clear the area where initials appear to prevent ghosting
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(width / 2 - 100, height / 4 + 180, 200, 80);
+                    
+                    // Draw the current initials immediately
+                    ctx.font = '60px Arial';
+                    ctx.fillStyle = 'white';
+                    ctx.textAlign = 'center';
+                    
+                    // Calculate positions for all letters entered so far
+                    for (let i = 0; i < playerInitials.length; i++) {
+                        const letterSpacing = 40;
+                        const offsetFromCenter = (playerInitials.length - 1) * letterSpacing / 2;
+                        const x = width / 2 - offsetFromCenter + (i * letterSpacing);
+                        ctx.fillText(playerInitials[i], x, height / 4 + 230);
+                    }
+                    
+                    // Now also trigger the normal redraw for completeness
                     if (redrawCallback) {
                         redrawCallback();
                     }
                     
-                    // Also schedule another redraw after a moment for the button visual feedback
+                    // Schedule another redraw for the button visual feedback
                     setTimeout(() => {
                         if (redrawCallback) {
                             redrawCallback();
@@ -529,12 +549,34 @@ function handleMobileTouchInput(event) {
                 mobileKeyboard.backspaceButton.y + mobileKeyboard.backspaceButton.height / 2
             );
             
-            // Immediate redraw to update the display
+            // DIRECT FEEDBACK: Immediately clear and redraw initials after backspace
+            const { width, height } = getDimensions();
+            
+            // Clear the area where initials appear 
+            ctx.fillStyle = 'black';
+            ctx.fillRect(width / 2 - 100, height / 4 + 180, 200, 80);
+            
+            // If there are still initials left, draw them
+            if (playerInitials.length > 0) {
+                ctx.font = '60px Arial';
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                
+                // Draw the remaining letters
+                for (let i = 0; i < playerInitials.length; i++) {
+                    const letterSpacing = 40;
+                    const offsetFromCenter = (playerInitials.length - 1) * letterSpacing / 2;
+                    const x = width / 2 - offsetFromCenter + (i * letterSpacing);
+                    ctx.fillText(playerInitials[i], x, height / 4 + 230);
+                }
+            }
+            
+            // Now also trigger the normal redraw
             if (redrawCallback) {
                 redrawCallback();
             }
             
-            // Schedule another redraw after a moment for the button visual feedback
+            // Schedule another redraw for button visual feedback
             setTimeout(() => {
                 if (redrawCallback) {
                     redrawCallback();

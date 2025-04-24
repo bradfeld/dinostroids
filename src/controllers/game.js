@@ -310,7 +310,7 @@ export class GameController {
                         shootCooldown = 0.3;
                         asteroidSpeed = 30;
                         initialAsteroids = 2;
-                        playerLives = 5;
+                        playerLives = 3;
                         break;
                     case 'difficult':
                         console.log("Setting DIFFICULT difficulty parameters");
@@ -1180,7 +1180,7 @@ export class GameController {
                     shootCooldown = 0.3;
                     asteroidSpeed = 30;
                     initialAsteroids = 2;
-                    playerLives = 5;
+                    playerLives = 3;
                     break;
                 case 'difficult':
                     console.log("Setting DIFFICULT difficulty parameters");
