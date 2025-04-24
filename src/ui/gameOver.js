@@ -23,6 +23,7 @@ let playerInitials = '';
 let inputActive = false;
 let submitCallback = null;
 let restartCallback = null;
+let cancelCallback = null;
 let redrawCallback = null;
 let redrawIntervalId = null;
 
@@ -36,6 +37,7 @@ let mobileKeyboard = {
   buttons: [],
   submitButton: { x: 0, y: 0, width: 120, height: 40, text: "SUBMIT" },
   backspaceButton: { x: 0, y: 0, width: 80, height: 40, text: "DEL" },
+  cancelButton: { x: 0, y: 0, width: 80, height: 40, text: "CANCEL" },
   restartButton: { x: 0, y: 0, width: 240, height: 60, text: "TOUCH TO PLAY AGAIN" }
 };
 
@@ -209,7 +211,7 @@ function drawMobileKeyboard(ctx) {
     }
     
     // Position and draw the submit button
-    const submitX = width / 2 + 20;
+    const submitX = width / 2 + 10;
     const submitY = mobileKeyboard.y + KEYBOARD_HEIGHT + 20;
     mobileKeyboard.submitButton = {
         x: submitX,
@@ -228,9 +230,27 @@ function drawMobileKeyboard(ctx) {
     ctx.textBaseline = 'middle';
     ctx.fillText("SUBMIT", submitX + 60, submitY + 20);
     
+    // Position and draw the cancel button
+    const cancelX = width / 2 - 120 - 10;
+    const cancelY = submitY;
+    mobileKeyboard.cancelButton = {
+        x: cancelX,
+        y: cancelY,
+        width: 120,
+        height: 40,
+        text: "CANCEL"
+    };
+    
+    // Draw cancel button
+    ctx.fillStyle = '#aa0000'; // Dark red
+    ctx.fillRect(cancelX, cancelY, 120, 40);
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.fillText("CANCEL", cancelX + 60, cancelY + 20);
+    
     // Position and draw the backspace button
     const backspaceX = width / 2 - 100;
-    const backspaceY = mobileKeyboard.y + KEYBOARD_HEIGHT + 20;
+    const backspaceY = mobileKeyboard.y + KEYBOARD_HEIGHT + 80; // Move below the submit/cancel
     mobileKeyboard.backspaceButton = {
         x: backspaceX,
         y: backspaceY,
@@ -300,6 +320,14 @@ export function handleGameOverKeyInput(event) {
     
     // Check if this is for high score input
     if (inputActive) {
+        // Handle Escape key to cancel high score submission
+        if (event.key === 'Escape' && cancelCallback) {
+            console.log("Canceling high score submission via Escape key");
+            resetInput();
+            cancelCallback();
+            return;
+        }
+        
         // Handle Enter key to submit initials
         if (event.key === 'Enter') {
             if (playerInitials.length > 0 && submitCallback) {
@@ -470,17 +498,41 @@ function handleMobileTouchInput(event) {
             }, 150);
             return;
         }
+        
+        // Check for cancel button press
+        if (isTouchOnButton(touchX, touchY, mobileKeyboard.cancelButton)) {
+            // Visual feedback for button press
+            const ctx = getCanvas().ctx;
+            ctx.fillStyle = '#880000'; // Darker red
+            ctx.fillRect(
+                mobileKeyboard.cancelButton.x, 
+                mobileKeyboard.cancelButton.y, 
+                mobileKeyboard.cancelButton.width, 
+                mobileKeyboard.cancelButton.height
+            );
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(
+                "CANCEL", 
+                mobileKeyboard.cancelButton.x + mobileKeyboard.cancelButton.width / 2, 
+                mobileKeyboard.cancelButton.y + mobileKeyboard.cancelButton.height / 2
+            );
+            
+            // Cancel after a short delay for visual feedback
+            setTimeout(() => {
+                if (cancelCallback) {
+                    resetInput();
+                    cancelCallback();
+                }
+            }, 150);
+            return;
+        }
     } else if (!inputActive) {
         // Check for restart button press when not in high score entry
         if (isTouchOnButton(touchX, touchY, mobileKeyboard.restartButton)) {
-            console.log("Restart button touched");
-            
-            // Store the callback locally to ensure it's not lost during redraws
-            const restartCb = restartCallback;
-            
-            // Temporarily remove the event listener to prevent double-activation
-            const { canvas } = getCanvas();
-            canvas.removeEventListener('touchstart', handleMobileTouchInput);
+            console.log("Restart button touched - ENHANCED HANDLING");
             
             // Visual feedback for button press
             const ctx = getCanvas().ctx;
@@ -501,19 +553,22 @@ function handleMobileTouchInput(event) {
                 mobileKeyboard.restartButton.y + mobileKeyboard.restartButton.height / 2
             );
             
-            // Restart using a hard timeout to ensure it happens after visual feedback
-            console.log("Scheduling restart callback");
+            // Immediately clean up event handlers to prevent issues during transition
+            const localRestartCallback = restartCallback; // Capture current callback
+            
+            // Immediately disable further touches
+            cleanupGameOverEvents(canvas);
+            
+            // Force state reset before callback
+            resetInput();
+            
+            // Restart after a short delay for visual feedback, using the captured callback
             setTimeout(() => {
-                console.log("Executing restart callback");
-                if (restartCb) {
-                    // Force state reset before callback to ensure clean restart
-                    inputActive = false;
-                    mobileKeyboard.visible = false;
-                    
-                    // Execute the restart callback
-                    restartCb();
+                if (localRestartCallback) {
+                    console.log("Executing restart callback from mobile touch - ENHANCED");
+                    localRestartCallback();
                 }
-            }, 300); // Longer delay for reliability
+            }, 150);
             
             return;
         }
@@ -587,6 +642,14 @@ export function onRestart(callback) {
 }
 
 /**
+ * Set the callback for score submission cancelation
+ * @param {Function} callback - Function to call when score submission is canceled
+ */
+export function onCancelScoreSubmit(callback) {
+    cancelCallback = callback;
+}
+
+/**
  * Set up event listeners for the game over screen
  * @param {HTMLCanvasElement} canvas - The canvas element to attach events to
  */
@@ -621,28 +684,47 @@ export function setupGameOverEvents(canvas) {
  * @param {HTMLCanvasElement} canvas - The canvas element to remove events from
  */
 export function cleanupGameOverEvents(canvas) {
-    console.log("Cleaning up game over events");
+    console.log("Cleaning up game over events - ENHANCED");
     
     // Remove desktop keyboard handlers
     document.removeEventListener('keydown', handleGameOverKeyInput);
     
     // Remove mobile touch handlers - ensure multiple passes to catch any duplicate listeners
     if (canvas) {
+        // Remove with all possible options combinations to ensure complete cleanup
         canvas.removeEventListener('touchstart', handleMobileTouchInput);
-        canvas.removeEventListener('touchstart', handleMobileTouchInput);
-        
-        // Also remove with the passive option to match any possible registration variations
         canvas.removeEventListener('touchstart', handleMobileTouchInput, { passive: false });
+        canvas.removeEventListener('touchstart', handleMobileTouchInput, { passive: true });
+        canvas.removeEventListener('touchstart', handleMobileTouchInput, { capture: true });
+        canvas.removeEventListener('touchstart', handleMobileTouchInput, { capture: false });
+        canvas.removeEventListener('touchstart', handleMobileTouchInput, { capture: true, passive: false });
+        canvas.removeEventListener('touchstart', handleMobileTouchInput, { capture: false, passive: false });
         
-        // Clear any scheduled callbacks by forcing a reset
-        resetInput();
+        // Also remove all other touch events just to be safe
+        canvas.removeEventListener('touchend', handleMobileTouchInput);
+        canvas.removeEventListener('touchmove', handleMobileTouchInput);
+        canvas.removeEventListener('touchcancel', handleMobileTouchInput);
     }
+    
+    // Clear any scheduled callbacks by forcing a reset
+    resetInput();
     
     // Reset callbacks to prevent stale references
     submitCallback = null;
     restartCallback = null;
+    cancelCallback = null;
     redrawCallback = null;
     
-    // Reset state
-    resetInput();
+    // Clear any intervals
+    if (redrawIntervalId) {
+        clearInterval(redrawIntervalId);
+        redrawIntervalId = null;
+    }
+    
+    // Reset all state variables
+    playerInitials = '';
+    inputActive = false;
+    mobileKeyboard.visible = false;
+    
+    console.log("Game over events fully cleaned up - ENHANCED");
 } 

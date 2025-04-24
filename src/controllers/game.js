@@ -81,15 +81,16 @@ export class GameController {
      * Draw the start screen
      */
     showStartScreen() {
-        const { ctx } = getCanvas();
+        const { ctx, canvas } = getCanvas();
         
-        console.log("Showing start screen");
+        console.log("Showing start screen - ENHANCED");
         
         // Make sure game state is reset
         isGameStarted = false;
         isHelpScreenVisible = false;
         gameRunning = false;
         isGameOver = false;
+        isPaused = false;
         
         // Clean up any frame animation
         if (animationFrameId) {
@@ -99,8 +100,24 @@ export class GameController {
         
         // Clean up mobile controls if they exist
         if (this.mobileControls) {
+            console.log("Cleaning up existing mobile controls before start screen");
             this.mobileControls.cleanup();
             this.mobileControls = null;
+        }
+        
+        // Enhanced cleanup: Make sure there are no touch event handlers left over
+        // This helps prevent conflicts when transitioning from game over to start screen
+        if (canvas) {
+            console.log("Performing extra canvas event cleanup for start screen");
+            // Remove all possible touch events with various options
+            const noop = () => {}; // Empty function for safe removal
+            canvas.removeEventListener('touchstart', noop);
+            canvas.removeEventListener('touchend', noop);
+            canvas.removeEventListener('touchmove', noop);
+            canvas.removeEventListener('touchcancel', noop);
+            
+            // Remove any potential leftover game over events
+            cleanupGameOverEvents(canvas);
         }
         
         // Clean up event handlers that might be left over
@@ -108,19 +125,28 @@ export class GameController {
         
         // Reset all input handlers
         this.cleanupInputHandlers();
-        this.setupInputHandlers();
         
-        // Clear the canvas
-        clear('black');
+        // Add a small delay before setting up new handlers to ensure clean state
+        setTimeout(() => {
+            console.log("Setting up input handlers for start screen after cleanup");
+            this.setupInputHandlers();
         
-        // Draw start screen with current difficulty and game data
-        drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
-        
-        // Set up fresh mobile controls if on mobile
-        if (isMobilePhone()) {
-            const { canvas } = getCanvas();
-            this.mobileControls = new MobileControls(canvas, this);
-        }
+            // Clear the canvas
+            clear('black');
+            
+            // Draw start screen with current difficulty and game data
+            drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
+            
+            // Set up fresh mobile controls if on mobile with a small delay 
+            // to ensure previous ones are fully cleaned up
+            if (isMobilePhone()) {
+                setTimeout(() => {
+                    const { canvas } = getCanvas();
+                    console.log("Creating new mobile controls for start screen");
+                    this.mobileControls = new MobileControls(canvas, this);
+                }, 50);
+            }
+        }, 50);
     }
 
     /**
@@ -841,40 +867,63 @@ export class GameController {
         
         // Set up the restart callback for non-high score case
         onRestart(function(event) {
-            console.log("Restart callback triggered - returning to start screen");
+            console.log("Restart callback triggered - ENHANCED version for mobile");
             
-            // Clean up any event handlers
+            // Clean up any event handlers first
             cleanupGameOverEvents(canvas);
             
             // Reset game state
             isGameOver = false;
             isGameStarted = false;
-            gameRunning = false; // Add this to match onSubmitScore
+            gameRunning = false;
+            isPaused = false;
             
             // Force mobile-specific cleanup if needed
             if (isMobilePhone() && this.mobileControls) {
-                console.log("Cleaning up mobile controls before restart");
-                this.mobileControls.cleanup();
-                this.mobileControls = null;
+                console.log("Cleaning up mobile controls before restart - ENHANCED");
+                try {
+                    this.mobileControls.cleanup();
+                    this.mobileControls = null;
+                } catch (err) {
+                    console.error("Error cleaning up mobile controls:", err);
+                    // Continue anyway to ensure we complete the restart
+                }
             }
             
-            // Clean up
+            // Clean up input system
             this.cleanupInputHandlers();
+            
+            // Cancel any animation frames
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
             }
             
             // Reset game controller reference for input system
-            resetGameControllerRef(this);
+            try {
+                resetGameControllerRef(this);
+            } catch (err) {
+                console.error("Error resetting game controller:", err);
+                // Continue anyway
+            }
             
-            // Re-initialize input system to ensure the canvas is set up correctly
-            console.log("Re-initializing input system for the start screen");
-            initInput(canvas, this);
-            
-            // Show the start screen - this will set up the appropriate handlers
-            console.log("Showing start screen from restart callback");
-            this.showStartScreen();
+            // Add a small delay before initializing the input system and showing start screen
+            // This helps prevent event handler conflicts
+            setTimeout(() => {
+                try {
+                    // Re-initialize input system with the current game controller
+                    console.log("Re-initializing input system for the start screen - ENHANCED");
+                    initInput(canvas, this);
+                    
+                    // Show the start screen after a short delay to ensure clean state
+                    console.log("Showing start screen from restart callback - ENHANCED");
+                    this.showStartScreen();
+                } catch (err) {
+                    console.error("Error during restart transition:", err);
+                    // Emergency fallback - force a clean start screen
+                    this.showStartScreen();
+                }
+            }, 100);
         }.bind(this));
         
         // If it's a high score, activate the initials input
@@ -888,7 +937,7 @@ export class GameController {
             // Set up the score submission handler
             onSubmitScore(function(initials) {
                 try {
-                    console.log(`Submitting high score with initials: ${initials}`);
+                    console.log(`Submitting high score with initials: ${initials} - ENHANCED handling`);
                     // Submit score with level and time information
                     submitScore(initials, score, gameTime, level, currentDifficulty).then(() => {
                         // Refresh leaderboard after submitting
@@ -896,19 +945,26 @@ export class GameController {
                     }).then(newLeaderboard => {
                         leaderboardData = newLeaderboard;
                         
-                        // Clean up game over input handlers
+                        // Clean up game over input handlers with enhanced cleanup
+                        console.log("Cleaning up game over events after score submission - ENHANCED");
                         cleanupGameOverEvents(canvas);
                         
                         // Reset game state completely
                         isGameOver = false;
                         isGameStarted = false;
                         gameRunning = false;
+                        isPaused = false;
                         
                         // Force mobile-specific cleanup if needed
                         if (isMobilePhone() && this.mobileControls) {
-                            console.log("Cleaning up mobile controls after high score submission");
-                            this.mobileControls.cleanup();
-                            this.mobileControls = null;
+                            console.log("Cleaning up mobile controls after high score submission - ENHANCED");
+                            try {
+                                this.mobileControls.cleanup();
+                                this.mobileControls = null;
+                            } catch (err) {
+                                console.error("Error cleaning up mobile controls:", err);
+                                // Continue anyway to ensure we complete the transition
+                            }
                         }
                         
                         // Clear any animation frames to prevent hanging
@@ -918,54 +974,57 @@ export class GameController {
                         }
                         
                         // Reset game controller reference for input system
-                        resetGameControllerRef(this);
+                        try {
+                            resetGameControllerRef(this);
+                        } catch (err) {
+                            console.error("Error resetting game controller:", err);
+                            // Continue anyway
+                        }
                         
-                        // Re-initialize input system with the current game controller
-                        console.log("Re-initializing input system for the start screen after score submission");
-                        initInput(canvas, this);
-                        
-                        this.showStartScreen();
+                        // Add delay before setting up new handlers to ensure clean state
+                        setTimeout(() => {
+                            try {
+                                // Re-initialize input system with the current game controller
+                                console.log("Re-initializing input system after score submission - ENHANCED");
+                                initInput(canvas, this);
+                                
+                                // Show the start screen with enhanced handling
+                                this.showStartScreen();
+                            } catch (err) {
+                                console.error("Error during post-score transition:", err);
+                                // Emergency fallback - force a clean start screen
+                                this.showStartScreen();
+                            }
+                        }, 100);
                     }).catch(error => {
                         console.error("Failed to submit score:", error);
-                        
-                        // Even if submission fails, go back to start screen
-                        cleanupGameOverEvents(canvas);
-                        isGameOver = false;
-                        
-                        // Force mobile-specific cleanup if needed
-                        if (isMobilePhone() && this.mobileControls) {
-                            console.log("Cleaning up mobile controls after failed score submission");
-                            this.mobileControls.cleanup();
-                            this.mobileControls = null;
-                        }
-                        
-                        // Clear any animation frames to prevent hanging
-                        if (animationFrameId) {
-                            cancelAnimationFrame(animationFrameId);
-                            animationFrameId = null;
-                        }
-                        
-                        // Reset game controller reference for input system
-                        resetGameControllerRef(this);
-                        
-                        // Re-initialize input system with the current game controller
-                        console.log("Re-initializing input system for the start screen after failed submission");
-                        initInput(canvas, this);
-                        
-                        this.showStartScreen();
+                        handleFailedSubmission.call(this);
                     });
                 } catch (error) {
                     console.error("Exception submitting score:", error);
-                    
+                    handleFailedSubmission.call(this);
+                }
+                
+                // Helper function to handle failed submission
+                function handleFailedSubmission() {
                     // Even if submission fails, go back to start screen
                     cleanupGameOverEvents(canvas);
+                    
+                    // Reset game state
                     isGameOver = false;
+                    isGameStarted = false;
+                    gameRunning = false;
+                    isPaused = false;
                     
                     // Force mobile-specific cleanup if needed
                     if (isMobilePhone() && this.mobileControls) {
-                        console.log("Cleaning up mobile controls after failed score submission");
-                        this.mobileControls.cleanup();
-                        this.mobileControls = null;
+                        console.log("Cleaning up mobile controls after failed submission - ENHANCED");
+                        try {
+                            this.mobileControls.cleanup();
+                            this.mobileControls = null;
+                        } catch (err) {
+                            console.error("Error cleaning up mobile controls:", err);
+                        }
                     }
                     
                     // Clear any animation frames to prevent hanging
@@ -974,14 +1033,21 @@ export class GameController {
                         animationFrameId = null;
                     }
                     
-                    // Reset game controller reference for input system
-                    resetGameControllerRef(this);
-                    
-                    // Re-initialize input system with the current game controller
-                    console.log("Re-initializing input system for the start screen after failed submission");
-                    initInput(canvas, this);
-                    
-                    this.showStartScreen();
+                    // Add delay before reinitializing
+                    setTimeout(() => {
+                        try {
+                            // Reset game controller reference and reinitialize input
+                            resetGameControllerRef(this);
+                            initInput(canvas, this);
+                            
+                            // Show the start screen with enhanced handling
+                            this.showStartScreen();
+                        } catch (err) {
+                            console.error("Error in emergency restart:", err);
+                            // Last resort
+                            this.showStartScreen();
+                        }
+                    }, 100);
                 }
             }.bind(this));
         }
