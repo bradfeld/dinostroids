@@ -89,47 +89,41 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
             ctx.fillText('Enter your initials below:', width / 2, height / 4 + 160);
         }
         
-        // Create a highlighted area for the initials
-        const initialsBoxWidth = 160;
-        const initialsBoxHeight = 60;
-        const initialsBoxX = width / 2 - initialsBoxWidth / 2;
-        const initialsBoxY = height / 4 + 170;
-        
-        // Draw a bordered box for the initials (black with white border)
-        ctx.fillStyle = 'black';
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 2;
-        ctx.fillRect(initialsBoxX, initialsBoxY, initialsBoxWidth, initialsBoxHeight);
-        ctx.strokeRect(initialsBoxX, initialsBoxY, initialsBoxWidth, initialsBoxHeight);
-        
-        // Display the initials being typed in real time
+        // Display the initials being typed in real time - no box, just the letters
         ctx.font = '48px Arial';
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         
-        // Make sure the initials are clearly displayed
-        // For mobile, we show exactly what has been typed so far, with an underscore for empty space
-        let displayText = '';
+        // Draw underscores for initials (instead of a box)
+        const underscoreSpacing = 40; // Space between underscores
+        const startX = width / 2 - underscoreSpacing;
+        const initialsY = height / 4 + 220;
+        
+        // Draw three underscores to indicate the three initials
         for (let i = 0; i < MAX_INITIALS_LENGTH; i++) {
+            const x = startX + (i * underscoreSpacing);
+            ctx.fillRect(x - 15, initialsY + 5, 30, 3); // Draw underline
+            
+            // If we have a letter for this position, draw it
             if (i < playerInitials.length) {
-                displayText += playerInitials[i];
-            } else {
-                displayText += '_';
-            }
-            // Add space between characters for readability
-            if (i < MAX_INITIALS_LENGTH - 1) {
-                displayText += ' ';
+                ctx.fillText(playerInitials[i], x, initialsY);
             }
         }
         
-        // Draw the initials centered in the box
-        ctx.fillText(displayText, width / 2, initialsBoxY + initialsBoxHeight/2 + 16);
+        // Force a clear redraw interval to update the display after each key press
+        if (inputActive && !redrawIntervalId) {
+            redrawIntervalId = setInterval(() => {
+                if (redrawCallback) {
+                    redrawCallback();
+                }
+            }, 100);
+        }
         
         // Platform-specific UI
         if (!isMobile) {
             // Desktop: keyboard instructions
             ctx.font = '16px Arial';
-            ctx.fillText('Press ENTER when done or type up to 3 letters', width / 2, initialsBoxY + initialsBoxHeight + 30);
+            ctx.fillText('Press ENTER when done or type up to 3 letters', width / 2, initialsY + 40);
         } else {
             // Mobile: virtual keyboard
             drawMobileKeyboard(ctx);
@@ -185,8 +179,9 @@ function isNewHighScore(score, leaderboard) {
 function drawMobileKeyboard(ctx) {
     const { width, height } = getDimensions();
     
-    // Center the keyboard at the bottom of the screen
-    mobileKeyboard.x = Math.floor((width - KEYBOARD_WIDTH) / 2);
+    // Center the keyboard horizontally - shift slightly left to account for screen centering
+    const keyboardXOffset = -10; // Shift left to better center on screen
+    mobileKeyboard.x = Math.floor((width - KEYBOARD_WIDTH) / 2) + keyboardXOffset;
     mobileKeyboard.y = height - KEYBOARD_HEIGHT - 100;
     mobileKeyboard.visible = true;
     
@@ -240,16 +235,62 @@ function drawMobileKeyboard(ctx) {
         col++;
     }
     
-    // Center submission controls
+    // Position all controls on the same line below the keyboard
     const controlsY = mobileKeyboard.y + KEYBOARD_HEIGHT + 20;
-    const submitWidth = 120;
+    const delWidth = 80;
     const cancelWidth = 120;
-    const totalWidth = submitWidth + cancelWidth + 20; // 20px spacing between
-    const startX = Math.floor((width - totalWidth) / 2);
+    const submitWidth = 120;
+    const spacing = 20;
+    const totalWidth = delWidth + cancelWidth + submitWidth + (spacing * 2);
+    const startX = Math.floor((width - totalWidth) / 2) + keyboardXOffset;
     
-    // Position and draw the submit button
-    const submitX = startX + cancelWidth + 20;
-    const submitY = controlsY;
+    // Position and draw the DEL button first
+    const delX = startX;
+    const delY = controlsY;
+    mobileKeyboard.backspaceButton = {
+        x: delX,
+        y: delY,
+        width: delWidth,
+        height: 40,
+        text: "DEL"
+    };
+    
+    // Draw DEL button - black background with white outline and text
+    ctx.fillStyle = 'black';
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.fillRect(delX, delY, delWidth, 40);
+    ctx.strokeRect(delX, delY, delWidth, 40);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText("DEL", delX + delWidth/2, delY + 20);
+    
+    // Position and draw the CANCEL button in the middle
+    const cancelX = delX + delWidth + spacing;
+    const cancelY = delY;
+    mobileKeyboard.cancelButton = {
+        x: cancelX,
+        y: cancelY,
+        width: cancelWidth,
+        height: 40,
+        text: "CANCEL"
+    };
+    
+    // Draw cancel button - black background with white outline and text
+    ctx.fillStyle = 'black';
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.fillRect(cancelX, cancelY, cancelWidth, 40);
+    ctx.strokeRect(cancelX, cancelY, cancelWidth, 40);
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.fillText("CANCEL", cancelX + cancelWidth/2, cancelY + 20);
+    
+    // Position and draw the SUBMIT button at the end
+    const submitX = cancelX + cancelWidth + spacing;
+    const submitY = delY;
     mobileKeyboard.submitButton = {
         x: submitX,
         y: submitY,
@@ -269,51 +310,6 @@ function drawMobileKeyboard(ctx) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText("SUBMIT", submitX + submitWidth/2, submitY + 20);
-    
-    // Position and draw the cancel button
-    const cancelX = startX;
-    const cancelY = submitY;
-    mobileKeyboard.cancelButton = {
-        x: cancelX,
-        y: cancelY,
-        width: cancelWidth,
-        height: 40,
-        text: "CANCEL"
-    };
-    
-    // Draw cancel button - black background with white outline and text
-    ctx.fillStyle = 'black';
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
-    ctx.fillRect(cancelX, cancelY, cancelWidth, 40);
-    ctx.strokeRect(cancelX, cancelY, cancelWidth, 40);
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.fillText("CANCEL", cancelX + cancelWidth/2, cancelY + 20);
-    
-    // Position and draw the backspace button, centered below
-    const backspaceWidth = 80;
-    const backspaceX = Math.floor((width - backspaceWidth) / 2);
-    const backspaceY = controlsY + 60; // Position below other buttons
-    mobileKeyboard.backspaceButton = {
-        x: backspaceX,
-        y: backspaceY,
-        width: backspaceWidth,
-        height: 40,
-        text: "DEL"
-    };
-    
-    // Draw backspace button - black background with white outline and text
-    ctx.fillStyle = 'black';
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
-    ctx.fillRect(backspaceX, backspaceY, backspaceWidth, 40);
-    ctx.strokeRect(backspaceX, backspaceY, backspaceWidth, 40);
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 18px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText("DEL", backspaceX + backspaceWidth/2, backspaceY + 20);
 }
 
 /**
@@ -454,7 +450,9 @@ function handleMobileTouchInput(event) {
         for (const button of mobileKeyboard.buttons) {
             if (isTouchOnButton(touchX, touchY, button)) {
                 if (playerInitials.length < MAX_INITIALS_LENGTH) {
+                    // Add the letter to initials
                     playerInitials += button.letter;
+                    console.log(`Added letter ${button.letter}. Current initials: ${playerInitials}`);
                     
                     // Visual feedback for button press (inverted colors)
                     const ctx = getCanvas().ctx;
@@ -469,7 +467,12 @@ function handleMobileTouchInput(event) {
                     ctx.textBaseline = 'middle';
                     ctx.fillText(button.letter, button.x + button.width / 2, button.y + button.height / 2);
                     
-                    // Redraw the game over screen to update the initials display
+                    // Immediate redraw to update the display
+                    if (redrawCallback) {
+                        redrawCallback();
+                    }
+                    
+                    // Also schedule another redraw after a moment for the button visual feedback
                     setTimeout(() => {
                         if (redrawCallback) {
                             redrawCallback();
@@ -493,6 +496,7 @@ function handleMobileTouchInput(event) {
         // Check for backspace button press
         if (isTouchOnButton(touchX, touchY, mobileKeyboard.backspaceButton)) {
             playerInitials = playerInitials.slice(0, -1);
+            console.log(`Deleted letter. Current initials: ${playerInitials}`);
             
             // Visual feedback for button press (inverted colors)
             const ctx = getCanvas().ctx;
@@ -521,7 +525,12 @@ function handleMobileTouchInput(event) {
                 mobileKeyboard.backspaceButton.y + mobileKeyboard.backspaceButton.height / 2
             );
             
-            // Redraw the screen to update initials display
+            // Immediate redraw to update the display
+            if (redrawCallback) {
+                redrawCallback();
+            }
+            
+            // Schedule another redraw after a moment for the button visual feedback
             setTimeout(() => {
                 if (redrawCallback) {
                     redrawCallback();
@@ -681,14 +690,22 @@ function isTouchOnButton(touchX, touchY, button) {
  * Reset the initials input state
  */
 function resetInput() {
+    console.log("Resetting high score input state");
     playerInitials = '';
     inputActive = false;
     mobileKeyboard.visible = false;
     
     // Clear the forced redraw interval
     if (redrawIntervalId) {
+        console.log("Clearing redraw interval");
         clearInterval(redrawIntervalId);
         redrawIntervalId = null;
+    }
+    
+    // Force one final redraw to ensure the screen is cleared
+    if (redrawCallback) {
+        console.log("Final redraw after reset");
+        redrawCallback();
     }
 }
 
