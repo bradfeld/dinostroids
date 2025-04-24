@@ -840,7 +840,7 @@ export class GameController {
         setupGameOverEvents(canvas);
         
         // Set up the restart callback for non-high score case
-        onRestart((event) => {
+        onRestart(function(event) {
             console.log("Restart callback triggered - returning to start screen");
             
             // Clean up any event handlers
@@ -886,46 +886,76 @@ export class GameController {
             setTimeout(redrawGameOver, 100);
             
             // Set up the score submission handler
-            onSubmitScore(async (initials) => {
+            onSubmitScore(function(initials) {
                 try {
                     console.log(`Submitting high score with initials: ${initials}`);
                     // Submit score with level and time information
-                    await submitScore(initials, score, gameTime, level, currentDifficulty);
-                    
-                    // Refresh leaderboard after submitting
-                    leaderboardData = await fetchLeaderboard();
-                    
-                    // Clean up game over input handlers
-                    cleanupGameOverEvents(canvas);
-                    
-                    // Reset game state completely
-                    isGameOver = false;
-                    isGameStarted = false;
-                    gameRunning = false;
-                    
-                    // Force mobile-specific cleanup if needed
-                    if (isMobilePhone() && this.mobileControls) {
-                        console.log("Cleaning up mobile controls after high score submission");
-                        this.mobileControls.cleanup();
-                        this.mobileControls = null;
-                    }
-                    
-                    // Clear any animation frames to prevent hanging
-                    if (animationFrameId) {
-                        cancelAnimationFrame(animationFrameId);
-                        animationFrameId = null;
-                    }
-                    
-                    // Reset game controller reference for input system
-                    resetGameControllerRef(this);
-                    
-                    // Re-initialize input system with the current game controller
-                    console.log("Re-initializing input system for the start screen after score submission");
-                    initInput(canvas, this);
-                    
-                    this.showStartScreen();
+                    submitScore(initials, score, gameTime, level, currentDifficulty).then(() => {
+                        // Refresh leaderboard after submitting
+                        return fetchLeaderboard();
+                    }).then(newLeaderboard => {
+                        leaderboardData = newLeaderboard;
+                        
+                        // Clean up game over input handlers
+                        cleanupGameOverEvents(canvas);
+                        
+                        // Reset game state completely
+                        isGameOver = false;
+                        isGameStarted = false;
+                        gameRunning = false;
+                        
+                        // Force mobile-specific cleanup if needed
+                        if (isMobilePhone() && this.mobileControls) {
+                            console.log("Cleaning up mobile controls after high score submission");
+                            this.mobileControls.cleanup();
+                            this.mobileControls = null;
+                        }
+                        
+                        // Clear any animation frames to prevent hanging
+                        if (animationFrameId) {
+                            cancelAnimationFrame(animationFrameId);
+                            animationFrameId = null;
+                        }
+                        
+                        // Reset game controller reference for input system
+                        resetGameControllerRef(this);
+                        
+                        // Re-initialize input system with the current game controller
+                        console.log("Re-initializing input system for the start screen after score submission");
+                        initInput(canvas, this);
+                        
+                        this.showStartScreen();
+                    }).catch(error => {
+                        console.error("Failed to submit score:", error);
+                        
+                        // Even if submission fails, go back to start screen
+                        cleanupGameOverEvents(canvas);
+                        isGameOver = false;
+                        
+                        // Force mobile-specific cleanup if needed
+                        if (isMobilePhone() && this.mobileControls) {
+                            console.log("Cleaning up mobile controls after failed score submission");
+                            this.mobileControls.cleanup();
+                            this.mobileControls = null;
+                        }
+                        
+                        // Clear any animation frames to prevent hanging
+                        if (animationFrameId) {
+                            cancelAnimationFrame(animationFrameId);
+                            animationFrameId = null;
+                        }
+                        
+                        // Reset game controller reference for input system
+                        resetGameControllerRef(this);
+                        
+                        // Re-initialize input system with the current game controller
+                        console.log("Re-initializing input system for the start screen after failed submission");
+                        initInput(canvas, this);
+                        
+                        this.showStartScreen();
+                    });
                 } catch (error) {
-                    console.error("Failed to submit score:", error);
+                    console.error("Exception submitting score:", error);
                     
                     // Even if submission fails, go back to start screen
                     cleanupGameOverEvents(canvas);
@@ -953,7 +983,7 @@ export class GameController {
                     
                     this.showStartScreen();
                 }
-            }).bind(this);
+            }.bind(this));
         }
     }
 
