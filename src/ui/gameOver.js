@@ -120,11 +120,6 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
                     // Draw a vertical cursor line
                     ctx.fillRect(width / 2 - 2, initialsY - 40, 4, 45);
                 }
-                
-                // Also draw empty placeholders
-                ctx.font = '24px Arial';
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; // semi-transparent
-                ctx.fillText("TYPE HERE", width / 2, initialsY + 20);
             }
             
             console.log("Input active but no initials entered yet");
