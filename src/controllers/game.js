@@ -840,7 +840,7 @@ export class GameController {
         setupGameOverEvents(canvas);
         
         // Set up the restart callback for non-high score case
-        onRestart(((event) => {
+        onRestart((event) => {
             console.log("Restart callback triggered - returning to start screen");
             
             // Clean up any event handlers
@@ -875,7 +875,7 @@ export class GameController {
             // Show the start screen - this will set up the appropriate handlers
             console.log("Showing start screen from restart callback");
             this.showStartScreen();
-        }).bind(this));
+        }.bind(this));
         
         // If it's a high score, activate the initials input
         if (isHighScore) {
@@ -953,7 +953,7 @@ export class GameController {
                     
                     this.showStartScreen();
                 }
-            }).bind(this));
+            }).bind(this);
         }
     }
 
