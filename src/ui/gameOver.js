@@ -89,23 +89,47 @@ export function drawGameOver(ctx, score, leaderboard = [], level = 1, gameTime =
             ctx.fillText('Enter your initials below:', width / 2, height / 4 + 160);
         }
         
+        // Create a highlighted area for the initials
+        const initialsBoxWidth = 160;
+        const initialsBoxHeight = 60;
+        const initialsBoxX = width / 2 - initialsBoxWidth / 2;
+        const initialsBoxY = height / 4 + 170;
+        
+        // Draw a bordered box for the initials (black with white border)
+        ctx.fillStyle = 'black';
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.fillRect(initialsBoxX, initialsBoxY, initialsBoxWidth, initialsBoxHeight);
+        ctx.strokeRect(initialsBoxX, initialsBoxY, initialsBoxWidth, initialsBoxHeight);
+        
         // Display the initials being typed in real time
         ctx.font = '48px Arial';
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         
         // Make sure the initials are clearly displayed
-        const displayText = playerInitials ? playerInitials + (playerInitials.length < MAX_INITIALS_LENGTH ? "_" : "") : "_";
+        // For mobile, we show exactly what has been typed so far, with an underscore for empty space
+        let displayText = '';
+        for (let i = 0; i < MAX_INITIALS_LENGTH; i++) {
+            if (i < playerInitials.length) {
+                displayText += playerInitials[i];
+            } else {
+                displayText += '_';
+            }
+            // Add space between characters for readability
+            if (i < MAX_INITIALS_LENGTH - 1) {
+                displayText += ' ';
+            }
+        }
         
-        // Clear the area where the initials will be displayed
-        ctx.clearRect(width / 2 - 100, height / 4 + 170, 200, 60);
-        ctx.fillText(displayText, width / 2, height / 4 + 210);
+        // Draw the initials centered in the box
+        ctx.fillText(displayText, width / 2, initialsBoxY + initialsBoxHeight/2 + 16);
         
         // Platform-specific UI
         if (!isMobile) {
             // Desktop: keyboard instructions
             ctx.font = '16px Arial';
-            ctx.fillText('Press ENTER when done or type up to 3 letters', width / 2, height / 4 + 250);
+            ctx.fillText('Press ENTER when done or type up to 3 letters', width / 2, initialsBoxY + initialsBoxHeight + 30);
         } else {
             // Mobile: virtual keyboard
             drawMobileKeyboard(ctx);
@@ -161,14 +185,17 @@ function isNewHighScore(score, leaderboard) {
 function drawMobileKeyboard(ctx) {
     const { width, height } = getDimensions();
     
-    // Position the keyboard at the bottom of the screen
-    mobileKeyboard.x = (width - KEYBOARD_WIDTH) / 2;
+    // Center the keyboard at the bottom of the screen
+    mobileKeyboard.x = Math.floor((width - KEYBOARD_WIDTH) / 2);
     mobileKeyboard.y = height - KEYBOARD_HEIGHT - 100;
     mobileKeyboard.visible = true;
     
     // Draw keyboard background
-    ctx.fillStyle = 'rgba(50, 50, 50, 0.8)';
+    ctx.fillStyle = 'black';
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
     ctx.fillRect(mobileKeyboard.x, mobileKeyboard.y, KEYBOARD_WIDTH, KEYBOARD_HEIGHT);
+    ctx.strokeRect(mobileKeyboard.x, mobileKeyboard.y, KEYBOARD_WIDTH, KEYBOARD_HEIGHT);
     
     // Create and draw letter buttons
     mobileKeyboard.buttons = [];
@@ -196,12 +223,15 @@ function drawMobileKeyboard(ctx) {
             height: BUTTON_SIZE
         });
         
-        // Draw the button
-        ctx.fillStyle = 'white';
+        // Draw the button - black background with white outline and text
+        ctx.fillStyle = 'black';
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 1.5;
         ctx.fillRect(x, y, BUTTON_SIZE, BUTTON_SIZE);
+        ctx.strokeRect(x, y, BUTTON_SIZE, BUTTON_SIZE);
         
         // Draw the letter
-        ctx.fillStyle = 'black';
+        ctx.fillStyle = 'white';
         ctx.font = 'bold 20px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -210,63 +240,80 @@ function drawMobileKeyboard(ctx) {
         col++;
     }
     
+    // Center submission controls
+    const controlsY = mobileKeyboard.y + KEYBOARD_HEIGHT + 20;
+    const submitWidth = 120;
+    const cancelWidth = 120;
+    const totalWidth = submitWidth + cancelWidth + 20; // 20px spacing between
+    const startX = Math.floor((width - totalWidth) / 2);
+    
     // Position and draw the submit button
-    const submitX = width / 2 + 10;
-    const submitY = mobileKeyboard.y + KEYBOARD_HEIGHT + 20;
+    const submitX = startX + cancelWidth + 20;
+    const submitY = controlsY;
     mobileKeyboard.submitButton = {
         x: submitX,
         y: submitY,
-        width: 120,
+        width: submitWidth,
         height: 40,
         text: "SUBMIT"
     };
     
-    // Draw submit button
-    ctx.fillStyle = 'green';
-    ctx.fillRect(submitX, submitY, 120, 40);
+    // Draw submit button - black background with white outline and text
+    ctx.fillStyle = 'black';
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.fillRect(submitX, submitY, submitWidth, 40);
+    ctx.strokeRect(submitX, submitY, submitWidth, 40);
     ctx.fillStyle = 'white';
     ctx.font = 'bold 18px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText("SUBMIT", submitX + 60, submitY + 20);
+    ctx.fillText("SUBMIT", submitX + submitWidth/2, submitY + 20);
     
     // Position and draw the cancel button
-    const cancelX = width / 2 - 120 - 10;
+    const cancelX = startX;
     const cancelY = submitY;
     mobileKeyboard.cancelButton = {
         x: cancelX,
         y: cancelY,
-        width: 120,
+        width: cancelWidth,
         height: 40,
         text: "CANCEL"
     };
     
-    // Draw cancel button
-    ctx.fillStyle = '#aa0000'; // Dark red
-    ctx.fillRect(cancelX, cancelY, 120, 40);
+    // Draw cancel button - black background with white outline and text
+    ctx.fillStyle = 'black';
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.fillRect(cancelX, cancelY, cancelWidth, 40);
+    ctx.strokeRect(cancelX, cancelY, cancelWidth, 40);
     ctx.fillStyle = 'white';
     ctx.textAlign = 'center';
-    ctx.fillText("CANCEL", cancelX + 60, cancelY + 20);
+    ctx.fillText("CANCEL", cancelX + cancelWidth/2, cancelY + 20);
     
-    // Position and draw the backspace button
-    const backspaceX = width / 2 - 100;
-    const backspaceY = mobileKeyboard.y + KEYBOARD_HEIGHT + 80; // Move below the submit/cancel
+    // Position and draw the backspace button, centered below
+    const backspaceWidth = 80;
+    const backspaceX = Math.floor((width - backspaceWidth) / 2);
+    const backspaceY = controlsY + 60; // Position below other buttons
     mobileKeyboard.backspaceButton = {
         x: backspaceX,
         y: backspaceY,
-        width: 80,
+        width: backspaceWidth,
         height: 40,
         text: "DEL"
     };
     
-    // Draw backspace button
-    ctx.fillStyle = 'red';
-    ctx.fillRect(backspaceX, backspaceY, 80, 40);
+    // Draw backspace button - black background with white outline and text
+    ctx.fillStyle = 'black';
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.fillRect(backspaceX, backspaceY, backspaceWidth, 40);
+    ctx.strokeRect(backspaceX, backspaceY, backspaceWidth, 40);
     ctx.fillStyle = 'white';
     ctx.font = 'bold 18px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText("DEL", backspaceX + 40, backspaceY + 20);
+    ctx.fillText("DEL", backspaceX + backspaceWidth/2, backspaceY + 20);
 }
 
 /**
@@ -277,29 +324,33 @@ function drawMobileRestartButton(ctx) {
     const { width, height } = getDimensions();
     
     // Position the button
-    const buttonX = (width - 240) / 2;
+    const buttonWidth = 240;
+    const buttonHeight = 60;
+    const buttonX = Math.floor((width - buttonWidth) / 2);
     const buttonY = height - 160;
     
     // Store button position
     mobileKeyboard.restartButton = {
         x: buttonX,
         y: buttonY,
-        width: 240,
-        height: 60,
+        width: buttonWidth,
+        height: buttonHeight,
         text: "TOUCH TO PLAY AGAIN"
     };
     
-    // Draw button
+    // Draw button with black fill and white border
+    ctx.fillStyle = 'black';
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 4;
-    ctx.strokeRect(buttonX, buttonY, 240, 60);
+    ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+    ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
     
-    // Draw text
+    // Draw text in white
     ctx.fillStyle = 'white';
     ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText("TOUCH TO PLAY AGAIN", buttonX + 120, buttonY + 30);
+    ctx.fillText("TOUCH TO PLAY AGAIN", buttonX + buttonWidth/2, buttonY + buttonHeight/2);
 }
 
 /**
@@ -405,17 +456,20 @@ function handleMobileTouchInput(event) {
                 if (playerInitials.length < MAX_INITIALS_LENGTH) {
                     playerInitials += button.letter;
                     
-                    // Visual feedback for button press
+                    // Visual feedback for button press (inverted colors)
                     const ctx = getCanvas().ctx;
-                    ctx.fillStyle = 'yellow';
+                    ctx.fillStyle = 'white';
                     ctx.fillRect(button.x, button.y, button.width, button.height);
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(button.x, button.y, button.width, button.height);
                     ctx.fillStyle = 'black';
                     ctx.font = 'bold 20px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(button.letter, button.x + button.width / 2, button.y + button.height / 2);
                     
-                    // Redraw after a short delay for visual feedback
+                    // Redraw the game over screen to update the initials display
                     setTimeout(() => {
                         if (redrawCallback) {
                             redrawCallback();
@@ -440,16 +494,24 @@ function handleMobileTouchInput(event) {
         if (isTouchOnButton(touchX, touchY, mobileKeyboard.backspaceButton)) {
             playerInitials = playerInitials.slice(0, -1);
             
-            // Visual feedback for button press
+            // Visual feedback for button press (inverted colors)
             const ctx = getCanvas().ctx;
-            ctx.fillStyle = 'darkred';
+            ctx.fillStyle = 'white';
             ctx.fillRect(
                 mobileKeyboard.backspaceButton.x, 
                 mobileKeyboard.backspaceButton.y, 
                 mobileKeyboard.backspaceButton.width, 
                 mobileKeyboard.backspaceButton.height
             );
-            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(
+                mobileKeyboard.backspaceButton.x, 
+                mobileKeyboard.backspaceButton.y, 
+                mobileKeyboard.backspaceButton.width, 
+                mobileKeyboard.backspaceButton.height
+            );
+            ctx.fillStyle = 'black';
             ctx.font = 'bold 18px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -459,7 +521,7 @@ function handleMobileTouchInput(event) {
                 mobileKeyboard.backspaceButton.y + mobileKeyboard.backspaceButton.height / 2
             );
             
-            // Redraw after a short delay for visual feedback
+            // Redraw the screen to update initials display
             setTimeout(() => {
                 if (redrawCallback) {
                     redrawCallback();
@@ -470,16 +532,24 @@ function handleMobileTouchInput(event) {
         
         // Check for submit button press
         if (isTouchOnButton(touchX, touchY, mobileKeyboard.submitButton) && playerInitials.length > 0) {
-            // Visual feedback for button press
+            // Visual feedback for button press (inverted colors)
             const ctx = getCanvas().ctx;
-            ctx.fillStyle = 'darkgreen';
+            ctx.fillStyle = 'white';
             ctx.fillRect(
                 mobileKeyboard.submitButton.x, 
                 mobileKeyboard.submitButton.y, 
                 mobileKeyboard.submitButton.width, 
                 mobileKeyboard.submitButton.height
             );
-            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(
+                mobileKeyboard.submitButton.x, 
+                mobileKeyboard.submitButton.y, 
+                mobileKeyboard.submitButton.width, 
+                mobileKeyboard.submitButton.height
+            );
+            ctx.fillStyle = 'black';
             ctx.font = 'bold 18px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -501,16 +571,24 @@ function handleMobileTouchInput(event) {
         
         // Check for cancel button press
         if (isTouchOnButton(touchX, touchY, mobileKeyboard.cancelButton)) {
-            // Visual feedback for button press
+            // Visual feedback for button press (inverted colors)
             const ctx = getCanvas().ctx;
-            ctx.fillStyle = '#880000'; // Darker red
+            ctx.fillStyle = 'white';
             ctx.fillRect(
                 mobileKeyboard.cancelButton.x, 
                 mobileKeyboard.cancelButton.y, 
                 mobileKeyboard.cancelButton.width, 
                 mobileKeyboard.cancelButton.height
             );
-            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(
+                mobileKeyboard.cancelButton.x, 
+                mobileKeyboard.cancelButton.y, 
+                mobileKeyboard.cancelButton.width, 
+                mobileKeyboard.cancelButton.height
+            );
+            ctx.fillStyle = 'black';
             ctx.font = 'bold 18px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -534,10 +612,18 @@ function handleMobileTouchInput(event) {
         if (isTouchOnButton(touchX, touchY, mobileKeyboard.restartButton)) {
             console.log("Restart button touched - ENHANCED HANDLING");
             
-            // Visual feedback for button press
+            // Visual feedback for button press (inverted colors)
             const ctx = getCanvas().ctx;
             ctx.fillStyle = 'white';
             ctx.fillRect(
+                mobileKeyboard.restartButton.x, 
+                mobileKeyboard.restartButton.y, 
+                mobileKeyboard.restartButton.width, 
+                mobileKeyboard.restartButton.height
+            );
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(
                 mobileKeyboard.restartButton.x, 
                 mobileKeyboard.restartButton.y, 
                 mobileKeyboard.restartButton.width, 
