@@ -40,20 +40,19 @@ class Bullet {
         // Decrease lifespan
         this.lifespan -= deltaTime * 1000; // Convert to ms
         
-        // Check if bullet is still active
+        // Check if bullet is still active based on lifespan
         if (this.lifespan <= 0) {
             this.active = false;
             return false;
         }
         
-        // Check screen boundaries
+        // Screen wrapping instead of deactivating when off-screen
         const { width, height } = getDimensions();
         
-        if (this.x < -this.radius || this.x > width + this.radius ||
-            this.y < -this.radius || this.y > height + this.radius) {
-            this.active = false;
-            return false;
-        }
+        if (this.x < -this.radius) this.x = width + this.radius;
+        if (this.x > width + this.radius) this.x = -this.radius;
+        if (this.y < -this.radius) this.y = height + this.radius;
+        if (this.y > height + this.radius) this.y = -this.radius;
         
         return true;
     }
