@@ -4,7 +4,7 @@ A classic arcade-style shooter game built with HTML Canvas and pure JavaScript. 
 
 Written entirely by vibe coding using Cursor and Claude-3.7-sonnet.
 
-Inspiration and emotional support from Quinn McIntyre.
+Inspiration and emotional support from [@qamcintyre](https://github.com/qamcintyre).
 
 ## Directory Structure
 
