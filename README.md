@@ -4,7 +4,7 @@ A classic arcade-style shooter game built with HTML Canvas and pure JavaScript. 
 
 Written entirely by vibe coding using Cursor and Claude-3.7-sonnet.
 
-Inspiration and emotional support from Quinn McIntyre.
+Inspiration and emotional support from [@qamcintyre](https://github.com/qamcintyre).
 
 ## Directory Structure
 
@@ -87,3 +87,5 @@ To set up the development environment:
 
 The development server will be available at http://localhost:8000 by default.
 
+To generate a production JS build, call `npm run build`. This creates a minified bundle at
+`bundle.js`. Test it out with `npm run serve` (note that the API won't be available!)
