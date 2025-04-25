@@ -80,6 +80,65 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
         ctx.fillText(diff, width * 0.5, y + buttonHeight * 0.6);
     });
 
+    // Calculate position for the high scores section, below difficulty buttons
+    const highScoresY = startY + (buttonHeight + buttonSpacing) * difficulties.length + buttonSpacing * 2;
+    
+    // Display top 5 high scores if data is available
+    if (leaderboardData && leaderboardData.length > 0) {
+        // Sort scores and get top 5
+        const topScores = [...leaderboardData]
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 5);
+            
+        // Background for high scores
+        const scoreBoxWidth = Math.min(width * 0.9, 350);
+        const rowHeight = Math.floor(height * 0.028);
+        const scoreBoxHeight = rowHeight * (topScores.length + 2); // +2 for header and title
+        
+        // Draw semi-transparent background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(
+            (width - scoreBoxWidth) / 2,
+            highScoresY,
+            scoreBoxWidth,
+            scoreBoxHeight
+        );
+        
+        // Draw title
+        ctx.fillStyle = 'white';
+        ctx.font = `bold ${Math.floor(height * 0.025)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.fillText('High Scores', width * 0.5, highScoresY + rowHeight);
+        
+        // Define column positions
+        const rankX = width * 0.5 - scoreBoxWidth * 0.35;
+        const scoreX = width * 0.5;
+        const initialsX = width * 0.5 + scoreBoxWidth * 0.35;
+        
+        // Draw column headers
+        ctx.font = `${Math.floor(height * 0.02)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.fillText('Rank', rankX, highScoresY + rowHeight * 2);
+        ctx.fillText('Score', scoreX, highScoresY + rowHeight * 2);
+        ctx.fillText('Initials', initialsX, highScoresY + rowHeight * 2);
+        
+        // Draw scores
+        ctx.font = `${Math.floor(height * 0.02)}px Arial`;
+        topScores.forEach((score, i) => {
+            const rowY = highScoresY + rowHeight * (i + 3);
+            
+            // Rank
+            ctx.textAlign = 'center';
+            ctx.fillText(`${i + 1}`, rankX, rowY);
+            
+            // Score value
+            ctx.fillText(`${score.score}`, scoreX, rowY);
+            
+            // Initials
+            ctx.fillText(score.initials || '---', initialsX, rowY);
+        });
+    }
+
     // Draw game stats at the bottom if available
     if (gamesPlayed > 0) {
         ctx.font = `${Math.floor(height * 0.02)}px Arial`;
