@@ -834,6 +834,10 @@ export class GameController {
         // Calculate final game time (in milliseconds)
         const gameTime = currentTime;
         
+        // Update games played count
+        gamesPlayedCount++;
+        incrementGamesPlayed();
+        
         // Clean up entities
         if (player) {
             player = null;
