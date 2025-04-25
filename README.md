@@ -61,7 +61,7 @@ Inspiration and emotional support from Quinn McIntyre.
 *   **Shoot:** `Spacebar`
 *   **Start Game:** `Enter/Return`
 *   **Pause:** `P`
-    **Help Screen:** `?`
+*   **Help Screen:** `?`
 *   **End Game:** `Esc`
 *   **Hyperspace:** `H` (teleports your ship to a random location)
 
