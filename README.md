@@ -2,7 +2,7 @@
 
 A classic arcade-style shooter game built with HTML Canvas and pure JavaScript. Pilot your spaceship, dodge and destroy waves of incoming dinosaur-shaped asteroids!
 
-Written entirely by vibe coding using Cursor and gemini-2.5.-pro-exp-03-25 with assists from claude-3.7-sonnet and claude-3.5-sonnet. Well, not entirely.
+Written entirely by vibe coding using Cursor and Claude-3.7-sonnet.
 
 Inspiration and emotional support from Quinn McIntyre.
 
@@ -46,13 +46,13 @@ Inspiration and emotional support from Quinn McIntyre.
 
 ## Gameplay
 
-*   **Objective:** Survive as long as possible by shooting asteroids and avoiding collisions.
-*   **Asteroids:** Destroy large asteroids (T-Rex), which break into medium ones (Pterodactyl), which break into small ones (Sauropod). Smaller asteroids are worth more points.
-*   **Scoring:** Earn points for each asteroid destroyed.
-*   **Levels:** Clear all asteroids on the screen to advance to the next level, which introduces more asteroids.
-*   **Lives:** You start with a set number of lives. Lose a life if an asteroid hits your ship. Gain an extra life every 10,000 points.
+*   **Objective:** Survive as long as possible by shooting dinostroids and avoiding collisions.
+*   **Dinostroids:** Destroy large dinostroids which break into medium and small ones.
+*   **Scoring:** Earn points for each dinostroid destroyed.
+*   **Levels:** Clear all dinostroids on the screen to advance to the next level, which introduces more asteroids.
+*   **Lives:** You start with a set number of lives. Lose a life if an dinostroid hits your ship. Gain an extra life every 10,000 points.
 *   **Game Over:** The game ends when you run out of lives.
-*   **Difficulty Levels:** Choose between Easy, Medium, or Difficult modes, which affect asteroid speed, quantity, and player lives.
+*   **Difficulty Levels:** Choose between Easy, Medium, or Difficult modes, which affect dinostroid speed, quantity, and player lives.
 
 ## Controls
 
@@ -71,6 +71,10 @@ Inspiration and emotional support from Quinn McIntyre.
 *   **Hyperspace:** Button above the bottom right controls
 
 ## How to Play
+
+The program, with a High Score leaderboard, is at https://dinostroids.com
+
+## To Create Your Own Version
 
 1.  Clone or download this repository.
 2.  Open the `index.html` file in your web browser.
