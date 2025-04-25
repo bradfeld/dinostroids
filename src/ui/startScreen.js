@@ -90,7 +90,7 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
     // Copyright text
     ctx.font = `${Math.floor(height * 0.015)}px Arial`;
     ctx.textAlign = 'center';
-    ctx.fillText('© 2025, Intensity Ventures', width * 0.5, height * 0.95);
+    ctx.fillText('© 2025 by Brad Feld', width * 0.5, height * 0.95);
 }
 
 /**
@@ -166,5 +166,5 @@ function drawDesktopStartScreen(ctx, currentDifficulty, leaderboardData, gamesPl
     // Copyright text - centered horizontally
     ctx.font = '14px Arial';
     ctx.textAlign = 'center'; // Ensure text is center-aligned
-    ctx.fillText('© 2025, Intensity Ventures', width / 2, height - 40);
+    ctx.fillText('© 2025 by Brad Feld', width / 2, height - 40);
 } 
