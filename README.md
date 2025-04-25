@@ -73,7 +73,7 @@ Inspiration and emotional support from Quinn McIntyre.
 
 ## How to Play
 
-The program, with a High Score leaderboard, is at https://dinostroids.com
+*   The program, with a High Score leaderboard, is at https://dinostroids.com
 
 ## To Create Your Own Version
 
