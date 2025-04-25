@@ -80,13 +80,6 @@ function drawMobileStartScreen(ctx, currentDifficulty, leaderboardData, gamesPla
         ctx.fillText(diff, width * 0.5, y + buttonHeight * 0.6);
     });
 
-    // Instructions
-    ctx.fillStyle = 'white';
-    ctx.font = `${Math.floor(height * 0.025)}px Arial`;
-    ctx.textAlign = 'center';
-    const instructionsY = startY + (buttonHeight + buttonSpacing) * difficulties.length + buttonSpacing;
-    ctx.fillText('TAP ANY DIFFICULTY TO START GAME', width * 0.5, instructionsY);
-
     // Draw game stats at the bottom if available
     if (gamesPlayed > 0) {
         ctx.font = `${Math.floor(height * 0.02)}px Arial`;
