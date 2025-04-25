@@ -129,23 +129,23 @@ export class GameController {
         // Add a small delay before setting up new handlers to ensure clean state
         setTimeout(() => {
             console.log("Setting up input handlers for start screen after cleanup");
-            this.setupInputHandlers();
+        this.setupInputHandlers();
         
-            // Clear the canvas
-            clear('black');
-            
-            // Draw start screen with current difficulty and game data
-            drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
-            
+        // Clear the canvas
+        clear('black');
+        
+        // Draw start screen with current difficulty and game data
+        drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
+        
             // Set up fresh mobile controls if on mobile with a small delay 
             // to ensure previous ones are fully cleaned up
-            if (isMobilePhone()) {
+        if (isMobilePhone()) {
                 setTimeout(() => {
-                    const { canvas } = getCanvas();
+            const { canvas } = getCanvas();
                     console.log("Creating new mobile controls for start screen");
-                    this.mobileControls = new MobileControls(canvas, this);
+            this.mobileControls = new MobileControls(canvas, this);
                 }, 50);
-            }
+        }
         }, 50);
     }
 
@@ -864,17 +864,17 @@ export class GameController {
         
         // Set up game over event handlers - handles both desktop and mobile
         setupGameOverEvents(canvas);
-        
+                
         // Set up the restart callback for non-high score case
         onRestart(function(event) {
             console.log("Restart callback triggered - ENHANCED version for mobile");
             
             // Clean up any event handlers first
             cleanupGameOverEvents(canvas);
-            
-            // Reset game state
-            isGameOver = false;
-            isGameStarted = false;
+                    
+                    // Reset game state
+                    isGameOver = false;
+                    isGameStarted = false;
             gameRunning = false;
             isPaused = false;
             
@@ -891,22 +891,22 @@ export class GameController {
             }
             
             // Clean up input system
-            this.cleanupInputHandlers();
+                    this.cleanupInputHandlers();
             
             // Cancel any animation frames
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            
-            // Reset game controller reference for input system
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    
+                    // Reset game controller reference for input system
             try {
-                resetGameControllerRef(this);
+                    resetGameControllerRef(this);
             } catch (err) {
                 console.error("Error resetting game controller:", err);
                 // Continue anyway
             }
-            
+                    
             // Add a small delay before initializing the input system and showing start screen
             // This helps prevent event handler conflicts
             setTimeout(() => {
@@ -922,7 +922,7 @@ export class GameController {
                     console.error("Error during restart transition:", err);
                     // Emergency fallback - force a clean start screen
                     this.showStartScreen();
-                }
+            }
             }, 100);
         }.bind(this));
         
@@ -940,19 +940,19 @@ export class GameController {
                     console.log(`Submitting high score with initials: ${initials} - ENHANCED handling`);
                     // Submit score with level and time information
                     submitScore(initials, score, gameTime, level, currentDifficulty).then(() => {
-                        // Refresh leaderboard after submitting
+                    // Refresh leaderboard after submitting
                         return fetchLeaderboard();
                     }).then(newLeaderboard => {
                         leaderboardData = newLeaderboard;
-                        
+                    
                         // Clean up game over input handlers with enhanced cleanup
                         console.log("Cleaning up game over events after score submission - ENHANCED");
                         cleanupGameOverEvents(canvas);
-                        
-                        // Reset game state completely
-                        isGameOver = false;
-                        isGameStarted = false;
-                        gameRunning = false;
+                    
+                    // Reset game state completely
+                    isGameOver = false;
+                    isGameStarted = false;
+                    gameRunning = false;
                         isPaused = false;
                         
                         // Force mobile-specific cleanup if needed
@@ -966,16 +966,16 @@ export class GameController {
                                 // Continue anyway to ensure we complete the transition
                             }
                         }
-                        
-                        // Clear any animation frames to prevent hanging
-                        if (animationFrameId) {
-                            cancelAnimationFrame(animationFrameId);
-                            animationFrameId = null;
-                        }
-                        
-                        // Reset game controller reference for input system
+                    
+                    // Clear any animation frames to prevent hanging
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    
+                    // Reset game controller reference for input system
                         try {
-                            resetGameControllerRef(this);
+                    resetGameControllerRef(this);
                         } catch (err) {
                             console.error("Error resetting game controller:", err);
                             // Continue anyway
@@ -986,10 +986,10 @@ export class GameController {
                             try {
                                 // Re-initialize input system with the current game controller
                                 console.log("Re-initializing input system after score submission - ENHANCED");
-                                initInput(canvas, this);
-                                
+                    initInput(canvas, this);
+                    
                                 // Show the start screen with enhanced handling
-                                this.showStartScreen();
+                    this.showStartScreen();
                             } catch (err) {
                                 console.error("Error during post-score transition:", err);
                                 // Emergency fallback - force a clean start screen
@@ -997,7 +997,7 @@ export class GameController {
                             }
                         }, 100);
                     }).catch(error => {
-                        console.error("Failed to submit score:", error);
+                    console.error("Failed to submit score:", error);
                         handleFailedSubmission.call(this);
                     });
                 } catch (error) {
@@ -1037,16 +1037,16 @@ export class GameController {
                     setTimeout(() => {
                         try {
                             // Reset game controller reference and reinitialize input
-                            resetGameControllerRef(this);
-                            initInput(canvas, this);
-                            
+                    resetGameControllerRef(this);
+                    initInput(canvas, this);
+                    
                             // Show the start screen with enhanced handling
                             this.showStartScreen();
                         } catch (err) {
                             console.error("Error in emergency restart:", err);
                             // Last resort
-                            this.showStartScreen();
-                        }
+                    this.showStartScreen();
+                }
                     }, 100);
                 }
             }.bind(this));
