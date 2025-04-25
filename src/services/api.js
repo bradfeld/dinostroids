@@ -55,15 +55,20 @@ export async function fetchGamesPlayed() {
  * @returns {Promise<boolean>} True if successful
  */
 export async function incrementGamesPlayed() {
+    console.log("Attempting to increment games played count...");
     try {
         // Add a timeout to prevent long fetch operations
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000); // 3-second timeout
         
+        console.log("Sending POST request to /api/incrementGamesPlayed");
         const response = await fetch('/api/incrementGamesPlayed', { 
             method: 'POST',
             signal: controller.signal,
-            cache: 'no-store'
+            cache: 'no-store',
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
         
         clearTimeout(timeoutId);
@@ -73,7 +78,8 @@ export async function incrementGamesPlayed() {
             return false;
         }
         
-        console.log('Successfully triggered server-side games played increment.');
+        const data = await response.json();
+        console.log('Successfully triggered server-side games played increment. Response:', data);
         return true;
     } catch (error) {
         if (error.name === 'AbortError') {

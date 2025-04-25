@@ -836,7 +836,16 @@ export class GameController {
         
         // Update games played count
         gamesPlayedCount++;
-        incrementGamesPlayed();
+        console.log("About to increment games played count, current local count:", gamesPlayedCount);
+        
+        // Call API and handle the response for debugging
+        incrementGamesPlayed()
+            .then(success => {
+                console.log("incrementGamesPlayed API call completed, success:", success);
+            })
+            .catch(error => {
+                console.error("incrementGamesPlayed API call failed:", error);
+            });
         
         // Clean up entities
         if (player) {
