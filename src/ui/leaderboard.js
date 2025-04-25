@@ -45,11 +45,14 @@ export function drawLeaderboard(x, y, leaderboardData, ctx, useSmallFont = false
         maxVisibleScores * (useSmallFont ? 18 : 25) + (useSmallFont ? 40 : 50)
     );
     
-    // Draw title
+    // Draw title - centered relative to the background, not the position x
     ctx.fillStyle = 'white';
     ctx.font = `bold ${useSmallFont ? '18px' : '24px'} Arial`;
     ctx.textAlign = 'center';
-    ctx.fillText('High Scores', x, y + (useSmallFont ? 22 : 30));
+    
+    // Calculate the exact center of the background rectangle
+    const titleX = x; // x is already the center of the background
+    ctx.fillText('High Scores', titleX, y + (useSmallFont ? 22 : 30));
     
     // Define column positions and widths - adjusted for smaller font
     const colSpacing = useSmallFont ? 0.8 : 1;

@@ -206,8 +206,8 @@ function drawDesktopStartScreen(ctx, currentDifficulty, leaderboardData, gamesPl
     
     // Draw leaderboard if data is available
     if (leaderboardData && leaderboardData.length > 0) {
-        // Draw the leaderboard in the top right corner
-        const leaderboardX = width * 0.9; // Position at 90% of screen width
+        // Position the leaderboard in the top right corner, slightly more centered
+        const leaderboardX = width * 0.85; // Adjusted from 0.9 to 0.85 for better centering
         const leaderboardY = height * 0.1; // Position at 10% from the top
         
         // Set a smaller font size flag for the leaderboard
