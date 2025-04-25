@@ -36,7 +36,7 @@ let mobileKeyboard = {
   visible: false,
   buttons: [],
   submitButton: { x: 0, y: 0, width: 120, height: 40, text: "SUBMIT" },
-  backspaceButton: { x: 0, y: 0, width: 80, height: 40, text: "DEL" },
+  delButton: { x: 0, y: 0, width: 80, height: 40, text: "DEL" },
   cancelButton: { x: 0, y: 0, width: 80, height: 40, text: "CANCEL" },
   restartButton: { x: 0, y: 0, width: 240, height: 60, text: "TOUCH TO PLAY AGAIN" }
 };
@@ -195,8 +195,8 @@ function isNewHighScore(score, leaderboard) {
 function drawMobileKeyboard(ctx) {
     const { width, height } = getDimensions();
     
-    // Center the keyboard horizontally - shift slightly left to account for screen centering
-    const keyboardXOffset = -10; // Shift left to better center on screen
+    // Center the keyboard horizontally - remove the offset that's shifting it right
+    const keyboardXOffset = 0; // Changed from -10 to 0 to properly center
     mobileKeyboard.x = Math.floor((width - KEYBOARD_WIDTH) / 2) + keyboardXOffset;
     mobileKeyboard.y = height - KEYBOARD_HEIGHT - 100;
     mobileKeyboard.visible = true;
@@ -258,74 +258,85 @@ function drawMobileKeyboard(ctx) {
     const submitWidth = 120;
     const spacing = 20;
     const totalWidth = delWidth + cancelWidth + submitWidth + (spacing * 2);
-    const startX = Math.floor((width - totalWidth) / 2) + keyboardXOffset;
+    const startX = Math.floor((width - totalWidth) / 2);
     
     // Position and draw the DEL button first
     const delX = startX;
     const delY = controlsY;
-    mobileKeyboard.backspaceButton = {
+    
+    // Store DEL button data
+    mobileKeyboard.delButton = {
         x: delX,
         y: delY,
         width: delWidth,
-        height: 40,
-        text: "DEL"
+        height: BUTTON_SIZE
     };
     
-    // Draw DEL button - black background with white outline and text
+    // Draw the DEL button
     ctx.fillStyle = 'black';
     ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
-    ctx.fillRect(delX, delY, delWidth, 40);
-    ctx.strokeRect(delX, delY, delWidth, 40);
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(delX, delY, delWidth, BUTTON_SIZE);
+    ctx.strokeRect(delX, delY, delWidth, BUTTON_SIZE);
+    
+    // Draw the text
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 18px Arial';
+    ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText("DEL", delX + delWidth/2, delY + 20);
+    ctx.fillText('DEL', delX + delWidth / 2, delY + BUTTON_SIZE / 2);
     
-    // Position and draw the CANCEL button in the middle
+    // Position and draw the CANCEL button
     const cancelX = delX + delWidth + spacing;
-    const cancelY = delY;
+    const cancelY = controlsY;
+    
+    // Store CANCEL button data
     mobileKeyboard.cancelButton = {
         x: cancelX,
         y: cancelY,
         width: cancelWidth,
-        height: 40,
-        text: "CANCEL"
+        height: BUTTON_SIZE
     };
     
-    // Draw cancel button - black background with white outline and text
+    // Draw the CANCEL button
     ctx.fillStyle = 'black';
     ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
-    ctx.fillRect(cancelX, cancelY, cancelWidth, 40);
-    ctx.strokeRect(cancelX, cancelY, cancelWidth, 40);
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.fillText("CANCEL", cancelX + cancelWidth/2, cancelY + 20);
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(cancelX, cancelY, cancelWidth, BUTTON_SIZE);
+    ctx.strokeRect(cancelX, cancelY, cancelWidth, BUTTON_SIZE);
     
-    // Position and draw the SUBMIT button at the end
+    // Draw the text
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('CANCEL', cancelX + cancelWidth / 2, cancelY + BUTTON_SIZE / 2);
+    
+    // Position and draw the SUBMIT button
     const submitX = cancelX + cancelWidth + spacing;
-    const submitY = delY;
+    const submitY = controlsY;
+    
+    // Store SUBMIT button data
     mobileKeyboard.submitButton = {
         x: submitX,
         y: submitY,
         width: submitWidth,
-        height: 40,
-        text: "SUBMIT"
+        height: BUTTON_SIZE
     };
     
-    // Draw submit button - black background with white outline and text
+    // Draw the SUBMIT button
     ctx.fillStyle = 'black';
     ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
-    ctx.fillRect(submitX, submitY, submitWidth, 40);
-    ctx.strokeRect(submitX, submitY, submitWidth, 40);
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(submitX, submitY, submitWidth, BUTTON_SIZE);
+    ctx.strokeRect(submitX, submitY, submitWidth, BUTTON_SIZE);
+    
+    // Draw the text
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 18px Arial';
+    ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText("SUBMIT", submitX + submitWidth/2, submitY + 20);
+    ctx.fillText('SUBMIT', submitX + submitWidth / 2, submitY + BUTTON_SIZE / 2);
 }
 
 /**
@@ -579,7 +590,7 @@ function handleMobileTouchInput(event) {
         }
         
         // Check for backspace button press
-        if (isTouchOnButton(touchX, touchY, mobileKeyboard.backspaceButton)) {
+        if (isTouchOnButton(touchX, touchY, mobileKeyboard.delButton)) {
             playerInitials = playerInitials.slice(0, -1);
             console.log(`Deleted letter. Current initials: ${playerInitials}`);
             
@@ -587,27 +598,27 @@ function handleMobileTouchInput(event) {
             const ctx = getCanvas().ctx;
             ctx.fillStyle = 'white';
             ctx.fillRect(
-                mobileKeyboard.backspaceButton.x, 
-                mobileKeyboard.backspaceButton.y, 
-                mobileKeyboard.backspaceButton.width, 
-                mobileKeyboard.backspaceButton.height
+                mobileKeyboard.delButton.x, 
+                mobileKeyboard.delButton.y, 
+                mobileKeyboard.delButton.width, 
+                mobileKeyboard.delButton.height
             );
             ctx.strokeStyle = 'black';
             ctx.lineWidth = 1.5;
             ctx.strokeRect(
-                mobileKeyboard.backspaceButton.x, 
-                mobileKeyboard.backspaceButton.y, 
-                mobileKeyboard.backspaceButton.width, 
-                mobileKeyboard.backspaceButton.height
+                mobileKeyboard.delButton.x, 
+                mobileKeyboard.delButton.y, 
+                mobileKeyboard.delButton.width, 
+                mobileKeyboard.delButton.height
             );
             ctx.fillStyle = 'black';
-            ctx.font = 'bold 18px Arial';
+            ctx.font = 'bold 20px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(
                 "DEL", 
-                mobileKeyboard.backspaceButton.x + mobileKeyboard.backspaceButton.width / 2, 
-                mobileKeyboard.backspaceButton.y + mobileKeyboard.backspaceButton.height / 2
+                mobileKeyboard.delButton.x + mobileKeyboard.delButton.width / 2, 
+                mobileKeyboard.delButton.y + mobileKeyboard.delButton.height / 2
             );
             
             // DIRECT FEEDBACK: Immediately clear and redraw initials after backspace
