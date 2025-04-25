@@ -75,9 +75,15 @@ Inspiration and emotional support from Quinn McIntyre.
 
 *   The program, with a High Score leaderboard, is at https://dinostroids.com
 
-## To Create Your Own Version
+## Development
 
-1.  Clone or download this repository.
-2.  Open the `index.html` file in your web browser.
-3.  Select a difficulty level (Easy, Medium, or Difficult).
-4.  Press `Enter` or tap your selected difficulty to start the game.
+To set up the development environment:
+
+1. Clone the repository: `git clone https://github.com/bradfeld/dinostroids.git`
+2. Install dependencies: `npm install`
+3. Start the development server: `npm run dev`
+   - This will bundle the JavaScript and start a local server
+   - Changes to source files will automatically trigger a rebuild
+
+The development server will be available at http://localhost:8000 by default.
+
