@@ -204,10 +204,6 @@ function drawDesktopStartScreen(ctx, currentDifficulty, leaderboardData, gamesPl
     ctx.fillText('Press RETURN to start', width / 2, height * 2/3 + 20);
     ctx.fillText('Press ? for help', width / 2, height * 2/3 + 60);
     
-    // Add arrow key navigation instruction
-    ctx.font = '20px Arial';
-    ctx.fillText('Use ← → arrow keys to change difficulty', width / 2, height * 2/3 + 100);
-    
     // Draw leaderboard if data is available
     if (leaderboardData && leaderboardData.length > 0) {
         // Draw the leaderboard in the top right corner

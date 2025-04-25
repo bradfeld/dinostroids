@@ -92,33 +92,6 @@ function handleKeyDown(event) {
         } else if (event.code === 'KeyD') {
             difficultyCallback('difficult');
         }
-        
-        // Handle arrow keys for difficulty navigation
-        // Only process if we have a game controller and we're on the start screen
-        if (gameControllerRef && (!gameControllerRef.getGameState().isGameStarted || gameControllerRef.getGameState().isGameOver)) {
-            // Get current difficulty
-            const currentState = gameControllerRef.getGameState();
-            const currentDifficulty = currentState.currentDifficulty;
-            
-            // Navigate through difficulties with arrow keys
-            if (event.code === 'ArrowRight') {
-                // Move to harder difficulty
-                if (currentDifficulty === 'easy') {
-                    difficultyCallback('medium');
-                } else if (currentDifficulty === 'medium') {
-                    difficultyCallback('difficult');
-                }
-                // If already at difficult, do nothing (no wrap-around)
-            } else if (event.code === 'ArrowLeft') {
-                // Move to easier difficulty
-                if (currentDifficulty === 'difficult') {
-                    difficultyCallback('medium');
-                } else if (currentDifficulty === 'medium') {
-                    difficultyCallback('easy');
-                }
-                // If already at easy, do nothing (no wrap-around)
-            }
-        }
     }
 }
 
