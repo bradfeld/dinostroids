@@ -45,36 +45,41 @@ export function drawLeaderboard(x, y, leaderboardData, ctx, useSmallFont = false
         maxVisibleScores * (useSmallFont ? 18 : 25) + (useSmallFont ? 40 : 50)
     );
     
-    // Draw title - centered relative to the background, not the position x
+    // Draw title - centered relative to the background
     ctx.fillStyle = 'white';
     ctx.font = `bold ${useSmallFont ? '18px' : '24px'} Arial`;
     ctx.textAlign = 'center';
+    ctx.fillText('High Scores', x, y + (useSmallFont ? 22 : 30));
     
-    // Calculate the exact center of the background rectangle
-    const titleX = x; // x is already the center of the background
-    ctx.fillText('High Scores', titleX, y + (useSmallFont ? 22 : 30));
+    // Calculate the usable width inside the background for columns
+    const contentWidth = bgWidth * 0.9; // Leave some margin on both sides
+    const contentLeft = x - contentWidth/2;
     
-    // Define column positions and widths - adjusted for smaller font
-    const colSpacing = useSmallFont ? 0.8 : 1;
-    const rankCol = x - bgWidth/2 + 40 * colSpacing;
-    const scoreCol = x - bgWidth/2 + 100 * colSpacing;
-    const initialsCol = x - bgWidth/2 + 170 * colSpacing;
-    const levelCol = x - bgWidth/2 + 220 * colSpacing;
-    const dateCol = x - bgWidth/2 + 300 * colSpacing;
-    const timeCol = x - bgWidth/2 + 380 * colSpacing;
+    // Define column positions - centered and evenly distributed
+    // For a more balanced look, allocate relative widths to each column
+    const columnWidths = {
+        rank: 0.1,      // 10% of content width
+        score: 0.2,     // 20% of content width 
+        initials: 0.2,  // 20% of content width
+        level: 0.1,     // 10% of content width
+        date: 0.2,      // 20% of content width
+        time: 0.2       // 20% of content width
+    };
+    
+    // Calculate actual positions based on proportional widths
+    const rankCol = contentLeft + contentWidth * columnWidths.rank / 2;
+    const scoreCol = rankCol + contentWidth * (columnWidths.rank + columnWidths.score) / 2;
+    const initialsCol = scoreCol + contentWidth * (columnWidths.score + columnWidths.initials) / 2;
+    const levelCol = initialsCol + contentWidth * (columnWidths.initials + columnWidths.level) / 2;
+    const dateCol = levelCol + contentWidth * (columnWidths.level + columnWidths.date) / 2;
+    const timeCol = dateCol + contentWidth * (columnWidths.date + columnWidths.time) / 2;
     
     // Draw column headers
     ctx.font = useSmallFont ? '12px Arial' : '16px Arial';
-    ctx.textAlign = 'right';
+    ctx.textAlign = 'center'; // Center all headers for consistent look
     ctx.fillText('Rank', rankCol, y + (useSmallFont ? 45 : 60));
     ctx.fillText('Score', scoreCol, y + (useSmallFont ? 45 : 60));
-    
-    // Left-justify the initials header
-    ctx.textAlign = 'left';
-    ctx.fillText('Initials', initialsCol - 50 * colSpacing, y + (useSmallFont ? 45 : 60)); // Adjust position for left alignment
-    
-    // Switch back to right alignment for remaining headers
-    ctx.textAlign = 'right';
+    ctx.fillText('Initials', initialsCol, y + (useSmallFont ? 45 : 60));
     ctx.fillText('Level', levelCol, y + (useSmallFont ? 45 : 60));
     ctx.fillText('Date', dateCol, y + (useSmallFont ? 45 : 60));
     ctx.fillText('Time', timeCol, y + (useSmallFont ? 45 : 60));
@@ -92,37 +97,35 @@ export function drawLeaderboard(x, y, leaderboardData, ctx, useSmallFont = false
             ctx.fillStyle = 'white';
         }
         
-        // Rank number - right justified without period after
-        ctx.textAlign = 'right';
+        // Draw all score data with center alignment for consistency
+        ctx.textAlign = 'center';
+        
+        // Rank number
         ctx.fillText(`${i + 1}`, rankCol, yPos);
         
-        // Score - right justified
+        // Score value
         ctx.fillText(`${score.score}`, scoreCol, yPos);
         
-        // Initials - left justified
-        ctx.textAlign = 'left';
-        ctx.fillText(score.initials || '---', initialsCol - 50 * colSpacing, yPos);
+        // Initials
+        ctx.fillText(score.initials || '---', initialsCol, yPos);
         
-        // Reset to right alignment for remaining columns
-        ctx.textAlign = 'right';
-        
-        // Level - right justified with NO period after
+        // Level
         ctx.fillText(`${score.level || '1'}`, levelCol, yPos);
         
-        // Date (if available) - right justified
+        // Date (if available)
         const dateField = score.date || score.createdAt || score.created_at;
         if (dateField) {
             try {
                 const date = new Date(dateField);
                 if (!isNaN(date.getTime())) { // Check if date is valid
-                    // Date - right justified in mm/dd/yy format with leading zeros
+                    // Date in mm/dd/yy format with leading zeros
                     const month = (date.getMonth() + 1).toString().padStart(2, '0');
                     const day = date.getDate().toString().padStart(2, '0');
                     const year = date.getFullYear().toString().substr(2);
                     const dateStr = `${month}/${day}/${year}`;
                     ctx.fillText(dateStr, dateCol, yPos);
                     
-                    // Time in AM/PM format - right justified
+                    // Time in AM/PM format
                     const hours = date.getHours();
                     const minutes = date.getMinutes();
                     const ampm = hours >= 12 ? 'PM' : 'AM';
@@ -130,7 +133,7 @@ export function drawLeaderboard(x, y, leaderboardData, ctx, useSmallFont = false
                     const timeStr = `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
                     ctx.fillText(timeStr, timeCol, yPos);
                 } else {
-                    // Invalid date - right justified
+                    // Invalid date
                     ctx.fillText('--/--/--', dateCol, yPos);
                     ctx.fillText('--:--', timeCol, yPos);
                 }
