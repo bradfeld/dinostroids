@@ -60,7 +60,8 @@ Inspiration and emotional support from Quinn McIntyre.
 *   **Movement:** Arrow Keys
 *   **Shoot:** `Spacebar`
 *   **Start Game:** `Enter/Return`
-*   **Help Screen:** `?`
+*   **Pause:** `P`
+    **Help Screen:** `?`
 *   **End Game:** `Esc`
 *   **Hyperspace:** `H` (teleports your ship to a random location)
 
@@ -80,5 +81,3 @@ The program, with a High Score leaderboard, is at https://dinostroids.com
 2.  Open the `index.html` file in your web browser.
 3.  Select a difficulty level (Easy, Medium, or Difficult).
 4.  Press `Enter` or tap your selected difficulty to start the game.
-
-Enjoy! 
