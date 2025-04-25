@@ -12,11 +12,13 @@ import { isMobilePhone } from '../utils/device.js';
 // Constants
 const MAX_INITIALS_LENGTH = 3;
 const LETTER_BUTTONS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
-const KEYBOARD_WIDTH = 280;
-const KEYBOARD_HEIGHT = 120;
+const BUTTONS_PER_ROW = 9;
 const BUTTON_SIZE = 38;
 const BUTTON_MARGIN = 4;
-const BUTTONS_PER_ROW = 9;
+// Calculate the width needed for 9 buttons with margins
+// Each row needs: (9 buttons * button size) + (10 margins = 9 between buttons + 1 at start)
+const KEYBOARD_WIDTH = (BUTTONS_PER_ROW * BUTTON_SIZE) + ((BUTTONS_PER_ROW + 1) * BUTTON_MARGIN);
+const KEYBOARD_HEIGHT = 120;
 
 // Shared state
 let playerInitials = '';
