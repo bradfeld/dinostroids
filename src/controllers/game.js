@@ -126,27 +126,56 @@ export class GameController {
         // Reset all input handlers
         this.cleanupInputHandlers();
         
-        // Add a small delay before setting up new handlers to ensure clean state
-        setTimeout(() => {
-            console.log("Setting up input handlers for start screen after cleanup");
-        this.setupInputHandlers();
-        
-        // Clear the canvas
-        clear('black');
-        
-        // Draw start screen with current difficulty and game data
-        drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
-        
-            // Set up fresh mobile controls if on mobile with a small delay 
-            // to ensure previous ones are fully cleaned up
-        if (isMobilePhone()) {
-                setTimeout(() => {
-            const { canvas } = getCanvas();
-                    console.log("Creating new mobile controls for start screen");
-            this.mobileControls = new MobileControls(canvas, this);
-                }, 50);
-        }
-        }, 50);
+        // Fetch the latest games played count to ensure display is up to date
+        fetchGamesPlayed().then(count => {
+            console.log("Updated games played count from server:", count);
+            gamesPlayedCount = count;
+            
+            // Now draw the start screen with updated data
+            setTimeout(() => {
+                console.log("Setting up input handlers for start screen after cleanup");
+                this.setupInputHandlers();
+                
+                // Clear the canvas
+                clear('black');
+                
+                // Draw start screen with current difficulty and UPDATED game data
+                drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
+                
+                // Set up fresh mobile controls if on mobile with a small delay 
+                // to ensure previous ones are fully cleaned up
+                if (isMobilePhone()) {
+                    setTimeout(() => {
+                        const { canvas } = getCanvas();
+                        console.log("Creating new mobile controls for start screen");
+                        this.mobileControls = new MobileControls(canvas, this);
+                    }, 50);
+                }
+            }, 50);
+        })
+        .catch(error => {
+            console.error("Error fetching games played count:", error);
+            // Continue with setup even if fetch fails
+            setTimeout(() => {
+                console.log("Setting up input handlers for start screen after cleanup");
+                this.setupInputHandlers();
+                
+                // Clear the canvas
+                clear('black');
+                
+                // Draw start screen with current difficulty and existing game data
+                drawStartScreen(ctx, currentDifficulty, leaderboardData, gamesPlayedCount);
+                
+                // Set up fresh mobile controls if on mobile with a small delay 
+                if (isMobilePhone()) {
+                    setTimeout(() => {
+                        const { canvas } = getCanvas();
+                        console.log("Creating new mobile controls for start screen");
+                        this.mobileControls = new MobileControls(canvas, this);
+                    }, 50);
+                }
+            }, 50);
+        });
     }
 
     /**
