@@ -6,6 +6,44 @@ Written entirely by vibe coding using Cursor and gemini-2.5.-pro-exp-03-25 with 
 
 Inspiration and emotional support from Quinn McIntyre.
 
+## Directory Structure
+
+```
+.
+├── api                   # API endpoints for leaderboard and game stats
+│   ├── gamesPlayed.js    # Endpoint to get games played count
+│   ├── incrementGamesPlayed.js # Endpoint to increment games played count
+│   └── leaderboard.js    # Endpoint for leaderboard data
+├── public                # Static assets
+├── src                   # Source code
+│   ├── controllers       # Game controllers
+│   │   ├── game.js       # Main game controller logic
+│   │   └── input.js      # Input handling
+│   ├── entities          # Game entities
+│   │   ├── asteroid.js   # Asteroid entity
+│   │   ├── bullet.js     # Bullet entity
+│   │   └── player.js     # Player entity
+│   ├── services          # Game services
+│   │   ├── api.js        # API client
+│   │   ├── images.js     # Image handling
+│   │   └── vectorDinos.js # Vector dinosaur drawing
+│   ├── ui                # User interface elements
+│   │   ├── gameOver.js   # Game over screen
+│   │   ├── gameStatus.js # Game status HUD
+│   │   ├── helpScreen.js # Help screen
+│   │   ├── leaderboard.js # Leaderboard UI
+│   │   ├── mobileControls.js # Mobile touch controls
+│   │   └── startScreen.js # Start screen
+│   ├── utils             # Utility functions
+│   │   └── device.js     # Device detection utilities
+│   ├── canvas.js         # Canvas setup and management
+│   ├── constants.js      # Game constants and settings
+│   ├── index.js          # Entry point
+│   └── utils.js          # General utility functions
+├── index.html            # Main HTML file
+└── bundle.js             # Bundled JavaScript
+```
+
 ## Gameplay
 
 *   **Objective:** Survive as long as possible by shooting asteroids and avoiding collisions.
@@ -38,43 +76,5 @@ Inspiration and emotional support from Quinn McIntyre.
 2.  Open the `index.html` file in your web browser.
 3.  Select a difficulty level (Easy, Medium, or Difficult).
 4.  Press `Enter` or tap your selected difficulty to start the game.
-
-## Directory Structure
-
-```
-/
-├── api/                    # Server API endpoints
-│   ├── gamesPlayed.js      # Tracks total games played
-│   ├── incrementGamesPlayed.js # Increments games counter
-│   └── leaderboard.js      # High score management
-├── public/                 # Static assets
-├── src/                    # Source code
-│   ├── controllers/        # Game controllers
-│   │   ├── game.js         # Main game logic
-│   │   └── input.js        # Input handling
-│   ├── entities/           # Game entities
-│   │   ├── asteroid.js     # Asteroid implementation
-│   │   ├── bullet.js       # Bullet implementation
-│   │   └── player.js       # Player ship implementation
-│   ├── services/           # Service modules
-│   │   ├── api.js          # API client for server interaction
-│   │   ├── images.js       # Image loading service
-│   │   └── vectorDinos.js  # Vector graphics for dinosaurs
-│   ├── ui/                 # User interface components
-│   │   ├── gameOver.js     # Game over screen
-│   │   ├── gameStatus.js   # In-game status display
-│   │   ├── helpScreen.js   # Help/instructions screen
-│   │   ├── leaderboard.js  # Leaderboard display
-│   │   ├── mobileControls.js # Mobile control overlay
-│   │   └── startScreen.js  # Game start screen
-│   ├── utils/              # Utility functions
-│   │   └── device.js       # Device detection
-│   ├── canvas.js           # Canvas setup and management
-│   ├── constants.js        # Game constants and settings
-│   ├── index.js            # Application entry point
-│   └── utils.js            # General utility functions
-├── index.html              # Main HTML file
-└── README.md               # Project documentation
-```
 
 Enjoy! 
