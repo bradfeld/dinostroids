@@ -10,9 +10,8 @@ app:
 
 # -- Customized Configuration for GraphQL/SOAP/OpenAPI, add here --
   # Configuration Docs: https://docs.stackhawk.com/hawkscan/configuration/
-  applicationSpecs:
-    openApi:
-      path: ./openapi.yaml
+  openApiConf:
+    filePath: ./openapi.yaml
 
 # -- If Authenticated Scanning is needed, add here --
   # Authenticated Scanning Docs: https://docs.stackhawk.com/hawkscan/authenticated-scanning.html
