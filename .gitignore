@@ -5,3 +5,7 @@ node_modules/
 
 # Mac system files
 .DS_Store
+
+# Editor/IDE files
+.clj-kondo/
+.lsp/
