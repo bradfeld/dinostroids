@@ -1,0 +1,199 @@
+openapi: 3.0.3
+info:
+  title: Dinostroids API
+  description: API for Dinostroids game including game statistics and leaderboard functionality
+  version: 1.0.0
+  contact:
+    name: Intensity Ventures
+servers:
+  - url: https://dinostroids.com/api
+    description: Production server
+paths:
+  /gamesPlayed:
+    get:
+      summary: Get total games played count
+      description: Returns the total number of games that have been played
+      operationId: getGamesPlayed
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: Total number of games played
+                    example: 42
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: Fallback count (0) in case of server error
+                    example: 0
+  /incrementGamesPlayed:
+    post:
+      summary: Increment games played counter
+      description: Increments the total games played counter by 1
+      operationId: incrementGamesPlayed
+      responses:
+        '200':
+          description: Counter incremented successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Counter incremented successfully
+                  previousCount:
+                    type: integer
+                    description: Value before incrementing
+                    example: 41
+                  newCount:
+                    type: integer
+                    description: Updated value after incrementing
+                    example: 42
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error incrementing counter
+  /leaderboard:
+    get:
+      summary: Get leaderboard entries
+      description: Returns sorted leaderboard entries with the highest scores first
+      operationId: getLeaderboard
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaderboardEntry'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to retrieve leaderboard
+                  message:
+                    type: string
+    post:
+      summary: Add score to leaderboard
+      description: Adds a new score entry to the leaderboard
+      operationId: addLeaderboardEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - score
+              properties:
+                initials:
+                  type: string
+                  description: Player initials (max 3 characters)
+                  example: "BDF"
+                score:
+                  type: integer
+                  description: Player score
+                  example: 10000
+                time:
+                  type: integer
+                  description: Time in seconds
+                  example: 120
+                difficulty:
+                  type: string
+                  enum: [easy, medium, difficult]
+                  default: medium
+                  example: difficult
+                level:
+                  type: integer
+                  description: Level reached
+                  default: 1
+                  example: 5
+      responses:
+        '200':
+          description: Score added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Score added to leaderboard
+                  entry:
+                    $ref: '#/components/schemas/LeaderboardEntry'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid input. Score must be a positive number.
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to add score to leaderboard
+                  message:
+                    type: string
+components:
+  schemas:
+    LeaderboardEntry:
+      type: object
+      properties:
+        initials:
+          type: string
+          description: Player initials (max 3 characters)
+          example: "BDF"
+        score:
+          type: integer
+          description: Player score
+          example: 10000
+        time:
+          type: integer
+          description: Time in seconds
+          example: 120
+        level:
+          type: integer
+          description: Level reached
+          example: 5
+        difficulty:
+          type: string
+          enum: [easy, medium, difficult]
+          example: difficult
+        date:
+          type: string
+          format: date-time
+          description: When the score was recorded
+          example: "2025-05-28T12:34:56Z" 
